@@ -11,6 +11,11 @@ public partial class GridManager : Node2D
 
     private readonly BioFilter.AirflowCalculator _airflowCalculator = new();
 
+    /// <summary>
+    /// When true, left-click places walls. When false, TowerManager owns left-click.
+    /// </summary>
+    public bool WallPlacementActive { get; set; } = true;
+
     /// <summary>Current airflow percentage (0.0–1.0). Cached after each placement/removal.</summary>
     public float CurrentAirflow { get; private set; } = 1.0f;
 
@@ -193,7 +198,7 @@ public partial class GridManager : Node2D
 
             if (mouseButton.ButtonIndex == MouseButton.Left)
             {
-                if (GetTileType(tile.X, tile.Y) == TileType.Empty)
+                if (WallPlacementActive && GetTileType(tile.X, tile.Y) == TileType.Empty)
                     PlaceTile(tile.X, tile.Y, TileType.Wall);
             }
             else if (mouseButton.ButtonIndex == MouseButton.Right)

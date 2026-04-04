@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://biofilter_main"]
+[gd_scene load_steps=11 format=3 uid="uid://biofilter_main"]
 
 [ext_resource type="Script" path="res://src/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://src/GridManager.cs" id="2_gridmanager"]
@@ -6,6 +6,9 @@
 [ext_resource type="Script" path="res://src/GameState.cs" id="4_gamestate"]
 [ext_resource type="Script" path="res://src/ParticleManager.cs" id="5_particlemanager"]
 [ext_resource type="Script" path="res://src/UI/LivesMeter.cs" id="6_livesmeter"]
+[ext_resource type="Script" path="res://src/TowerManager.cs" id="7_towermanager"]
+[ext_resource type="Script" path="res://src/UI/BuildPanel.cs" id="8_buildpanel"]
+[ext_resource type="Script" path="res://src/UI/CurrencyMeter.cs" id="9_currencymeter"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -19,6 +22,9 @@ script = ExtResource("4_gamestate")
 
 [node name="ParticleManager" type="Node2D" parent="."]
 script = ExtResource("5_particlemanager")
+
+[node name="TowerManager" type="Node2D" parent="."]
+script = ExtResource("7_towermanager")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
@@ -37,3 +43,39 @@ offset_right = 250.0
 offset_bottom = 60.0
 text = "Population: 100"
 script = ExtResource("6_livesmeter")
+
+[node name="CurrencyMeter" type="Label" parent="HUD"]
+offset_left = 8.0
+offset_top = 64.0
+offset_right = 250.0
+offset_bottom = 88.0
+text = "Currency: 200"
+script = ExtResource("9_currencymeter")
+
+[node name="BuildPanel" type="CanvasLayer" parent="."]
+layer = 2
+script = ExtResource("8_buildpanel")
+
+[node name="Panel" type="Panel" parent="BuildPanel"]
+offset_left = 0.0
+offset_top = 300.0
+offset_right = 480.0
+offset_bottom = 340.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="BuildPanel/Panel"]
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 476.0
+offset_bottom = 36.0
+
+[node name="BasicFilterBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
+size_flags_horizontal = 3
+text = "Basic Filter [$50]"
+
+[node name="ElectrostaticBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
+size_flags_horizontal = 3
+text = "Electrostatic [$75]"
+
+[node name="UVSteriliserBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
+size_flags_horizontal = 3
+text = "UV Steriliser [$100]"
