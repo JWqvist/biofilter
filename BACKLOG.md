@@ -67,22 +67,24 @@ Tasks:
 
 ---
 
-### 🔫 Sprint 4 — Filter Modules (Towers) ← Current
+### 🔫 Sprint 4 — Filter Modules (Towers) ✅
 **Goal:** Three tower types can be placed and attack particles.
 
 Tasks:
-- [ ] TowerBase: placement, range, targeting
-- [ ] Basic Filter: damage aura in radius
-- [ ] Electrostatic: slow aura in radius
-- [ ] UV Sterilizer: projectile targeting nearest particle
-- [ ] Tower UI in build panel (with costs)
-- [ ] Currency system (earn on kill, spend on placement)
+- [x] TowerBase: placement, range, targeting
+- [x] Basic Filter: damage aura in radius
+- [x] Electrostatic: slow aura in radius
+- [x] UV Sterilizer: projectile targeting nearest particle
+- [x] Tower UI in build panel (with costs)
+- [x] Currency system (earn on kill, spend on placement)
 
 **Acceptance criteria:** All 3 towers placed, damage particles, economy works.
 
+**Completed:** 2026-04-05 — PR: Sprint 4: Filter Modules
+
 ---
 
-### 🌊 Sprint 5 — Wave System & Game Loop
+### 🌊 Sprint 5 — Wave System & Game Loop ← Current
 **Goal:** Full playable game loop — waves, win, lose.
 
 Tasks:
@@ -116,8 +118,11 @@ Tasks:
 
 ---
 
-## Current Sprint: Sprint 4
+## Current Sprint: Sprint 5
 Status: 🔴 Not started
+
+## Sprint 4
+Status: ✅ Done
 
 ## Sprint 3
 Status: ✅ Done
