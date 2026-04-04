@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://biofilter_main"]
+[gd_scene load_steps=4 format=3 uid="uid://biofilter_main"]
 
 [ext_resource type="Script" path="res://src/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://src/GridManager.cs" id="2_gridmanager"]
+[ext_resource type="Script" path="res://src/UI/AirflowMeter.cs" id="3_airflowmeter"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -9,3 +10,13 @@ script = ExtResource("1_main")
 [node name="GridManager" type="Node2D" parent="."]
 position = Vector2(0, 0)
 script = ExtResource("2_gridmanager")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="AirflowMeter" type="Label" parent="HUD"]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 200.0
+offset_bottom = 32.0
+text = "Airflow: 100%"
+script = ExtResource("3_airflowmeter")

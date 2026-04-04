@@ -9,6 +9,15 @@ public partial class GridManager : Node2D
     private TileType[,] _grid = new TileType[GameConfig.GridWidth, GameConfig.GridHeight];
     private Vector2I _hoverTile = new Vector2I(-1, -1);
 
+    private readonly BioFilter.AirflowCalculator _airflowCalculator = new();
+
+    /// <summary>Current airflow percentage (0.0–1.0). Cached after each placement/removal.</summary>
+    public float CurrentAirflow { get; private set; } = 1.0f;
+
+    /// <summary>Emitted whenever CurrentAirflow changes so the HUD can update.</summary>
+    [Signal]
+    public delegate void AirflowChangedEventHandler(float airflow);
+
     // Colors
     private static readonly Color ColorEmpty = new Color("#1a1a2e");
     private static readonly Color ColorGridLine = new Color("#2a2a3e");
@@ -16,10 +25,12 @@ public partial class GridManager : Node2D
     private static readonly Color ColorSpawn = new Color("#d50000");
     private static readonly Color ColorExit = new Color("#ff6d00");
     private static readonly Color ColorHover = new Color(1f, 1f, 1f, 0.3f);
+    private static readonly Color ColorBlocked = new Color(1f, 0f, 0f, 0.4f); // flash on rejected placement
 
     public override void _Ready()
     {
         InitializeGrid();
+        RefreshAirflow();
     }
 
     private void InitializeGrid()
@@ -42,22 +53,43 @@ public partial class GridManager : Node2D
         }
     }
 
-    public void PlaceTile(int col, int row, TileType type)
+    /// <summary>
+    /// Attempts to place a tile. Returns false if placement would drop airflow below the minimum.
+    /// </summary>
+    public bool PlaceTile(int col, int row, TileType type)
     {
-        if (!IsValidCoord(col, row)) return;
-        if (_grid[col, row] == TileType.Spawn) return;
-        if (_grid[col, row] == TileType.Exit) return;
+        if (!IsValidCoord(col, row)) return false;
+        if (_grid[col, row] == TileType.Spawn) return false;
+        if (_grid[col, row] == TileType.Exit) return false;
+        if (_grid[col, row] == type) return false; // already this type
+
+        // Test airflow on a copy before committing
+        TileType[,] testGrid = CloneGrid();
+        testGrid[col, row] = type;
+
+        float testAirflow = _airflowCalculator.CalculateAirflow(testGrid);
+        if (testAirflow < GameConfig.AirflowMinPercent)
+            return false; // reject — would block too much
+
         _grid[col, row] = type;
+        RefreshAirflow();
         QueueRedraw();
+        return true;
     }
 
-    public void RemoveTile(int col, int row)
+    /// <summary>
+    /// Removes a tile and recalculates airflow.
+    /// </summary>
+    public bool RemoveTile(int col, int row)
     {
-        if (!IsValidCoord(col, row)) return;
-        if (_grid[col, row] == TileType.Spawn) return;
-        if (_grid[col, row] == TileType.Exit) return;
+        if (!IsValidCoord(col, row)) return false;
+        if (_grid[col, row] == TileType.Spawn) return false;
+        if (_grid[col, row] == TileType.Exit) return false;
+
         _grid[col, row] = TileType.Empty;
+        RefreshAirflow();
         QueueRedraw();
+        return true;
     }
 
     public TileType GetTileType(int col, int row)
@@ -87,11 +119,27 @@ public partial class GridManager : Node2D
         }
     }
 
+    /// <summary>Recalculates and caches CurrentAirflow, then emits AirflowChanged signal.</summary>
+    private void RefreshAirflow()
+    {
+        CurrentAirflow = _airflowCalculator.CalculateAirflow(_grid);
+        EmitSignal(SignalName.AirflowChanged, CurrentAirflow);
+    }
+
+    private TileType[,] CloneGrid()
+    {
+        int cols = _grid.GetLength(0);
+        int rows = _grid.GetLength(1);
+        TileType[,] copy = new TileType[cols, rows];
+        System.Array.Copy(_grid, copy, _grid.Length);
+        return copy;
+    }
+
     public override void _Draw()
     {
         for (int col = 0; col < GameConfig.GridWidth; col++)
         {
-            for (int row = 0; row < GRID_HEIGHT; row++)
+            for (int row = 0; row < GameConfig.GridHeight; row++)
             {
                 var rect = new Rect2(col * GameConfig.TileSize, row * GameConfig.TileSize, GameConfig.TileSize, GameConfig.TileSize);
                 TileType tile = _grid[col, row];
