@@ -34,17 +34,19 @@ Tasks:
 
 ---
 
-### 💨 Sprint 2 — Airflow System
+### 💨 Sprint 2 — Airflow System ✅
 **Goal:** Airflow meter calculated and displayed. Building blocked when airflow too low.
 
 Tasks:
-- [ ] AirflowCalculator: flood-fill from spawn to exit
-- [ ] Choke point detection (corridor width measurement)
-- [ ] Restriction score calculation
-- [ ] Airflow % UI meter (green → yellow → red)
-- [ ] Block placement rejected when airflow < 20%
+- [x] AirflowCalculator: flood-fill from spawn to exit
+- [x] Choke point detection (corridor width measurement)
+- [x] Restriction score calculation
+- [x] Airflow % UI meter (green → yellow → red)
+- [x] Block placement rejected when airflow < 20%
 
 **Acceptance criteria:** Meter updates on every placement. Narrowing paths reduces %. Building blocked at threshold.
+
+**Completed:** 2026-04-05 — PR: Sprint 2: Airflow System
 
 ---
 
@@ -112,8 +114,11 @@ Tasks:
 
 ---
 
-## Current Sprint: Sprint 2
+## Current Sprint: Sprint 3
 Status: 🔴 Not started
+
+## Sprint 2
+Status: ✅ Done
 
 ## Sprint 1
 Status: ✅ Done
