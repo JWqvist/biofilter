@@ -50,22 +50,24 @@ Tasks:
 
 ---
 
-### 🦠 Sprint 3 — Particles
+### 🦠 Sprint 3 — Particles ✅
 **Goal:** Bio Particles spawn, pathfind, and reach the exit.
 
 Tasks:
-- [ ] ParticleEntity: movement, health, speed
-- [ ] A* pathfinding on grid (recalculates when grid changes)
-- [ ] Smooth movement with momentum (no sharp corners)
-- [ ] Spawn from single left-edge point
-- [ ] Exit detection (right edge = life lost)
-- [ ] Lives counter in HUD
+- [x] ParticleEntity: movement, health, speed
+- [x] A* pathfinding on grid (recalculates when grid changes)
+- [x] Smooth movement with momentum (no sharp corners)
+- [x] Spawn from single left-edge point
+- [x] Exit detection (right edge = life lost)
+- [x] Lives counter in HUD
 
 **Acceptance criteria:** Particles spawn, flow around walls, reach exit, lives decrease.
 
+**Completed:** 2026-04-05 — PR: Sprint 3: Particles
+
 ---
 
-### 🔫 Sprint 4 — Filter Modules (Towers)
+### 🔫 Sprint 4 — Filter Modules (Towers) ← Current
 **Goal:** Three tower types can be placed and attack particles.
 
 Tasks:
@@ -114,8 +116,11 @@ Tasks:
 
 ---
 
-## Current Sprint: Sprint 3
+## Current Sprint: Sprint 4
 Status: 🔴 Not started
+
+## Sprint 3
+Status: ✅ Done
 
 ## Sprint 2
 Status: ✅ Done

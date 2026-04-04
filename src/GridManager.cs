@@ -92,6 +92,12 @@ public partial class GridManager : Node2D
         return true;
     }
 
+    /// <summary>Returns a snapshot of the current grid for pathfinding.</summary>
+    public TileType[,] GetGrid()
+    {
+        return CloneGrid();
+    }
+
     public TileType GetTileType(int col, int row)
     {
         if (!IsValidCoord(col, row)) return TileType.Empty;
