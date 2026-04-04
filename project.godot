@@ -6,13 +6,17 @@
 ;   [section] ; section goes between []
 ;   param=value ; assign values to parameters
 
-[gd_resource type="ProjectSettings"]
+config_version=5
+
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
 config/name="BioFilter"
 run/main_scene="res://scenes/Main.tscn"
-config/features=PackedStringArray("4.3")
+config/features=PackedStringArray("4.6")
 
 [dotnet]
 
