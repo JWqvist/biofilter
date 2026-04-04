@@ -19,16 +19,18 @@ Tasks:
 
 ---
 
-### 🗺️ Sprint 1 — Grid & Building
+### 🗺️ Sprint 1 — Grid & Building ✅
 **Goal:** Player can place and remove wall blocks on the grid.
 
 Tasks:
-- [ ] GridManager: tile data model (empty, wall, tower)
-- [ ] Click to place/remove wall tiles
-- [ ] Visual feedback (hover highlight, placed block color)
-- [ ] Grid boundaries enforced (can't build on spawn/exit tiles)
+- [x] GridManager: tile data model (empty, wall, tower)
+- [x] Click to place/remove wall tiles
+- [x] Visual feedback (hover highlight, placed block color)
+- [x] Grid boundaries enforced (can't build on spawn/exit tiles)
 
 **Acceptance criteria:** Player can place/remove walls with mouse. Blocks are visible. Spawn/exit protected.
+
+**Completed:** 2026-04-04 — PR: Sprint 1: Grid & Building
 
 ---
 
@@ -110,8 +112,11 @@ Tasks:
 
 ---
 
-## Current Sprint: Sprint 1
+## Current Sprint: Sprint 2
 Status: 🔴 Not started
+
+## Sprint 1
+Status: ✅ Done
 
 ## Sprint 0
 Status: ✅ Done
