@@ -4,16 +4,18 @@
 
 ---
 
-### 🏗️ Sprint 0 — Project Foundation
+### 🏗️ Sprint 0 — Project Foundation ✅
 **Goal:** Godot project running, dev branch, basic scene structure, nothing interactive yet.
 
 Tasks:
-- [ ] Initialize Godot 4 C# project (project.godot, folder structure)
-- [ ] Create `dev` branch and branch protection on `main`
-- [ ] Main scene with empty grid (30x20 visual tiles, 16x16px)
-- [ ] Basic color palette constants file
+- [x] Initialize Godot 4 C# project (project.godot, folder structure)
+- [x] Create `dev` branch and branch protection on `main`
+- [x] Main scene with empty grid (30x20 visual tiles, 16x16px)
+- [x] Basic color palette constants file
 
 **Acceptance criteria:** Game opens, shows empty dark grid, no errors.
+
+**Completed:** 2026-04-04 — PR: Sprint 0: Project Foundation
 
 ---
 
@@ -108,5 +110,8 @@ Tasks:
 
 ---
 
-## Current Sprint: Sprint 0
+## Current Sprint: Sprint 1
 Status: 🔴 Not started
+
+## Sprint 0
+Status: ✅ Done

@@ -1,0 +1,23 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+[gd_resource type="ProjectSettings"]
+
+[application]
+
+config/name="BioFilter"
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.3")
+
+[dotnet]
+
+project/assembly_name="BioFilter"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
