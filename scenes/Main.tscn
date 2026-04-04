@@ -1,4 +1,11 @@
-[gd_scene load_steps=2 format=3 uid="uid://biofilter_main"]
+[gd_scene load_steps=3 format=3 uid="uid://biofilter_main"]
+
+[ext_resource type="Script" path="res://src/Main.cs" id="1_main"]
+[ext_resource type="Script" path="res://src/GridManager.cs" id="2_gridmanager"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
+
+[node name="GridManager" type="Node2D" parent="."]
+position = Vector2(0, 0)
+script = ExtResource("2_gridmanager")
