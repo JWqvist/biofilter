@@ -2,11 +2,11 @@ using Godot;
 
 public partial class GridManager : Node2D
 {
-    public const int GRID_WIDTH = 30;
-    public const int GRID_HEIGHT = 20;
-    public const int TILE_SIZE = 16;
+    private int GridWidth => GameConfig.GridWidth;
+    private int GridHeight => GameConfig.GridHeight;
+    private int TileSize => GameConfig.TileSize;
 
-    private TileType[,] _grid = new TileType[GRID_WIDTH, GRID_HEIGHT];
+    private TileType[,] _grid = new TileType[GameConfig.GridWidth, GameConfig.GridHeight];
     private Vector2I _hoverTile = new Vector2I(-1, -1);
 
     // Colors
@@ -24,21 +24,21 @@ public partial class GridManager : Node2D
 
     private void InitializeGrid()
     {
-        for (int col = 0; col < GRID_WIDTH; col++)
+        for (int col = 0; col < GameConfig.GridWidth; col++)
         {
-            for (int row = 0; row < GRID_HEIGHT; row++)
+            for (int row = 0; row < GameConfig.GridHeight; row++)
             {
                 _grid[col, row] = TileType.Empty;
             }
         }
 
         // Spawn: column 0, row 10 (left middle)
-        _grid[0, 10] = TileType.Spawn;
+        _grid[GameConfig.SpawnCol, GameConfig.SpawnRow] = TileType.Spawn;
 
         // Exit: entire column 29 (right edge)
-        for (int row = 0; row < GRID_HEIGHT; row++)
+        for (int row = 0; row < GameConfig.GridHeight; row++)
         {
-            _grid[29, row] = TileType.Exit;
+            _grid[GameConfig.GridWidth - 1, row] = TileType.Exit;
         }
     }
 
@@ -68,13 +68,13 @@ public partial class GridManager : Node2D
 
     private bool IsValidCoord(int col, int row)
     {
-        return col >= 0 && col < GRID_WIDTH && row >= 0 && row < GRID_HEIGHT;
+        return col >= 0 && col < GameConfig.GridWidth && row >= 0 && row < GameConfig.GridHeight;
     }
 
     public Vector2I WorldToGrid(Vector2 worldPos)
     {
-        int col = (int)(worldPos.X / TILE_SIZE);
-        int row = (int)(worldPos.Y / TILE_SIZE);
+        int col = (int)(worldPos.X / GameConfig.TileSize);
+        int row = (int)(worldPos.Y / GameConfig.TileSize);
         return new Vector2I(col, row);
     }
 
@@ -89,11 +89,11 @@ public partial class GridManager : Node2D
 
     public override void _Draw()
     {
-        for (int col = 0; col < GRID_WIDTH; col++)
+        for (int col = 0; col < GameConfig.GridWidth; col++)
         {
             for (int row = 0; row < GRID_HEIGHT; row++)
             {
-                var rect = new Rect2(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                var rect = new Rect2(col * GameConfig.TileSize, row * GameConfig.TileSize, GameConfig.TileSize, GameConfig.TileSize);
                 TileType tile = _grid[col, row];
 
                 // Fill tile
