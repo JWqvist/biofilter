@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://biofilter_main"]
+[gd_scene load_steps=16 format=3 uid="uid://biofilter_main"]
 
 [ext_resource type="Script" path="res://src/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://src/GridManager.cs" id="2_gridmanager"]
@@ -9,6 +9,11 @@
 [ext_resource type="Script" path="res://src/TowerManager.cs" id="7_towermanager"]
 [ext_resource type="Script" path="res://src/UI/BuildPanel.cs" id="8_buildpanel"]
 [ext_resource type="Script" path="res://src/UI/CurrencyMeter.cs" id="9_currencymeter"]
+[ext_resource type="Script" path="res://src/WaveManager.cs" id="10_wavemanager"]
+[ext_resource type="Script" path="res://src/UI/WaveHUD.cs" id="11_wavehud"]
+[ext_resource type="Script" path="res://src/UI/StartWaveButton.cs" id="12_startwavebutton"]
+[ext_resource type="PackedScene" path="res://scenes/UI/GameOver.tscn" id="13_gameover"]
+[ext_resource type="PackedScene" path="res://scenes/UI/WinScreen.tscn" id="14_winscreen"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -25,6 +30,9 @@ script = ExtResource("5_particlemanager")
 
 [node name="TowerManager" type="Node2D" parent="."]
 script = ExtResource("7_towermanager")
+
+[node name="WaveManager" type="Node2D" parent="."]
+script = ExtResource("10_wavemanager")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
@@ -51,6 +59,22 @@ offset_right = 250.0
 offset_bottom = 88.0
 text = "Currency: 200"
 script = ExtResource("9_currencymeter")
+
+[node name="WaveHUD" type="Label" parent="HUD"]
+offset_left = 8.0
+offset_top = 92.0
+offset_right = 250.0
+offset_bottom = 116.0
+text = "Wave: 0 / 10"
+script = ExtResource("11_wavehud")
+
+[node name="StartWaveButton" type="Button" parent="HUD"]
+offset_left = 8.0
+offset_top = 120.0
+offset_right = 160.0
+offset_bottom = 148.0
+text = "▶ Start Wave"
+script = ExtResource("12_startwavebutton")
 
 [node name="BuildPanel" type="CanvasLayer" parent="."]
 layer = 2
@@ -79,3 +103,7 @@ text = "Electrostatic [$75]"
 [node name="UVSteriliserBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
 size_flags_horizontal = 3
 text = "UV Steriliser [$100]"
+
+[node name="GameOver" parent="." instance=ExtResource("13_gameover")]
+
+[node name="WinScreen" parent="." instance=ExtResource("14_winscreen")]

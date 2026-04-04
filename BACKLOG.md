@@ -84,22 +84,24 @@ Tasks:
 
 ---
 
-### 🌊 Sprint 5 — Wave System & Game Loop ← Current
+### 🌊 Sprint 5 — Wave System & Game Loop ✅
 **Goal:** Full playable game loop — waves, win, lose.
 
 Tasks:
-- [ ] WaveManager: wave definitions, spawn intervals
-- [ ] "Start Wave" button, build phase between waves
-- [ ] Wave counter in HUD
-- [ ] Game Over screen (population = 0)
-- [ ] Win screen (survive 10 waves)
-- [ ] Basic balance pass
+- [x] WaveManager: wave definitions, spawn intervals
+- [x] "Start Wave" button, build phase between waves
+- [x] Wave counter in HUD
+- [x] Game Over screen (population = 0)
+- [x] Win screen (survive 10 waves)
+- [ ] Basic balance pass (deferred to polish sprint)
 
 **Acceptance criteria:** Full game loop playable start to finish.
 
+**Completed:** 2026-04-05 — PR: Sprint 5: Wave System & Game Loop
+
 ---
 
-### 🎨 Sprint 6 — Polish (Post-MVP)
+### 🎨 Sprint 6 — Polish (Post-MVP) ← Current
 - [ ] Upgrade system for towers
 - [ ] Particle visual variety (types 2+)
 - [ ] Sound effects
@@ -118,8 +120,11 @@ Tasks:
 
 ---
 
-## Current Sprint: Sprint 5
+## Current Sprint: Sprint 6
 Status: 🔴 Not started
+
+## Sprint 5
+Status: ✅ Done
 
 ## Sprint 4
 Status: ✅ Done
