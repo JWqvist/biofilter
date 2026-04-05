@@ -55,25 +55,25 @@ size_flags_horizontal = 3
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_minimum_size = Vector2(300, 80)
+custom_minimum_size = Vector2(140, 80)
 script = ExtResource("11_wavehud")
 
 [node name="LivesMeter" type="Control" parent="VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_vertical = 3
-custom_minimum_size = Vector2(180, 80)
+custom_minimum_size = Vector2(120, 80)
 script = ExtResource("6_livesmeter")
 
 [node name="CurrencyMeter" type="Control" parent="VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_vertical = 3
-custom_minimum_size = Vector2(110, 70)
+custom_minimum_size = Vector2(80, 70)
 script = ExtResource("9_currencymeter")
 
 [node name="AirflowMeter" type="Control" parent="VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_vertical = 3
-custom_minimum_size = Vector2(140, 85)
+custom_minimum_size = Vector2(120, 85)
 script = ExtResource("3_airflowmeter")
 
 [node name="GameArea" type="Control" parent="VBoxContainer"]
