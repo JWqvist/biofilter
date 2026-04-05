@@ -47,6 +47,13 @@ public static class GameConfig
     public const float WaveHealthMultiplierIncrease = 0.45f; // was 0.3 — steeper ramp: W10 at 5.05x
     public const float SpawnInterval = 1.0f;         // seconds between particle spawns
 
+    // ─── Build Menu ───────────────────────────────────────────────────────────
+    public const int BuildMenuItemCount  = 4;   // wall + 3 tower types
+    public const int BuildMenuWidth      = 220;  // popup width in pixels
+    public const int BuildMenuItemHeight = 44;   // height per item row
+    public const int BuildMenuTitleHeight = 24;  // height of title bar
+    public const int BuildMenuBottomMargin = 50; // pixels above bottom of screen
+
     // ─── Towers ─────────────────────────────────────────────────────────────
     public const int BasicFilterCost = 50;
     public const float BasicFilterDamage = 8f;       // was 10 — lower to require more towers

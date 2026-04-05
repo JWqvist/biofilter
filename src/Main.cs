@@ -4,19 +4,20 @@ using Godot;
 
 public partial class Main : Node2D
 {
-    private GridManager _gridManager = null!;
+    private GridManager    _gridManager     = null!;
     private BioFilter.AirflowMeter _airflowMeter = null!;
-    private GameState _gameState = null!;
+    private GameState      _gameState       = null!;
     private ParticleManager _particleManager = null!;
     private BioFilter.LivesMeter _livesMeter = null!;
-    private TowerManager _towerManager = null!;
-    private CurrencyMeter _currencyMeter = null!;
-    private BuildPanel _buildPanel = null!;
-    private WaveManager _waveManager = null!;
-    private WaveHUD _waveHUD = null!;
+    private TowerManager   _towerManager    = null!;
+    private CurrencyMeter  _currencyMeter   = null!;
+    private BuildMenu      _buildMenu       = null!;
+    private BuildButton    _buildButton     = null!;
+    private WaveManager    _waveManager     = null!;
+    private WaveHUD        _waveHUD         = null!;
     private StartWaveButton _startWaveButton = null!;
-    private GameOver _gameOverScreen = null!;
-    private WinScreen _winScreen = null!;
+    private GameOver       _gameOverScreen  = null!;
+    private WinScreen      _winScreen       = null!;
 
     public override void _Ready()
     {
@@ -27,10 +28,11 @@ public partial class Main : Node2D
         _livesMeter       = GetNode<BioFilter.LivesMeter>("HUD/TopBar/LeftGroup/LivesMeter");
         _towerManager     = GetNode<TowerManager>("TowerManager");
         _currencyMeter    = GetNode<CurrencyMeter>("HUD/TopBar/LeftGroup/CurrencyMeter");
-        _buildPanel       = GetNode<BuildPanel>("BuildPanel");
+        _buildMenu        = GetNode<BuildMenu>("BuildMenu");
+        _buildButton      = GetNode<BuildButton>("HUD/BottomBar/BuildButton");
         _waveManager      = GetNode<WaveManager>("WaveManager");
         _waveHUD          = GetNode<WaveHUD>("HUD/TopBar/LeftGroup/WaveHUD");
-        _startWaveButton  = GetNode<StartWaveButton>("BuildPanel/Panel/HBoxContainer/StartWaveButton");
+        _startWaveButton  = GetNode<StartWaveButton>("HUD/BottomBar/StartWaveButton");
         _gameOverScreen   = GetNode<GameOver>("GameOver");
         _winScreen        = GetNode<WinScreen>("WinScreen");
 
@@ -53,22 +55,25 @@ public partial class Main : Node2D
         _towerManager.GameStateRef       = _gameState;
         _towerManager.ParticleManagerRef = _particleManager;
 
-        // Wire BuildPanel to TowerManager and GridManager
-        _buildPanel.TowerSelected += (towerType) =>
+        // Wire BuildButton → BuildMenu
+        _buildButton.Initialize(_buildMenu);
+
+        // Wire BuildMenu signals to TowerManager / GridManager
+        _buildMenu.TowerSelected += (towerType) =>
         {
             _towerManager.OnTowerSelected(towerType);
             _gridManager.WallPlacementActive = false;
         };
-        _buildPanel.TowerDeselected += () =>
+        _buildMenu.TowerDeselected += () =>
         {
             _towerManager.OnTowerDeselected();
             _gridManager.WallPlacementActive = true;
         };
-        _buildPanel.UpgradeRequested += _towerManager.OnUpgradeRequested;
+        _buildMenu.UpgradeRequested += _towerManager.OnUpgradeRequested;
 
-        // Wire TowerManager upgrade signals back to BuildPanel
-        _towerManager.TowerClicked += _buildPanel.ShowUpgradeButton;
-        _towerManager.TowerDeselected += _buildPanel.HideUpgradeButton;
+        // Wire TowerManager upgrade signals back to BuildMenu
+        _towerManager.TowerClicked    += _buildMenu.ShowUpgradeButton;
+        _towerManager.TowerDeselected += _buildMenu.HideUpgradeButton;
 
         // Wire WaveManager
         _waveManager.ParticleManagerRef = _particleManager;
@@ -92,7 +97,7 @@ public partial class Main : Node2D
         GD.Print("GAME OVER — population reached zero.");
         _gameOverScreen.Show(0);
         GetTree().Paused = true;
-        _gameOverScreen.ProcessMode = ProcessModeEnum.Always; // overlay stays responsive
+        _gameOverScreen.ProcessMode = ProcessModeEnum.Always;
     }
 
     private void OnGameWon()
@@ -100,6 +105,6 @@ public partial class Main : Node2D
         GD.Print("GAME WON — all waves survived!");
         _winScreen.Show(GameConfig.TotalWaves);
         GetTree().Paused = true;
-        _winScreen.ProcessMode = ProcessModeEnum.Always; // overlay stays responsive
+        _winScreen.ProcessMode = ProcessModeEnum.Always;
     }
 }
