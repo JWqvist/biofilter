@@ -4,6 +4,7 @@
 
 [node name="WinScreen" type="CanvasLayer"]
 layer = 10
+visible = false
 script = ExtResource("1_winscreen")
 
 [node name="Panel" type="Panel" parent="."]

@@ -21,16 +21,16 @@ public partial class Main : Node2D
     public override void _Ready()
     {
         _gridManager      = GetNode<GridManager>("GridManager");
-        _airflowMeter     = GetNode<BioFilter.AirflowMeter>("HUD/AirflowMeter");
+        _airflowMeter     = GetNode<BioFilter.AirflowMeter>("HUD/TopBar/RightGroup/AirflowMeter");
         _gameState        = GetNode<GameState>("GameState");
         _particleManager  = GetNode<ParticleManager>("ParticleManager");
-        _livesMeter       = GetNode<BioFilter.LivesMeter>("HUD/LivesMeter");
+        _livesMeter       = GetNode<BioFilter.LivesMeter>("HUD/TopBar/LeftGroup/LivesMeter");
         _towerManager     = GetNode<TowerManager>("TowerManager");
-        _currencyMeter    = GetNode<CurrencyMeter>("HUD/CurrencyMeter");
+        _currencyMeter    = GetNode<CurrencyMeter>("HUD/TopBar/LeftGroup/CurrencyMeter");
         _buildPanel       = GetNode<BuildPanel>("BuildPanel");
         _waveManager      = GetNode<WaveManager>("WaveManager");
-        _waveHUD          = GetNode<WaveHUD>("HUD/WaveHUD");
-        _startWaveButton  = GetNode<StartWaveButton>("HUD/StartWaveButton");
+        _waveHUD          = GetNode<WaveHUD>("HUD/TopBar/LeftGroup/WaveHUD");
+        _startWaveButton  = GetNode<StartWaveButton>("BuildPanel/Panel/HBoxContainer/StartWaveButton");
         _gameOverScreen   = GetNode<GameOver>("GameOver");
         _winScreen        = GetNode<WinScreen>("WinScreen");
 

@@ -25,6 +25,9 @@ public partial class BuildPanel : CanvasLayer
     private Button _electrostaticBtn;
     private Button _uvSteriliserBtn;
     private Button _upgradeBtn;
+    private Label _statusLabel;
+
+    private static readonly string[] TowerNames = { "Basic Filter", "Electrostatic", "UV Steriliser" };
 
     public override void _Ready()
     {
@@ -37,6 +40,10 @@ public partial class BuildPanel : CanvasLayer
         _upgradeBtn = panel.GetNode<Button>("UpgradeBtn");
         _upgradeBtn.Visible = false;
         _upgradeBtn.Pressed += OnUpgradeBtnPressed;
+
+        // Status label — shows current build mode
+        _statusLabel = GetNode<Label>("Panel/StatusLabel");
+        _statusLabel.Text = "Wall mode";
 
         _basicFilterBtn.Pressed += () => OnTowerButtonPressed(0, _basicFilterBtn);
         _electrostaticBtn.Pressed += () => OnTowerButtonPressed(1, _electrostaticBtn);
@@ -59,12 +66,14 @@ public partial class BuildPanel : CanvasLayer
             // Deselect — go back to wall placement mode
             _selectedTower = -1;
             ClearHighlights();
+            SetStatus("Wall mode");
             EmitSignal(SignalName.TowerDeselected);
         }
         else
         {
             _selectedTower = towerType;
             HighlightButton(btn);
+            SetStatus($"Tower: {TowerNames[towerType]}");
             EmitSignal(SignalName.TowerSelected, towerType);
         }
     }
@@ -80,6 +89,7 @@ public partial class BuildPanel : CanvasLayer
         // Deselect any build mode selection
         _selectedTower = -1;
         ClearHighlights();
+        SetStatus("Tower selected");
 
         if (upgradeCost <= 0)
         {
@@ -109,6 +119,12 @@ public partial class BuildPanel : CanvasLayer
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void SetStatus(string text)
+    {
+        if (_statusLabel != null)
+            _statusLabel.Text = text;
+    }
 
     private void HighlightButton(Button active)
     {

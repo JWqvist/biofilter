@@ -15,8 +15,8 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="BioFilter"
-run/main_scene="res://scenes/Main.tscn"
-config/features=PackedStringArray("4.3")
+run/main_scene="res://scenes/MainMenu.tscn"
+config/features=PackedStringArray("4.6")
 
 [display]
 
