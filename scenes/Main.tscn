@@ -34,55 +34,68 @@ script = ExtResource("7_towermanager")
 script = ExtResource("10_wavemanager")
 
 [node name="HUD" type="CanvasLayer" parent="."]
+layer = 1
 
-[node name="AirflowMeter" type="Label" parent="HUD"]
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 200.0
-offset_bottom = 32.0
-text = "Airflow: 100%"
-script = ExtResource("3_airflowmeter")
+[node name="TopBar" type="HBoxContainer" parent="HUD"]
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_top = 0.0
+offset_bottom = 28.0
+grow_horizontal = 2
+grow_vertical = 1
 
-[node name="LivesMeter" type="Label" parent="HUD"]
-offset_left = 8.0
-offset_top = 36.0
-offset_right = 250.0
-offset_bottom = 60.0
-text = "Population: 100"
-script = ExtResource("6_livesmeter")
+[node name="LeftGroup" type="HBoxContainer" parent="HUD/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16
 
-[node name="CurrencyMeter" type="Label" parent="HUD"]
-offset_left = 8.0
-offset_top = 64.0
-offset_right = 250.0
-offset_bottom = 88.0
-text = "Currency: 200"
-script = ExtResource("9_currencymeter")
-
-[node name="WaveHUD" type="Label" parent="HUD"]
-offset_left = 8.0
-offset_top = 92.0
-offset_right = 250.0
-offset_bottom = 116.0
+[node name="WaveHUD" type="Label" parent="HUD/TopBar/LeftGroup"]
+layout_mode = 2
+size_flags_vertical = 4
 text = "Wave: 0 / 10"
 script = ExtResource("11_wavehud")
 
-[node name="StartWaveButton" type="Button" parent="HUD"]
-offset_left = 8.0
-offset_top = 120.0
-offset_right = 160.0
-offset_bottom = 148.0
-text = "▶ Start Wave"
-script = ExtResource("12_startwavebutton")
+[node name="LivesMeter" type="Label" parent="HUD/TopBar/LeftGroup"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Population: 100"
+script = ExtResource("6_livesmeter")
+
+[node name="CurrencyMeter" type="Label" parent="HUD/TopBar/LeftGroup"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Currency: 200"
+script = ExtResource("9_currencymeter")
+
+[node name="RightGroup" type="HBoxContainer" parent="HUD/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 2
+
+[node name="AirflowMeter" type="Label" parent="HUD/TopBar/RightGroup"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Airflow: 100%"
+script = ExtResource("3_airflowmeter")
 
 [node name="BuildPanel" type="CanvasLayer" parent="."]
 layer = 2
 script = ExtResource("8_buildpanel")
 
 [node name="Panel" type="Panel" parent="BuildPanel"]
-offset_top = 300.0
-offset_right = 480.0
-offset_bottom = 340.0
+layout_mode = 3
+anchors_preset = 7
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -40.0
+offset_bottom = 0.0
+grow_vertical = 0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="BuildPanel/Panel"]
 layout_mode = 0
@@ -111,6 +124,29 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Upgrade"
+
+[node name="StartWaveButton" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "▶ Start Wave"
+script = ExtResource("12_startwavebutton")
+
+[node name="StatusLabel" type="Label" parent="BuildPanel/Panel"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -80.0
+offset_top = -14.0
+offset_right = 80.0
+offset_bottom = 0.0
+grow_horizontal = 2
+text = "Wall mode"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.75, 0.75, 0.85, 1.0)
 
 [node name="GameOver" parent="." instance=ExtResource("13_gameover")]
 

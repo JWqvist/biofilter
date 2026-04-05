@@ -4,6 +4,7 @@
 
 [node name="GameOver" type="CanvasLayer"]
 layer = 10
+visible = false
 script = ExtResource("1_gameover")
 
 [node name="Panel" type="Panel" parent="."]

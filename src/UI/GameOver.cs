@@ -35,6 +35,6 @@ public partial class GameOver : CanvasLayer
     private void OnRestartPressed()
     {
         GetTree().Paused = false;
-        GetTree().ReloadCurrentScene();
+        GetTree().ChangeSceneToFile("res://scenes/MainMenu.tscn");
     }
 }
