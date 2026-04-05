@@ -141,7 +141,7 @@ public partial class WaveManager : Node2D
     private float GetHealthMultForType(ParticleType type)
     {
         if (CurrentWaveNumber >= 10 && type == ParticleType.RadiationBlob)
-            return _healthMultiplier * 3f; // 3x on boss wave
+            return 2.0f; // boss wave: flat 2x base health (prevents ~6000 HP blobs)
         return _healthMultiplier;
     }
 

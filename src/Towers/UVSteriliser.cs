@@ -79,7 +79,7 @@ public partial class UVSteriliser : TowerBase
         var projectile = _projectileScene.Instantiate<Projectile>();
         GetTree().Root.AddChild(projectile);
         projectile.GlobalPosition = GlobalPosition;
-        projectile.Initialize(nearest, ActiveDamage);
+        projectile.Initialize(nearest, ActiveDamage * DamageMultiplier);
 
         // Trigger muzzle flash
         _flashing = true;

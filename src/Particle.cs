@@ -25,7 +25,7 @@ public partial class Particle : Node2D
 {
     // ── State ────────────────────────────────────────────────────────────────
     public float Health { get; private set; }
-    public float Speed  { get; private set; }
+    public float Speed  { get; set; }
     public float SlowMultiplier { get; set; } = 1.0f;
     public ParticleType Type { get; private set; } = ParticleType.BioParticle;
     public bool IsDivisionChild { get; private set; } = false;

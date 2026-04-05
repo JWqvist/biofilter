@@ -86,6 +86,9 @@ public static class Pathfinder
                 if (tile == TileType.Wall || tile == TileType.Tower) continue;
 
                 float gNew = current.G + 1f;
+                // Add vortex penalty for tiles near a Vortex Separator
+                if (VortexPenaltyRegistry.IsPenalised(neighborPos))
+                    gNew += GameConfig.VortexPenaltyWeight;
                 float hNew = HeuristicToExits(neighborPos, exits);
 
                 if (openSet.TryGetValue(neighborPos, out Node? existing))

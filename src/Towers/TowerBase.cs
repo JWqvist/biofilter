@@ -17,8 +17,11 @@ public abstract partial class TowerBase : Node2D
     // Injected by TowerManager after placement
     public ParticleManager? ParticleManagerRef { get; set; }
 
-    // ── Upgrade state ──────────────────────────────────────────────────────
+    // Upgrade state
     public bool IsUpgraded { get; set; } = false;
+
+    /// <summary>Damage multiplier applied by BioNeutraliser support towers (default 1.0).</summary>
+    public float DamageMultiplier { get; set; } = 1.0f;
 
     /// <summary>Grid position (col, row) set by TowerManager on placement.</summary>
     public Vector2I GridPos { get; set; }

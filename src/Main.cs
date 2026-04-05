@@ -98,6 +98,7 @@ public partial class Main : Node
         _towerManager.GridManagerRef     = _gridManager;
         _towerManager.GameStateRef       = _gameState;
         _towerManager.ParticleManagerRef = _particleManager;
+        _towerManager.WaveManagerRef     = _waveManager;
 
         // Wire right-click refund: GridManager.TileRightClicked → TowerManager.RefundTile
         _gridManager.TileRightClicked += (col, row) =>

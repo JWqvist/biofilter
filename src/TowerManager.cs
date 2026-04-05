@@ -12,8 +12,18 @@ namespace BioFilter;
 /// </summary>
 public partial class TowerManager : Node2D
 {
-    // Tower type indices matching BuildPanel order
-    public enum TowerType { None = -1, BasicFilter = 0, Electrostatic = 1, UVSteriliser = 2 }
+    // Tower type indices matching BuildPanel/BuildMenu order
+    public enum TowerType
+    {
+        None             = -1,
+        BasicFilter      = 0,
+        Electrostatic    = 1,
+        UVSteriliser     = 2,
+        VortexSeparator  = 3,
+        PowerCore        = 4,
+        BioNeutraliser   = 5,
+        MagneticCage     = 6,
+    }
 
     public TowerType SelectedTower { get; private set; } = TowerType.None;
 
@@ -21,6 +31,7 @@ public partial class TowerManager : Node2D
     public GridManager? GridManagerRef { get; set; }
     public GameState? GameStateRef { get; set; }
     public ParticleManager? ParticleManagerRef { get; set; }
+    public WaveManager? WaveManagerRef { get; set; }
 
     // Emitted when player clicks an existing tower tile (upgrade flow)
     [Signal] public delegate void TowerClickedEventHandler(int upgradeCost, bool canAfford);
@@ -31,8 +42,12 @@ public partial class TowerManager : Node2D
     private PackedScene _basicFilterScene = null!;
     private PackedScene _electrostaticScene = null!;
     private PackedScene _uvSteriliserScene = null!;
+    private PackedScene _vortexSeparatorScene = null!;
+    private PackedScene _powerCoreScene = null!;
+    private PackedScene _bioNeutraliserScene = null!;
+    private PackedScene _magneticCageScene = null!;
 
-    // Map from grid position → placed tower node
+    // Map from grid position -> placed tower node
     private readonly Dictionary<Vector2I, TowerBase> _placedTowers = new();
 
     // Currently selected tower for upgrade UI
@@ -40,9 +55,22 @@ public partial class TowerManager : Node2D
 
     public override void _Ready()
     {
-        _basicFilterScene = GD.Load<PackedScene>("res://scenes/Towers/BasicFilter.tscn");
-        _electrostaticScene = GD.Load<PackedScene>("res://scenes/Towers/Electrostatic.tscn");
-        _uvSteriliserScene = GD.Load<PackedScene>("res://scenes/Towers/UVSteriliser.tscn");
+        _basicFilterScene     = GD.Load<PackedScene>("res://scenes/Towers/BasicFilter.tscn");
+        _electrostaticScene   = GD.Load<PackedScene>("res://scenes/Towers/Electrostatic.tscn");
+        _uvSteriliserScene    = GD.Load<PackedScene>("res://scenes/Towers/UVSteriliser.tscn");
+        _vortexSeparatorScene = GD.Load<PackedScene>("res://scenes/Towers/VortexSeparator.tscn");
+        _powerCoreScene       = GD.Load<PackedScene>("res://scenes/Towers/PowerCore.tscn");
+        _bioNeutraliserScene  = GD.Load<PackedScene>("res://scenes/Towers/BioNeutraliser.tscn");
+        _magneticCageScene    = GD.Load<PackedScene>("res://scenes/Towers/MagneticCage.tscn");
+    }
+
+    // ── Public helpers ────────────────────────────────────────────────────────
+
+    /// <summary>Returns the tower placed at the given grid position, or null.</summary>
+    public TowerBase? GetTowerAt(Vector2I gridPos)
+    {
+        _placedTowers.TryGetValue(gridPos, out var tower);
+        return tower;
     }
 
     // ── BuildPanel callbacks ──────────────────────────────────────────────────
@@ -93,7 +121,7 @@ public partial class TowerManager : Node2D
 
         if (mb.ButtonIndex == MouseButton.Right)
         {
-            // Right-click handled by GridManager.TileRightClicked → Main → RefundTile
+            // Right-click handled by GridManager.TileRightClicked -> Main -> RefundTile
             return;
         }
 
@@ -101,7 +129,7 @@ public partial class TowerManager : Node2D
 
         if (SelectedTower == TowerType.None)
         {
-            // Wall mode — check if player clicked an existing tower to select it for upgrade
+            // Wall mode -- check if player clicked an existing tower to select it for upgrade
             if (_placedTowers.TryGetValue(tile, out var existingTower))
             {
                 _selectedForUpgrade = existingTower;
@@ -113,14 +141,14 @@ public partial class TowerManager : Node2D
                 }
                 else
                 {
-                    // Already upgraded — still signal but with 0 cost to indicate max tier
+                    // Already upgraded -- still signal but with 0 cost to indicate max tier
                     EmitSignal(SignalName.TowerClicked, 0, false);
                 }
                 GetViewport().SetInputAsHandled();
             }
             else
             {
-                // Clicked empty space — deselect tower
+                // Clicked empty space -- deselect tower
                 if (_selectedForUpgrade != null)
                 {
                     _selectedForUpgrade = null;
@@ -153,7 +181,7 @@ public partial class TowerManager : Node2D
         bool placed = GridManagerRef.PlaceTile(col, row, TileType.Tower);
         if (!placed)
         {
-            // Refund — placement rejected (would block airflow)
+            // Refund -- placement rejected (would block airflow)
             GameStateRef.AddCurrency(cost);
             GD.Print("TowerManager: placement rejected (airflow)");
             return;
@@ -168,6 +196,32 @@ public partial class TowerManager : Node2D
         tower.GlobalPosition = TileCenter(col, row);
         tower.GridPos = new Vector2I(col, row);
         tower.ParticleManagerRef = ParticleManagerRef;
+
+        // Sprint 12: wire extra dependencies for new tower types
+        switch (tower)
+        {
+            case VortexSeparator vortex:
+                vortex.GridManagerRef = GridManagerRef;
+                vortex.ApplyVortexPenalty();
+                // Trigger path recalculation so existing particles reroute
+                GridManagerRef.TriggerAirflowRefresh();
+                break;
+
+            case PowerCore powerCore:
+                powerCore.WaveManagerRef = WaveManagerRef;
+                powerCore.GameStateRef   = GameStateRef;
+                powerCore.ConnectWaveManager();
+                break;
+
+            case BioNeutraliser neutraliser:
+                neutraliser.TowerManagerRef = this;
+                neutraliser.ApplyBoost();
+                break;
+
+            case MagneticCage:
+                // no extra wiring needed
+                break;
+        }
 
         _placedTowers[new Vector2I(col, row)] = tower;
 
@@ -195,6 +249,16 @@ public partial class TowerManager : Node2D
         var gridPos = new Vector2I(col, row);
         if (_placedTowers.TryGetValue(gridPos, out var tower))
         {
+            // Sprint 12: cleanup for new tower types
+            if (tower is BioNeutraliser bn)
+                bn.RemoveBoost();
+            if (tower is VortexSeparator vs)
+            {
+                vs.RemoveVortexPenalty();
+                // Recalc path so particles get shorter routes back
+                GridManagerRef.TriggerAirflowRefresh();
+            }
+
             tower.QueueFree();
             _placedTowers.Remove(gridPos);
         }
@@ -238,33 +302,49 @@ public partial class TowerManager : Node2D
 
     private int GetCostForType(TowerType type) => type switch
     {
-        TowerType.BasicFilter => GameConfig.BasicFilterCost,
-        TowerType.Electrostatic => GameConfig.ElectrostaticCost,
-        TowerType.UVSteriliser => GameConfig.UVSteriliserCost,
-        _ => 0
+        TowerType.BasicFilter     => GameConfig.BasicFilterCost,
+        TowerType.Electrostatic   => GameConfig.ElectrostaticCost,
+        TowerType.UVSteriliser    => GameConfig.UVSteriliserCost,
+        TowerType.VortexSeparator => GameConfig.VortexSeparatorCost,
+        TowerType.PowerCore       => GameConfig.PowerCoreCost,
+        TowerType.BioNeutraliser  => GameConfig.BioNeutraliserCost,
+        TowerType.MagneticCage    => GameConfig.MagneticCageCost,
+        _                         => 0
     };
 
     private float GetRangeForType(TowerType type) => type switch
     {
-        TowerType.BasicFilter   => GameConfig.BasicFilterRange,
-        TowerType.Electrostatic => GameConfig.ElectrostaticRange,
-        TowerType.UVSteriliser  => GameConfig.UVSteriliserRange,
-        _ => 0f
+        TowerType.BasicFilter     => GameConfig.BasicFilterRange,
+        TowerType.Electrostatic   => GameConfig.ElectrostaticRange,
+        TowerType.UVSteriliser    => GameConfig.UVSteriliserRange,
+        TowerType.VortexSeparator => GameConfig.VortexSeparatorRange,
+        TowerType.PowerCore       => 0f,
+        TowerType.BioNeutraliser  => 1.5f,
+        TowerType.MagneticCage    => GameConfig.MagneticCageRange,
+        _                         => 0f
     };
 
     private Color GetColorForType(TowerType type) => type switch
     {
-        TowerType.BasicFilter   => new Color("#3daa50"),  // green
-        TowerType.Electrostatic => new Color("#1a8a9a"),  // teal
-        TowerType.UVSteriliser  => new Color("#8a4aaa"),  // purple
-        _ => Colors.White
+        TowerType.BasicFilter     => new Color("#3daa50"),
+        TowerType.Electrostatic   => new Color("#1a8a9a"),
+        TowerType.UVSteriliser    => new Color("#8a4aaa"),
+        TowerType.VortexSeparator => new Color("#00bcd4"),
+        TowerType.PowerCore       => new Color("#ffd700"),
+        TowerType.BioNeutraliser  => new Color("#9c27b0"),
+        TowerType.MagneticCage    => new Color("#795548"),
+        _                         => Colors.White
     };
 
     private PackedScene? GetSceneForType(TowerType type) => type switch
     {
-        TowerType.BasicFilter => _basicFilterScene,
-        TowerType.Electrostatic => _electrostaticScene,
-        TowerType.UVSteriliser => _uvSteriliserScene,
-        _ => null
+        TowerType.BasicFilter     => _basicFilterScene,
+        TowerType.Electrostatic   => _electrostaticScene,
+        TowerType.UVSteriliser    => _uvSteriliserScene,
+        TowerType.VortexSeparator => _vortexSeparatorScene,
+        TowerType.PowerCore       => _powerCoreScene,
+        TowerType.BioNeutraliser  => _bioNeutraliserScene,
+        TowerType.MagneticCage    => _magneticCageScene,
+        _                         => null
     };
 }

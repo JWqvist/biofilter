@@ -210,7 +210,35 @@ Tasks:
 
 ---
 
-## Current Sprint: Sprint 11
+
+## Current Sprint: Sprint 12
+Status: ✅ Done
+
+### Sprint 12 — New Filter Modules
+
+#### Implemented
+- **VortexSeparator** — $125, cyan #00bcd4. Registers A* penalty (weight 6) for tiles within 3-tile radius via VortexPenaltyRegistry. Particles route around it taking longer paths. Visual: rotating cyan 4-arm spiral. Penalty removed on refund.
+- **PowerCore** — $150, gold #ffd700. Connects to WaveManager.WaveStarted and grants +$5 per wave. Disconnects cleanly on removal. Visual: pulsing gold square with 4 slowly rotating rays.
+- **BioNeutraliser** — $100, purple #9c27b0. On placement, sets DamageMultiplier=1.25 on all 8 adjacent towers. Resets to 1.0 on removal. TowerBase gained new DamageMultiplier property. BasicFilter and UVSteriliser apply it. Visual: purple square with connecting lines to boosted neighbors.
+- **MagneticCage** — $175, brown #795548. Freezes particles within 2.5 tiles (Speed=0) for 2.0s then releases. Restores original speed on release or tower removal. Visual: brown square with 4 inward-pointing arrow triangles.
+- **BuildMenu** updated to 8 items (wall + 7 towers). All 4 new towers shown with name, cost, description.
+- **TowerType enum** extended: VortexSeparator=3, PowerCore=4, BioNeutraliser=5, MagneticCage=6.
+- **Particle.Speed** changed to public setter to allow MagneticCage freezing.
+- **VortexPenaltyRegistry** — new static class, thread-safe registry of penalised tiles for Pathfinder.
+- **Pathfinder** updated to add VortexPenaltyWeight to tiles near Vortex towers.
+- **GridManager.TriggerAirflowRefresh()** — new public method for Vortex to force path recalculation.
+- **Wave 10 boss balance fix**: RadiationBlob health on wave 10 capped at flat 2.0× base (was _healthMultiplier * 3×, leading to ~6000 HP). Now ~800 HP max — still tanky but beatable.
+- **Scene files**: VortexSeparator.tscn, PowerCore.tscn, BioNeutraliser.tscn, MagneticCage.tscn
+- Build: 0 errors, 0 warnings.
+
+#### Balance Notes
+- Wave 10 RadiationBlob: was ~6000 HP (3× wave-10 multiplier ~5×), now ~800 HP (2× base)
+- PowerCore ROI: earns back its $150 cost in 30 waves — best used early or mid-game as foundation income
+- BioNeutraliser: 25% damage boost to 8 neighbors is strong when placed center of a cluster
+- MagneticCage: 2s hold in a 2.5-tile radius — excellent for slow tanky blobs (RadiationBlob stays frozen, bought time for damage towers to shred it)
+- VortexSeparator: path detour depends on grid layout — most effective with walls guiding the reroute
+
+## Sprint 11
 Status: ✅ Done
 
 ### Sprint 11 — New Enemy Types
