@@ -93,7 +93,7 @@ public class AirflowCalculator
         // Sample vertical width (number of passable tiles) at each column
         // from spawn column to exit column and accumulate restriction score
         float totalRestriction = 0f;
-        float maxRestriction = 0f;
+        float openGridRestriction = 0f; // what restriction looks like on an empty grid
         int sampleCols = 0;
 
         for (int col = GameConfig.SpawnCol; col < GameConfig.GridWidth - 1; col++)
@@ -119,15 +119,21 @@ public class AirflowCalculator
                 colWeight = GameConfig.ChokeWeightLow;
 
             totalRestriction += colWeight;
-            maxRestriction += GameConfig.ChokeWeightLow; // worst case = all single-tile corridors
+            openGridRestriction += GameConfig.ChokeWeightHigh; // best case = all wide open corridors
         }
 
-        if (sampleCols == 0 || maxRestriction <= 0f)
+        if (sampleCols == 0)
             return 1.0f;
 
-        // Airflow is inverse of how restricted the path is relative to worst case
-        float restriction = totalRestriction / maxRestriction;
-        float airflow = 1.0f - restriction;
+        float maxRestriction = GameConfig.ChokeWeightLow * sampleCols; // worst case = all single-tile
+        float range = maxRestriction - openGridRestriction;
+        if (range <= 0f)
+            return 1.0f; // all columns fully open, no restriction possible
+
+        // Normalize: 0.0 = open grid restriction, 1.0 = fully blocked
+        // Airflow is inverse of how restricted relative to worst case, scaled so open grid = 1.0
+        float normalizedRestriction = (totalRestriction - openGridRestriction) / range;
+        float airflow = 1.0f - normalizedRestriction;
 
         // Clamp to valid range
         if (airflow < 0f) airflow = 0f;

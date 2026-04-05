@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://biofilter_main"]
+[gd_scene load_steps=15 format=3 uid="uid://bxrjd3a1r66f2"]
 
 [ext_resource type="Script" path="res://src/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://src/GridManager.cs" id="2_gridmanager"]
@@ -19,7 +19,6 @@
 script = ExtResource("1_main")
 
 [node name="GridManager" type="Node2D" parent="."]
-position = Vector2(0, 0)
 script = ExtResource("2_gridmanager")
 
 [node name="GameState" type="Node" parent="."]
@@ -81,33 +80,37 @@ layer = 2
 script = ExtResource("8_buildpanel")
 
 [node name="Panel" type="Panel" parent="BuildPanel"]
-offset_left = 0.0
 offset_top = 300.0
 offset_right = 480.0
 offset_bottom = 340.0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="BuildPanel/Panel"]
+layout_mode = 0
 offset_left = 4.0
 offset_top = 4.0
 offset_right = 476.0
 offset_bottom = 36.0
 
 [node name="BasicFilterBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
+layout_mode = 2
 size_flags_horizontal = 3
 text = "Basic Filter [$50]"
 
 [node name="ElectrostaticBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
+layout_mode = 2
 size_flags_horizontal = 3
 text = "Electrostatic [$75]"
 
 [node name="UVSteriliserBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
+layout_mode = 2
 size_flags_horizontal = 3
 text = "UV Steriliser [$100]"
 
 [node name="UpgradeBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
+visible = false
+layout_mode = 2
 size_flags_horizontal = 3
 text = "Upgrade"
-visible = false
 
 [node name="GameOver" parent="." instance=ExtResource("13_gameover")]
 

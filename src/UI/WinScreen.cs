@@ -34,6 +34,7 @@ public partial class WinScreen : CanvasLayer
 
     private void OnPlayAgainPressed()
     {
+        GetTree().Paused = false;
         GetTree().ReloadCurrentScene();
     }
 }

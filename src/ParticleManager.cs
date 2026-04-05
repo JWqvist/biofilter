@@ -82,7 +82,8 @@ public partial class ParticleManager : Node2D
 
         // Slice path from bestIdx so particle continues forward
         var remainingPath = _cachedWorldPath.GetRange(bestIdx, _cachedWorldPath.Count - bestIdx);
-        p.Initialize(remainingPath);
+        // Use Reroute so health and position are NOT reset
+        p.Reroute(remainingPath);
     }
 
     // ── Spawn API ─────────────────────────────────────────────────────────────

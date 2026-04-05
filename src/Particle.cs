@@ -13,6 +13,7 @@ public partial class Particle : Node2D
     public float Health { get; private set; } = GameConfig.ParticleBaseHealth;
     public float Speed { get; private set; } = GameConfig.ParticleBaseSpeed;
     public float SlowMultiplier { get; set; } = 1.0f;
+    private bool _isDead = false;
 
     // ── Path ─────────────────────────────────────────────────────────────────
     private List<Vector2> _path;
@@ -34,16 +35,31 @@ public partial class Particle : Node2D
     {
         _path = worldPath;
         Health = GameConfig.ParticleBaseHealth * healthMultiplier;
+        _isDead = false;
         _waypointIndex = 0;
+        _velocity = Vector2.Zero;
         if (_path != null && _path.Count > 0)
             Position = _path[0];
     }
 
+    /// <summary>
+    /// Updates the particle's path without resetting health, position, or velocity.
+    /// Used by ParticleManager when the grid changes mid-wave.
+    /// </summary>
+    public void Reroute(List<Vector2> remainingPath)
+    {
+        _path = remainingPath;
+        _waypointIndex = 0;
+        // Do NOT reset Health, Position, or _velocity
+    }
+
     public void TakeDamage(float amount)
     {
+        if (_isDead) return; // guard against multiple Died emissions
         Health -= amount;
         if (Health <= 0f)
         {
+            _isDead = true;
             int reward = (int)(GameConfig.CurrencyPerKill);
             EmitSignal(SignalName.Died, reward);
         }
@@ -52,6 +68,7 @@ public partial class Particle : Node2D
     // ── Godot ─────────────────────────────────────────────────────────────────
     public override void _Process(double delta)
     {
+        if (_isDead) return; // stop processing after death
         if (_path == null || _path.Count == 0) return;
         if (_waypointIndex >= _path.Count) return;
 

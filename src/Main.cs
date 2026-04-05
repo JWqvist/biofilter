@@ -91,13 +91,15 @@ public partial class Main : Node2D
     {
         GD.Print("GAME OVER — population reached zero.");
         _gameOverScreen.Show(0);
-        SetProcess(false);
+        GetTree().Paused = true;
+        _gameOverScreen.ProcessMode = ProcessModeEnum.Always; // overlay stays responsive
     }
 
     private void OnGameWon()
     {
         GD.Print("GAME WON — all waves survived!");
         _winScreen.Show(GameConfig.TotalWaves);
-        SetProcess(false);
+        GetTree().Paused = true;
+        _winScreen.ProcessMode = ProcessModeEnum.Always; // overlay stays responsive
     }
 }

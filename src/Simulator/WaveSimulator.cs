@@ -216,9 +216,10 @@ public class WaveSimulator
             if (t.Type == TowerType.Electrostatic)
                 slowPercent = Math.Max(slowPercent, t.SlowPercent);
 
-        // slowPercent=0.5 means particle moves at (1-0.5*slow) = depends on impl
-        // In game: speed * (1f - SlowPercent * ParticleSlowFactor)
-        float speedMultiplier = 1f - (slowPercent * GameConfig.ParticleSlowFactor);
+        // In the actual game: particle speed is multiplied directly by SlowMultiplier.
+        // Electrostatic sets p.SlowMultiplier = ActiveSlowPercent (0.5 = 50% speed).
+        // So a slowPercent of 0.5 means the particle moves at 50% speed.
+        float speedMultiplier = (slowPercent > 0f) ? slowPercent : 1.0f;
         return Math.Max(0.2f, speedMultiplier); // floor at 20% speed
     }
 

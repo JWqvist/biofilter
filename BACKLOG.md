@@ -126,7 +126,49 @@ Tasks:
 
 ---
 
-### 🗺️ Sprint 7 — Content & Feel ← Current
+### 🗺️ Sprint 7 — QA & Final Tweaks ✅
+**Goal:** Pre-player QA pass — fix all bugs, verify all systems, add balance report.
+
+Tasks:
+- [x] Full code review all source files
+- [x] Fix Particle double-die bug (multiple towers could fire Died signal twice)
+- [x] Fix reroute teleport bug (Initialize() was resetting health/position mid-wave)
+- [x] Fix WaveManager _particlesAlive negative guard
+- [x] Fix Main.cs game over/win (SetProcess → GetTree().Paused = true)
+- [x] Fix GameOver/WinScreen restart (unpause tree before reload)
+- [x] Fix AirflowCalculator airflow normalization (open grid now correctly shows 100%)
+- [x] Fix WaveSimulator slow multiplier (was using ParticleSlowFactor, now matches actual game)
+- [x] Add Particle.Reroute() method for mid-wave path updates
+- [x] Add src/Tests/SimulationReport.cs — 4-scenario balance report
+
+**Status:** ✅ Ready for player testing
+
+---
+
+## Known Issues
+
+### Balance (Simulator)
+- **Simulator is optimistic**: The headless simulator models DPS as continuous per-corridor-fraction.
+  In real gameplay, particles move faster (steering, not straight corridors), towers have fixed tick
+  rates, and projectile travel time matters. Real difficulty will be harder than simulator shows.
+- **Wave scaling cliff**: With 3 Basic Filters only, W2-3 spike hard (0 kills) then become trivial
+  after upgrades. The upgrade system causes binary difficulty swings. Deferred to post-player feedback.
+- **W10 target label**: Simulator Summary shows W10 target as "DEATH SPIRAL" instead of "VERY HARD".
+  This is intentional (W10 should be lethal), but misleads the ✓/✗ match. Minor cosmetic issue.
+- **Economy**: Player starts with $200 but balanced builds cost $275+. Forces early waves with minimal
+  towers; works as intended but may feel punishing. Monitor in playtesting.
+
+### Gameplay
+- **No path recovery after game over**: If player causes complete airflow block and escapes,
+  particles on screen have no path. They stay still until the wave ends. Non-breaking.
+- **Tower range visual**: No range circle shown when placing or hovering towers.
+  Players may not know what they're buying. Sprint 8 candidate.
+- **Slow stacking**: Multiple Electrostatic towers don't stack slow (only max applies).
+  This is intentional but not communicated to the player.
+
+---
+
+### 🗺️ Sprint 8 — Content & Feel (Next)
 **Goal:** More content, sound, visual polish.
 
 Tasks:
@@ -135,6 +177,7 @@ Tasks:
 - [ ] Map 2 (different grid layout)
 - [ ] Selling/refunding towers
 - [ ] Particle health bars
+- [ ] Tower range circles on hover
 
 **Acceptance criteria:** Game has audio feedback. At least 2 particle types. Map selection screen.
 
@@ -150,8 +193,11 @@ Tasks:
 
 ---
 
-## Current Sprint: Sprint 7
+## Current Sprint: Sprint 8
 Status: 🔴 Not started
+
+## Sprint 7
+Status: ✅ Done — Ready for player testing
 
 ## Sprint 6
 Status: ✅ Done
