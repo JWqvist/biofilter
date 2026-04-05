@@ -10,12 +10,14 @@ namespace BioFilter;
 public partial class Projectile : Node2D
 {
     private Particle _target;
+    private float _damage;
     private const float Speed = 150f; // pixels per second
     private const float HitRadius = 4f; // pixels
 
-    public void Initialize(Particle target)
+    public void Initialize(Particle target, float damage = GameConfig.UVSteriliserDamage)
     {
         _target = target;
+        _damage = damage;
     }
 
     public override void _Process(double delta)
@@ -33,7 +35,7 @@ public partial class Projectile : Node2D
         // Hit check
         if (GlobalPosition.DistanceTo(_target.GlobalPosition) <= HitRadius)
         {
-            _target.TakeDamage(GameConfig.UVSteriliserDamage);
+            _target.TakeDamage(_damage);
             QueueFree();
         }
     }

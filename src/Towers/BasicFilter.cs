@@ -8,16 +8,24 @@ namespace BioFilter.Towers;
 /// </summary>
 public partial class BasicFilter : TowerBase
 {
-    public override float Range => GameConfig.BasicFilterRange;
+    public override float Range => IsUpgraded ? UpgradedRange : GameConfig.BasicFilterRange;
     public override int Cost => GameConfig.BasicFilterCost;
     protected override Color TowerColor => Constants.Colors.BasicFilter;
+
+    // Upgraded stats (set by TowerUpgrade)
+    public float UpgradedDamage { get; set; } = GameConfig.BasicFilterDamage;
+    public float UpgradedRange { get; set; } = GameConfig.BasicFilterRange;
+    public float UpgradedTickRate { get; set; } = GameConfig.BasicFilterTickRate;
+
+    private float ActiveDamage => IsUpgraded ? UpgradedDamage : GameConfig.BasicFilterDamage;
+    private float ActiveTickRate => IsUpgraded ? UpgradedTickRate : GameConfig.BasicFilterTickRate;
 
     private float _tickTimer = 0f;
 
     public override void _Process(double delta)
     {
         _tickTimer += (float)delta;
-        if (_tickTimer >= GameConfig.BasicFilterTickRate)
+        if (_tickTimer >= ActiveTickRate)
         {
             _tickTimer = 0f;
             DamageNearby();
@@ -28,6 +36,6 @@ public partial class BasicFilter : TowerBase
     {
         var particles = GetNearbyParticles(Range);
         foreach (var p in particles)
-            p.TakeDamage(GameConfig.BasicFilterDamage);
+            p.TakeDamage(ActiveDamage);
     }
 }

@@ -1,11 +1,13 @@
+using System.Collections.Generic;
 using BioFilter.Towers;
 using Godot;
 
 namespace BioFilter;
 
 /// <summary>
-/// Manages tower placement.
+/// Manages tower placement and upgrades.
 /// Intercepts left-click when a tower type is selected (via BuildPanel).
+/// When clicking an occupied tower tile in wall mode, signals BuildPanel to show upgrade button.
 /// Wall placement (default mode) is handled by GridManager._Input as before.
 /// </summary>
 public partial class TowerManager : Node2D
@@ -20,9 +22,19 @@ public partial class TowerManager : Node2D
     public GameState GameStateRef { get; set; }
     public ParticleManager ParticleManagerRef { get; set; }
 
+    // Emitted when player clicks an existing tower tile (upgrade flow)
+    [Signal] public delegate void TowerClickedEventHandler(int upgradeCost, bool canAfford);
+    [Signal] public delegate void TowerDeselectedEventHandler();
+
     private PackedScene _basicFilterScene;
     private PackedScene _electrostaticScene;
     private PackedScene _uvSteriliserScene;
+
+    // Map from grid position → placed tower node
+    private readonly Dictionary<Vector2I, TowerBase> _placedTowers = new();
+
+    // Currently selected tower for upgrade UI
+    private TowerBase _selectedForUpgrade;
 
     public override void _Ready()
     {
@@ -36,29 +48,71 @@ public partial class TowerManager : Node2D
     public void OnTowerSelected(int towerType)
     {
         SelectedTower = (TowerType)towerType;
+        _selectedForUpgrade = null;
         GD.Print($"TowerManager: selected {SelectedTower}");
     }
 
     public void OnTowerDeselected()
     {
         SelectedTower = TowerType.None;
+        _selectedForUpgrade = null;
         GD.Print("TowerManager: deselected (wall mode)");
+    }
+
+    /// <summary>Called by BuildPanel when the Upgrade button is pressed.</summary>
+    public void OnUpgradeRequested()
+    {
+        if (_selectedForUpgrade == null || GameStateRef == null) return;
+        TowerUpgrade.UpgradeTower(_selectedForUpgrade, GameStateRef);
+        // Refresh upgrade button state
+        int upgradeCost = TowerUpgrade.UpgradeCost(_selectedForUpgrade);
+        bool canAfford = GameStateRef.Currency >= upgradeCost;
+        EmitSignal(SignalName.TowerClicked, upgradeCost, canAfford);
     }
 
     // ── Input handling ────────────────────────────────────────────────────────
 
     public override void _Input(InputEvent @event)
     {
-        // Only intercept left-clicks when a tower is selected
-        if (SelectedTower == TowerType.None) return;
         if (@event is not InputEventMouseButton mb) return;
         if (!mb.Pressed || mb.ButtonIndex != MouseButton.Left) return;
         if (GridManagerRef == null) return;
 
         Vector2I tile = GridManagerRef.WorldToGrid(mb.Position);
-        TryPlaceTower(tile.X, tile.Y);
 
-        // Mark event handled so GridManager doesn't also process it
+        if (SelectedTower == TowerType.None)
+        {
+            // Wall mode — check if player clicked an existing tower to select it for upgrade
+            if (_placedTowers.TryGetValue(tile, out var existingTower))
+            {
+                _selectedForUpgrade = existingTower;
+                if (!existingTower.IsUpgraded)
+                {
+                    int upgradeCost = TowerUpgrade.UpgradeCost(existingTower);
+                    bool canAfford = GameStateRef != null && GameStateRef.Currency >= upgradeCost;
+                    EmitSignal(SignalName.TowerClicked, upgradeCost, canAfford);
+                }
+                else
+                {
+                    // Already upgraded — still signal but with 0 cost to indicate max tier
+                    EmitSignal(SignalName.TowerClicked, 0, false);
+                }
+                GetViewport().SetInputAsHandled();
+            }
+            else
+            {
+                // Clicked empty space — deselect tower
+                if (_selectedForUpgrade != null)
+                {
+                    _selectedForUpgrade = null;
+                    EmitSignal(SignalName.TowerDeselected);
+                }
+            }
+            return;
+        }
+
+        // Tower placement mode
+        TryPlaceTower(tile.X, tile.Y);
         GetViewport().SetInputAsHandled();
     }
 
@@ -93,7 +147,10 @@ public partial class TowerManager : Node2D
         var tower = scene.Instantiate<TowerBase>();
         AddChild(tower);
         tower.GlobalPosition = TileCenter(col, row);
+        tower.GridPos = new Vector2I(col, row);
         tower.ParticleManagerRef = ParticleManagerRef;
+
+        _placedTowers[new Vector2I(col, row)] = tower;
 
         GD.Print($"TowerManager: placed {SelectedTower} at ({col},{row})");
     }

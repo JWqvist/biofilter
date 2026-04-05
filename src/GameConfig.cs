@@ -25,15 +25,15 @@ public static class GameConfig
     public const float ChokeWeightMedium = 0.25f;
     public const float ChokeWeightLow = 0.6f;
 
-    // ─── Particles ──────────────────────────────────────────────────────────
+    // ─── Particles ──────────────────────────────────────────────────────────────────────
     public const float ParticleBaseSpeed = 1.5f;     // tiles per second
-    public const float ParticleBaseHealth = 30f;
+    public const float ParticleBaseHealth = 100f;    // was 30 — tripled for better scaling
     public const float ParticleSlowFactor = 0.5f;    // multiplier when slowed
     public const float ParticleSteeringWeight = 0.7f; // how much momentum affects turning
 
     // ─── Economy ────────────────────────────────────────────────────────────
     public const int StartingCurrency = 200;
-    public const int CurrencyPerKill = 10;           // base, scales with particle health
+    public const int CurrencyPerKill = 12;           // was 10 — slightly more income to encourage building
 
     // ─── Lives ──────────────────────────────────────────────────────────────
     public const int StartingPopulation = 100;
@@ -44,12 +44,12 @@ public static class GameConfig
     public const int WaveBaseParticleCount = 10;
     public const int WaveParticleCountIncrease = 5;  // +5 per wave
     public const float WaveHealthMultiplierBase = 1.0f;
-    public const float WaveHealthMultiplierIncrease = 0.3f; // +0.3x per wave
+    public const float WaveHealthMultiplierIncrease = 0.45f; // was 0.3 — steeper ramp: W10 at 5.05x
     public const float SpawnInterval = 1.0f;         // seconds between particle spawns
 
     // ─── Towers ─────────────────────────────────────────────────────────────
     public const int BasicFilterCost = 50;
-    public const float BasicFilterDamage = 10f;
+    public const float BasicFilterDamage = 8f;       // was 10 — lower to require more towers
     public const float BasicFilterRange = 2f;        // tiles
     public const float BasicFilterTickRate = 0.5f;   // damage ticks per second
 
@@ -58,9 +58,9 @@ public static class GameConfig
     public const float ElectrostaticRange = 2f;
 
     public const int UVSteriliserCost = 100;
-    public const float UVSteriliserDamage = 20f;
+    public const float UVSteriliserDamage = 15f;     // was 20 — lower, but fires fast
     public const float UVSteriliserRange = 4f;
-    public const float UVSteriliserFireRate = 1.0f;  // shots per second
+    public const float UVSteriliserFireRate = 1.2f;  // was 1.0 — slightly faster
 
     // ─── Upgrade multipliers ─────────────────────────────────────────────────
     public const float UpgradeCostMultiplier = 2.0f;

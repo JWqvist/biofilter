@@ -17,6 +17,12 @@ public abstract partial class TowerBase : Node2D
     // Injected by TowerManager after placement
     public ParticleManager ParticleManagerRef { get; set; }
 
+    // ── Upgrade state ──────────────────────────────────────────────────────
+    public bool IsUpgraded { get; set; } = false;
+
+    /// <summary>Grid position (col, row) set by TowerManager on placement.</summary>
+    public Vector2I GridPos { get; set; }
+
     public override void _Ready()
     {
         QueueRedraw();
@@ -48,5 +54,13 @@ public abstract partial class TowerBase : Node2D
         int size = GameConfig.TileSize;
         var rect = new Rect2(-size * 0.5f, -size * 0.5f, size, size);
         DrawRect(rect, TowerColor);
+
+        // Draw a small gold corner indicator when upgraded
+        if (IsUpgraded)
+        {
+            int corner = size / 4;
+            var badge = new Rect2(-size * 0.5f, -size * 0.5f, corner, corner);
+            DrawRect(badge, Colors.Gold);
+        }
     }
 }

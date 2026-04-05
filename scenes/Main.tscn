@@ -104,6 +104,11 @@ text = "Electrostatic [$75]"
 size_flags_horizontal = 3
 text = "UV Steriliser [$100]"
 
+[node name="UpgradeBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
+size_flags_horizontal = 3
+text = "Upgrade"
+visible = false
+
 [node name="GameOver" parent="." instance=ExtResource("13_gameover")]
 
 [node name="WinScreen" parent="." instance=ExtResource("14_winscreen")]

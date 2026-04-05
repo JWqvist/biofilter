@@ -64,6 +64,11 @@ public partial class Main : Node2D
             _towerManager.OnTowerDeselected();
             _gridManager.WallPlacementActive = true;
         };
+        _buildPanel.UpgradeRequested += _towerManager.OnUpgradeRequested;
+
+        // Wire TowerManager upgrade signals back to BuildPanel
+        _towerManager.TowerClicked += _buildPanel.ShowUpgradeButton;
+        _towerManager.TowerDeselected += _buildPanel.HideUpgradeButton;
 
         // Wire WaveManager
         _waveManager.ParticleManagerRef = _particleManager;

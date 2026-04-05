@@ -3,20 +3,28 @@ using Godot;
 namespace BioFilter.UI;
 
 /// <summary>
-/// Bottom HUD panel for selecting tower types.
+/// Bottom HUD panel for selecting tower types and upgrading selected towers.
 /// Manages build mode: wall vs tower selection.
+/// 
+/// Upgrade flow:
+///   1. Player clicks an existing tower tile (TowerManager handles click)
+///   2. TowerManager emits TowerClicked(cost, canAfford)
+///   3. BuildPanel shows "Upgrade [$cost]" button (disabled if can't afford)
+///   4. Player presses upgrade → calls TowerManager.OnUpgradeRequested()
 /// </summary>
 public partial class BuildPanel : CanvasLayer
 {
     // Signals to TowerManager
     [Signal] public delegate void TowerSelectedEventHandler(int towerType);
     [Signal] public delegate void TowerDeselectedEventHandler();
+    [Signal] public delegate void UpgradeRequestedEventHandler();
 
     private int _selectedTower = -1; // -1 = none (wall mode)
 
     private Button _basicFilterBtn;
     private Button _electrostaticBtn;
     private Button _uvSteriliserBtn;
+    private Button _upgradeBtn;
 
     public override void _Ready()
     {
@@ -24,6 +32,11 @@ public partial class BuildPanel : CanvasLayer
         _basicFilterBtn = panel.GetNode<Button>("BasicFilterBtn");
         _electrostaticBtn = panel.GetNode<Button>("ElectrostaticBtn");
         _uvSteriliserBtn = panel.GetNode<Button>("UVSteriliserBtn");
+
+        // Upgrade button — hidden by default, shown when a tower is selected
+        _upgradeBtn = panel.GetNode<Button>("UpgradeBtn");
+        _upgradeBtn.Visible = false;
+        _upgradeBtn.Pressed += OnUpgradeBtnPressed;
 
         _basicFilterBtn.Pressed += () => OnTowerButtonPressed(0, _basicFilterBtn);
         _electrostaticBtn.Pressed += () => OnTowerButtonPressed(1, _electrostaticBtn);
@@ -35,8 +48,12 @@ public partial class BuildPanel : CanvasLayer
         _uvSteriliserBtn.Text = $"UV Steriliser [${GameConfig.UVSteriliserCost}]";
     }
 
+    // ── Tower build buttons ───────────────────────────────────────────────────
+
     private void OnTowerButtonPressed(int towerType, Button btn)
     {
+        HideUpgradeButton();
+
         if (_selectedTower == towerType)
         {
             // Deselect — go back to wall placement mode
@@ -51,6 +68,47 @@ public partial class BuildPanel : CanvasLayer
             EmitSignal(SignalName.TowerSelected, towerType);
         }
     }
+
+    // ── Upgrade button ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Called by TowerManager when the player clicks an existing tower tile.
+    /// upgradeCost == 0 means tower is already at max tier.
+    /// </summary>
+    public void ShowUpgradeButton(int upgradeCost, bool canAfford)
+    {
+        // Deselect any build mode selection
+        _selectedTower = -1;
+        ClearHighlights();
+
+        if (upgradeCost <= 0)
+        {
+            // Already max tier
+            _upgradeBtn.Text = "MAX TIER";
+            _upgradeBtn.Disabled = true;
+            _upgradeBtn.Visible = true;
+        }
+        else
+        {
+            _upgradeBtn.Text = $"Upgrade [${upgradeCost}]";
+            _upgradeBtn.Disabled = !canAfford;
+            _upgradeBtn.Visible = true;
+        }
+    }
+
+    public void HideUpgradeButton()
+    {
+        if (_upgradeBtn != null)
+            _upgradeBtn.Visible = false;
+    }
+
+    private void OnUpgradeBtnPressed()
+    {
+        EmitSignal(SignalName.UpgradeRequested);
+        // Button will be refreshed when TowerManager re-emits TowerClicked
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void HighlightButton(Button active)
     {
