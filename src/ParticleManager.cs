@@ -10,15 +10,15 @@ namespace BioFilter;
 public partial class ParticleManager : Node2D
 {
     // ── Scene reference injected from Main ───────────────────────────────────
-    public GridManager GridManager { get; set; }
-    public GameState GameState { get; set; }
-    public WaveManager WaveManager { get; set; }
+    public GridManager? GridManager { get; set; }
+    public GameState? GameState { get; set; }
+    public WaveManager? WaveManager { get; set; }
 
-    private PackedScene _particleScene;
+    private PackedScene _particleScene = null!;
     private readonly List<Particle> _activeParticles = new();
 
     // Cached path (recalculated on grid change)
-    private List<Vector2> _cachedWorldPath;
+    private List<Vector2>? _cachedWorldPath;
 
     public override void _Ready()
     {
@@ -33,7 +33,7 @@ public partial class ParticleManager : Node2D
     }
 
     // ── Path helpers ──────────────────────────────────────────────────────────
-    private List<Vector2> BuildWorldPath()
+    private List<Vector2>? BuildWorldPath()
     {
         if (GridManager == null) return null;
 

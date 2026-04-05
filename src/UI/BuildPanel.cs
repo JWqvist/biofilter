@@ -1,3 +1,4 @@
+using BioFilter;
 using Godot;
 
 namespace BioFilter.UI;
@@ -21,11 +22,11 @@ public partial class BuildPanel : CanvasLayer
 
     private int _selectedTower = -1; // -1 = none (wall mode)
 
-    private Button _basicFilterBtn;
-    private Button _electrostaticBtn;
-    private Button _uvSteriliserBtn;
-    private Button _upgradeBtn;
-    private Label _statusLabel;
+    private Button _basicFilterBtn = null!;
+    private Button _electrostaticBtn = null!;
+    private Button _uvSteriliserBtn = null!;
+    private Button _upgradeBtn = null!;
+    private Label _statusLabel = null!;
 
     private static readonly string[] TowerNames = { "Basic Filter", "Electrostatic", "UV Steriliser" };
 

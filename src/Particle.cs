@@ -16,7 +16,7 @@ public partial class Particle : Node2D
     private bool _isDead = false;
 
     // ── Path ─────────────────────────────────────────────────────────────────
-    private List<Vector2> _path;
+    private List<Vector2>? _path;
     private int _waypointIndex = 0;
     private Vector2 _velocity = Vector2.Zero;
 

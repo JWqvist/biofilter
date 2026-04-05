@@ -24,7 +24,7 @@ public partial class UVSteriliser : TowerBase
 
     private float _fireTimer = 0f;
 
-    private PackedScene _projectileScene;
+    private PackedScene _projectileScene = null!;
 
     public override void _Ready()
     {
@@ -48,7 +48,7 @@ public partial class UVSteriliser : TowerBase
         if (particles.Count == 0) return;
 
         // Find nearest
-        Particle nearest = null;
+        Particle? nearest = null;
         float nearestDistSq = float.MaxValue;
         foreach (var p in particles)
         {

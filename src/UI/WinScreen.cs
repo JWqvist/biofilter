@@ -8,10 +8,10 @@ namespace BioFilter.UI;
 /// </summary>
 public partial class WinScreen : CanvasLayer
 {
-    private Label _titleLabel;
-    private Label _subtitleLabel;
-    private Label _statLabel;
-    private Button _playAgainButton;
+    private Label _titleLabel = null!;
+    private Label _subtitleLabel = null!;
+    private Label _statLabel = null!;
+    private Button _playAgainButton = null!;
 
     public override void _Ready()
     {

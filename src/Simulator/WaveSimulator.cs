@@ -42,14 +42,14 @@ public class WaveSimulator
         public float DifficultyScore; // 0=trivial, 1=perfect, 2+=death spiral
         public int CurrencyEarned;
         public int CurrencyBalance;
-        public string Rating;
+        public string Rating = string.Empty;
     }
 
     public class SimResult
     {
         public List<WaveResult> Waves = new();
         public int FinalCurrencyBalance;
-        public string Summary;
+        public string Summary = string.Empty;
     }
 
     // ── Corridor geometry constants ───────────────────────────────────────────
