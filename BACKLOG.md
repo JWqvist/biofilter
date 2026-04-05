@@ -210,8 +210,23 @@ Tasks:
 
 ---
 
-## Current Sprint: Sprint 9
+## Current Sprint: Sprint 11
 Status: ✅ Done
+
+### Sprint 11 — New Enemy Types
+
+#### Implemented
+- `ParticleType` enum: `BioParticle, SporeSpeck, RadiationBlob, BacterialSwarm, SwarmUnit, CellDivision`
+- **SporeSpeck** — HP 30, speed 3.0, size 0.4×tile, lime #aaff00. Fast scout.
+- **RadiationBlob** — HP 400, speed 0.8, size 0.9×tile, orange #ff8c00. Immune to slow (ignores SlowMultiplier).
+- **BacterialSwarm** — meta-type: spawns 8 SwarmUnits (HP 15, speed 2.0, size 0.3×tile, #88ff44) with random positional offsets.
+- **CellDivision** — HP 80, speed 1.5, size 0.7×tile, pink #ff44aa. On death spawns 2 child CellDivisions (HP 30, size 0.4×tile). Children do NOT split further (`IsDivisionChild` guard).
+- All stats added to `GameConfig`.
+- `WaveManager` selects enemy types per wave (1-3 bio, 4 bio+spore, 5-6 spore+blob, 7 swarm, 8 division, 9 all, 10 boss blobs 3×HP + divisions).
+- `WaveManager.RegisterExtraParticle()` — keeps alive counter correct when BacterialSwarm or CellDivision children spawn.
+- `WavePreview` shows correct enemy type description per wave.
+
+Build: 0 errors, 0 warnings.
 
 ## Sprint 10 — Visual Effects
 Status: ✅ Done

@@ -12,7 +12,7 @@ public partial class ParticleManager : Node2D
 {
     // ── Scene reference injected from Main ───────────────────────────────────
     public GridManager? GridManager { get; set; }
-    public GameState? GameState { get; set; }
+    public GameState?   GameState   { get; set; }
     public WaveManager? WaveManager { get; set; }
 
     private PackedScene _particleScene = null!;
@@ -20,6 +20,9 @@ public partial class ParticleManager : Node2D
 
     // Cached path (recalculated on grid change)
     private List<Vector2>? _cachedWorldPath;
+
+    // Random number generator for swarm offsets
+    private readonly RandomNumberGenerator _rng = new();
 
     public override void _Ready()
     {
@@ -39,12 +42,11 @@ public partial class ParticleManager : Node2D
         if (GridManager == null) return null;
 
         var tileGrid = GridManager.GetGrid();
-        var start = new Vector2I(GameConfig.SpawnCol, GameConfig.SpawnRow);
+        var start    = new Vector2I(GameConfig.SpawnCol, GameConfig.SpawnRow);
         var tilePath = Pathfinder.FindPath(tileGrid, start);
 
         if (tilePath == null || tilePath.Count == 0) return null;
 
-        // Convert tile coords → world positions (tile center)
         var worldPath = new List<Vector2>(tilePath.Count);
         foreach (var tile in tilePath)
         {
@@ -59,7 +61,6 @@ public partial class ParticleManager : Node2D
     {
         _cachedWorldPath = BuildWorldPath();
 
-        // Update all existing particles to new path from their nearest waypoint
         foreach (var p in _activeParticles)
             RecalculateParticlePath(p);
     }
@@ -68,27 +69,26 @@ public partial class ParticleManager : Node2D
     {
         if (_cachedWorldPath == null || _cachedWorldPath.Count == 0) return;
 
-        // Find the closest waypoint ahead in the new path
-        int bestIdx = 0;
+        int bestIdx  = 0;
         float bestDist = float.MaxValue;
         for (int i = 0; i < _cachedWorldPath.Count; i++)
         {
             float d = p.Position.DistanceTo(_cachedWorldPath[i]);
-            if (d < bestDist)
-            {
-                bestDist = d;
-                bestIdx = i;
-            }
+            if (d < bestDist) { bestDist = d; bestIdx = i; }
         }
 
-        // Slice path from bestIdx so particle continues forward
         var remainingPath = _cachedWorldPath.GetRange(bestIdx, _cachedWorldPath.Count - bestIdx);
-        // Use Reroute so health and position are NOT reset
         p.Reroute(remainingPath);
     }
 
     // ── Spawn API ─────────────────────────────────────────────────────────────
-    public void SpawnParticle(float healthMultiplier = 1.0f)
+
+    /// <summary>
+    /// Spawn a particle of the given type.
+    /// BacterialSwarm spawns 8 SwarmUnit particles instead of 1 BacterialSwarm.
+    /// Returns the number of "alive" counters to add to WaveManager.
+    /// </summary>
+    public int SpawnParticle(float healthMultiplier = 1.0f, ParticleType type = ParticleType.BioParticle)
     {
         if (_cachedWorldPath == null)
             RefreshCachedPath();
@@ -96,16 +96,80 @@ public partial class ParticleManager : Node2D
         if (_cachedWorldPath == null || _cachedWorldPath.Count == 0)
         {
             GD.PrintErr("ParticleManager: No path available — cannot spawn particle.");
-            return;
+            return 0;
         }
+
+        if (type == ParticleType.BacterialSwarm)
+        {
+            // Spawn 8 SwarmUnits with slight positional offsets
+            for (int i = 0; i < GameConfig.SwarmUnitCount; i++)
+                SpawnSingle(healthMultiplier, ParticleType.SwarmUnit, offset: true);
+            return GameConfig.SwarmUnitCount;
+        }
+
+        SpawnSingle(healthMultiplier, type);
+        return 1;
+    }
+
+    /// <summary>Spawn a CellDivision child at a specific world position.</summary>
+    public void SpawnDivisionChild(Vector2 worldPosition, float healthMultiplier = 1.0f)
+    {
+        if (_cachedWorldPath == null)
+            RefreshCachedPath();
+
+        if (_cachedWorldPath == null || _cachedWorldPath.Count == 0) return;
+
+        // Find closest waypoint to the death position
+        int bestIdx  = 0;
+        float bestDist = float.MaxValue;
+        for (int i = 0; i < _cachedWorldPath.Count; i++)
+        {
+            float d = worldPosition.DistanceTo(_cachedWorldPath[i]);
+            if (d < bestDist) { bestDist = d; bestIdx = i; }
+        }
+
+        var remainingPath = _cachedWorldPath.GetRange(bestIdx, _cachedWorldPath.Count - bestIdx);
+
+        // Override the first waypoint so the child starts exactly at the parent's position
+        var spawnPath = new List<Vector2>(remainingPath);
+        if (spawnPath.Count > 0)
+            spawnPath[0] = worldPosition;
 
         var particle = _particleScene.Instantiate<Particle>();
         AddChild(particle);
-
-        particle.Initialize(new List<Vector2>(_cachedWorldPath), healthMultiplier);
-        particle.ReachedExit += () => OnParticleReachedExit(particle);
-        particle.Died += reward => OnParticleDied(particle, reward);
+        particle.Initialize(spawnPath, healthMultiplier, ParticleType.CellDivision, isDivisionChild: true);
+        HookParticleSignals(particle);
         _activeParticles.Add(particle);
+
+        WaveManager?.RegisterExtraParticle();
+    }
+
+    // ── Internal helpers ──────────────────────────────────────────────────────
+
+    private void SpawnSingle(float healthMultiplier, ParticleType type, bool offset = false)
+    {
+        var particle = _particleScene.Instantiate<Particle>();
+        AddChild(particle);
+
+        var path = new List<Vector2>(_cachedWorldPath!);
+
+        if (offset && path.Count > 0)
+        {
+            // Slight random nudge on first waypoint so swarm units don't stack
+            float ox = _rng.RandfRange(-GameConfig.TileSize * 0.4f, GameConfig.TileSize * 0.4f);
+            float oy = _rng.RandfRange(-GameConfig.TileSize * 0.4f, GameConfig.TileSize * 0.4f);
+            path[0] = path[0] + new Vector2(ox, oy);
+        }
+
+        particle.Initialize(path, healthMultiplier, type);
+        HookParticleSignals(particle);
+        _activeParticles.Add(particle);
+    }
+
+    private void HookParticleSignals(Particle particle)
+    {
+        particle.ReachedExit += () => OnParticleReachedExit(particle);
+        particle.Died        += reward => OnParticleDied(particle, reward);
     }
 
     // ── Signal handlers ───────────────────────────────────────────────────────
@@ -124,6 +188,13 @@ public partial class ParticleManager : Node2D
 
     private void OnParticleDied(Particle particle, int reward)
     {
+        // CellDivision: spawn 2 children if not already a child
+        if (particle.Type == ParticleType.CellDivision && !particle.IsDivisionChild)
+        {
+            SpawnDivisionChild(particle.GlobalPosition);
+            SpawnDivisionChild(particle.GlobalPosition);
+        }
+
         SpawnFloatingText($"+{reward}", particle.GlobalPosition, Constants.Colors.HazardYellow);
         GameState?.AddCurrency(reward);
         RemoveParticle(particle);

@@ -85,10 +85,13 @@ public partial class WavePreview : CanvasLayer
     {
         return waveNumber switch
         {
-            <= 3 => "Bio Particles",
-            <= 6 => "Mutant Spores",
-            <= 8 => "Radiation Dust",
-            _    => "Nano-Plague"
+            1 or 2 or 3 => "Bio Particles",
+            4            => "Bio Particles + Spore Specks",
+            5 or 6       => "Spore Specks + Radiation Blobs",
+            7            => "Bacterial Swarms + Bio Particles",
+            8            => "Cell Divisions + Spore Specks",
+            9            => "All Enemy Types",
+            _            => "⚠ BOSS: Heavy Radiation Blobs + Cell Divisions",
         };
     }
 }
