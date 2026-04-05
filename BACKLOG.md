@@ -213,6 +213,22 @@ Tasks:
 ## Current Sprint: Sprint 9
 Status: ✅ Done
 
+## Sprint 10 — Visual Effects
+Status: ✅ Done
+
+### Implemented
+- **DeathSplash** (`src/Effects/DeathSplash.cs`) — 7 green squares fly outward on particle death, fade over 0.4s
+- **FloatingText** (`src/Effects/FloatingText.cs`) — reusable floating text, floats up 1s then fades
+  - `+12` yellow popup on kill (ParticleManager)
+  - `-1` red popup when particle escapes (ParticleManager)
+- **BasicFilter glow pulse** — green circle flash (0.2s) when dealing damage
+- **Electrostatic arc** — zigzag white/cyan lightning lines drawn to each slowed particle
+- **UV Steriliser muzzle flash** — white circle flash (0.15s) on firing
+- **AirflowVisualizer** (`src/Effects/AirflowVisualizer.cs`) — 8 air dots drift along path; yellow at <30%, red at <20% airflow
+- **AmbientDust** (`src/Effects/AmbientDust.cs`) — 10 drifting 1×1 white dots at alpha 0.15
+
+All effects: pure Godot DrawRect/DrawCircle/DrawLine, no sprites. Build: 0 errors.
+
 ## Sprint 8
 Status: 🔴 Not started
 

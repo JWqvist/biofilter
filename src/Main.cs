@@ -1,4 +1,5 @@
 using BioFilter;
+using BioFilter.Effects;
 using BioFilter.UI;
 using Godot;
 
@@ -27,6 +28,10 @@ public partial class Main : Node
     private BonusNotification _bonusNotification = null!;
     private AirflowVignette   _airflowVignette   = null!;
     private SpeedButton       _speedButton       = null!;
+
+    // Sprint 10 VFX nodes
+    private AirflowVisualizer _airflowVisualizer = null!;
+    private AmbientDust       _ambientDust       = null!;
 
     public override void _Ready()
     {
@@ -146,6 +151,55 @@ public partial class Main : Node
         _airflowMeter.UpdateAirflow(_gridManager.CurrentAirflow);
         _livesMeter.UpdatePopulation(_gameState.Population);
         _currencyMeter.UpdateCurrency(_gameState.Currency);
+
+        // ── Sprint 10: VFX nodes ──────────────────────────────────────────────
+        _airflowVisualizer = new AirflowVisualizer();
+        var gameArea = GetNode<Node2D>("VBoxContainer/GameArea");
+        gameArea.AddChild(_airflowVisualizer);
+
+        _ambientDust = new AmbientDust();
+        float gameW = GameConfig.GridWidth  * GameConfig.TileSize;
+        float gameH = GameConfig.GridHeight * GameConfig.TileSize;
+        _ambientDust.Initialize(gameW, gameH);
+        gameArea.AddChild(_ambientDust);
+
+        // Wire airflow signal to AirflowVisualizer
+        _gridManager.AirflowChanged += _airflowVisualizer.OnAirflowChanged;
+
+        // Give it the initial path
+        var tilePath = BioFilter.Pathfinder.FindPath(
+            _gridManager.GetGrid(),
+            new Vector2I(GameConfig.SpawnCol, GameConfig.SpawnRow));
+        if (tilePath != null && tilePath.Count > 0)
+        {
+            var worldPath = new System.Collections.Generic.List<Vector2>();
+            foreach (var tile in tilePath)
+            {
+                float cx = tile.X * GameConfig.TileSize + GameConfig.TileSize * 0.5f;
+                float cy = tile.Y * GameConfig.TileSize + GameConfig.TileSize * 0.5f;
+                worldPath.Add(new Vector2(cx, cy));
+            }
+            _airflowVisualizer.SetPath(worldPath);
+        }
+
+        // Refresh visualizer path when grid/airflow changes
+        _gridManager.AirflowChanged += (_) =>
+        {
+            var tp = BioFilter.Pathfinder.FindPath(
+                _gridManager.GetGrid(),
+                new Vector2I(GameConfig.SpawnCol, GameConfig.SpawnRow));
+            if (tp != null && tp.Count > 0)
+            {
+                var wp = new System.Collections.Generic.List<Vector2>();
+                foreach (var t in tp)
+                {
+                    float cx2 = t.X * GameConfig.TileSize + GameConfig.TileSize * 0.5f;
+                    float cy2 = t.Y * GameConfig.TileSize + GameConfig.TileSize * 0.5f;
+                    wp.Add(new Vector2(cx2, cy2));
+                }
+                _airflowVisualizer.SetPath(wp);
+            }
+        };
 
         GD.Print("BioFilter initialized.");
     }
