@@ -5,28 +5,24 @@ namespace BioFilter.UI;
 
 /// <summary>
 /// Bottom HUD panel for selecting tower types and upgrading selected towers.
-/// Manages build mode: wall vs tower selection.
-/// 
-/// Upgrade flow:
-///   1. Player clicks an existing tower tile (TowerManager handles click)
-///   2. TowerManager emits TowerClicked(cost, canAfford)
-///   3. BuildPanel shows "Upgrade [$cost]" button (disabled if can't afford)
-///   4. Player presses upgrade → calls TowerManager.OnUpgradeRequested()
+/// Tower build buttons are disabled during the wave phase.
 /// </summary>
 public partial class BuildPanel : CanvasLayer
 {
-    // Signals to TowerManager
     [Signal] public delegate void TowerSelectedEventHandler(int towerType);
     [Signal] public delegate void TowerDeselectedEventHandler();
     [Signal] public delegate void UpgradeRequestedEventHandler();
 
-    private int _selectedTower = -1; // -1 = none (wall mode)
+    private int _selectedTower = -1;
+    private bool _isWaveActive = false;
 
     private Button _basicFilterBtn = null!;
     private Button _electrostaticBtn = null!;
     private Button _uvSteriliserBtn = null!;
     private Button _upgradeBtn = null!;
     private Label _statusLabel = null!;
+    private Label _phaseLabel = null!;
+    private WaveManager _waveManager = null!;
 
     private static readonly string[] TowerNames = { "Basic Filter", "Electrostatic", "UV Steriliser" };
 
@@ -36,35 +32,79 @@ public partial class BuildPanel : CanvasLayer
         _basicFilterBtn = panel.GetNode<Button>("BasicFilterBtn");
         _electrostaticBtn = panel.GetNode<Button>("ElectrostaticBtn");
         _uvSteriliserBtn = panel.GetNode<Button>("UVSteriliserBtn");
-
-        // Upgrade button — hidden by default, shown when a tower is selected
         _upgradeBtn = panel.GetNode<Button>("UpgradeBtn");
         _upgradeBtn.Visible = false;
         _upgradeBtn.Pressed += OnUpgradeBtnPressed;
 
-        // Status label — shows current build mode
         _statusLabel = GetNode<Label>("Panel/StatusLabel");
         _statusLabel.Text = "Wall mode";
+
+        // Phase indicator label — shows BUILD PHASE / WAVE PHASE
+        _phaseLabel = GetNode<Label>("Panel/PhaseLabel");
+        SetPhase(false);
 
         _basicFilterBtn.Pressed += () => OnTowerButtonPressed(0, _basicFilterBtn);
         _electrostaticBtn.Pressed += () => OnTowerButtonPressed(1, _electrostaticBtn);
         _uvSteriliserBtn.Pressed += () => OnTowerButtonPressed(2, _uvSteriliserBtn);
 
-        // Set button labels with costs from GameConfig
         _basicFilterBtn.Text = $"Basic Filter [${GameConfig.BasicFilterCost}]";
         _electrostaticBtn.Text = $"Electrostatic [${GameConfig.ElectrostaticCost}]";
         _uvSteriliserBtn.Text = $"UV Steriliser [${GameConfig.UVSteriliserCost}]";
+
+        // Connect to WaveManager signals
+        _waveManager = GetNode<WaveManager>("/root/Main/WaveManager");
+        _waveManager.WaveStarted += OnWaveStarted;
+        _waveManager.WaveComplete += OnWaveComplete;
     }
 
-    // ── Tower build buttons ───────────────────────────────────────────────────
+    private void OnWaveStarted(int waveNumber)
+    {
+        _isWaveActive = true;
+        SetPhase(true);
+        // Disable tower placement buttons during wave
+        _basicFilterBtn.Disabled = true;
+        _electrostaticBtn.Disabled = true;
+        _uvSteriliserBtn.Disabled = true;
+        // Deselect any active tower selection
+        _selectedTower = -1;
+        ClearHighlights();
+        HideUpgradeButton();
+        SetStatus("Wave in progress…");
+    }
+
+    private void OnWaveComplete(int waveNumber)
+    {
+        _isWaveActive = false;
+        SetPhase(false);
+        // Re-enable tower placement buttons
+        _basicFilterBtn.Disabled = false;
+        _electrostaticBtn.Disabled = false;
+        _uvSteriliserBtn.Disabled = false;
+        SetStatus("Wall mode");
+    }
+
+    private void SetPhase(bool isWave)
+    {
+        if (_phaseLabel == null) return;
+        if (isWave)
+        {
+            _phaseLabel.Text = "⚡ WAVE PHASE";
+            _phaseLabel.AddThemeColorOverride("font_color", new Color("#ff6d00"));
+        }
+        else
+        {
+            _phaseLabel.Text = "🛠 BUILD PHASE";
+            _phaseLabel.AddThemeColorOverride("font_color", new Color("#00c853"));
+        }
+    }
 
     private void OnTowerButtonPressed(int towerType, Button btn)
     {
+        if (_isWaveActive) return; // Ignore during wave
         HideUpgradeButton();
 
         if (_selectedTower == towerType)
         {
-            // Deselect — go back to wall placement mode
             _selectedTower = -1;
             ClearHighlights();
             SetStatus("Wall mode");
@@ -79,22 +119,15 @@ public partial class BuildPanel : CanvasLayer
         }
     }
 
-    // ── Upgrade button ────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Called by TowerManager when the player clicks an existing tower tile.
-    /// upgradeCost == 0 means tower is already at max tier.
-    /// </summary>
     public void ShowUpgradeButton(int upgradeCost, bool canAfford)
     {
-        // Deselect any build mode selection
+        if (_isWaveActive) return;
         _selectedTower = -1;
         ClearHighlights();
         SetStatus("Tower selected");
 
         if (upgradeCost <= 0)
         {
-            // Already max tier
             _upgradeBtn.Text = "MAX TIER";
             _upgradeBtn.Disabled = true;
             _upgradeBtn.Visible = true;
@@ -116,10 +149,7 @@ public partial class BuildPanel : CanvasLayer
     private void OnUpgradeBtnPressed()
     {
         EmitSignal(SignalName.UpgradeRequested);
-        // Button will be refreshed when TowerManager re-emits TowerClicked
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void SetStatus(string text)
     {
