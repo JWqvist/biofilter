@@ -4,7 +4,9 @@ namespace BioFilter;
 
 /// <summary>
 /// Calculates airflow percentage based on grid state.
-/// Uses BFS flood-fill from spawn to measure path availability and corridor widths.
+/// Uses BFS flood-fill from spawn, then measures the minimum vertical corridor
+/// width across all columns between spawn and exit.
+/// Airflow% = min_width / GameConfig.GridHeight
 /// </summary>
 public class AirflowCalculator
 {
@@ -13,6 +15,7 @@ public class AirflowCalculator
 
     /// <summary>
     /// Returns true if there is at least one valid path from spawn to any exit tile.
+    /// Uses proper BFS flood-fill.
     /// </summary>
     public bool HasValidPath(TileType[,] grid)
     {
@@ -21,6 +24,10 @@ public class AirflowCalculator
 
         bool[,] visited = new bool[cols, rows];
         var queue = new Queue<(int col, int row)>();
+
+        // Guard: spawn must be in bounds
+        if (GameConfig.SpawnCol < 0 || GameConfig.SpawnCol >= cols) return false;
+        if (GameConfig.SpawnRow < 0 || GameConfig.SpawnRow >= rows) return false;
 
         queue.Enqueue((GameConfig.SpawnCol, GameConfig.SpawnRow));
         visited[GameConfig.SpawnCol, GameConfig.SpawnRow] = true;
@@ -54,20 +61,25 @@ public class AirflowCalculator
 
     /// <summary>
     /// Calculates airflow as a 0.0–1.0 value.
-    /// 1.0 = fully open, 0.0 = path completely blocked.
-    /// Uses BFS to find reachable tiles and samples corridor widths.
+    /// 1.0 = fully open (all GameConfig.GridHeight tiles passable in every column).
+    /// Uses BFS reachability then measures minimum vertical width (chokepoint).
+    /// Airflow% = min_width / GameConfig.GridHeight
+    ///   - Full open  (20 tiles) = 100%
+    ///   - 4 tiles wide          = 20%  (AirflowMinPercent threshold)
+    ///   - 1 tile wide           = 5%   (below minimum, rejected)
+    ///   - 0 tiles               = 0%   (fully blocked)
     /// </summary>
     public float CalculateAirflow(TileType[,] grid)
     {
-        if (!HasValidPath(grid))
-            return 0.0f;
-
         int cols = grid.GetLength(0);
         int rows = grid.GetLength(1);
 
-        // BFS to get all reachable passable tiles from spawn
+        // Step 1: BFS flood-fill from spawn to find all reachable passable tiles
         bool[,] reachable = new bool[cols, rows];
         var queue = new Queue<(int col, int row)>();
+
+        if (GameConfig.SpawnCol < 0 || GameConfig.SpawnCol >= cols) return 0.0f;
+        if (GameConfig.SpawnRow < 0 || GameConfig.SpawnRow >= rows) return 0.0f;
 
         queue.Enqueue((GameConfig.SpawnCol, GameConfig.SpawnRow));
         reachable[GameConfig.SpawnCol, GameConfig.SpawnRow] = true;
@@ -75,9 +87,15 @@ public class AirflowCalculator
         int[] dc = { 0, 0, 1, -1 };
         int[] dr = { 1, -1, 0, 0 };
 
+        bool foundExit = false;
+
         while (queue.Count > 0)
         {
             var (col, row) = queue.Dequeue();
+
+            if (grid[col, row] == TileType.Exit)
+                foundExit = true;
+
             for (int d = 0; d < 4; d++)
             {
                 int nc = col + dc[d];
@@ -90,13 +108,16 @@ public class AirflowCalculator
             }
         }
 
-        // Sample vertical width (number of passable tiles) at each column
-        // from spawn column to exit column and accumulate restriction score
-        float totalRestriction = 0f;
-        float openGridRestriction = 0f; // what restriction looks like on an empty grid
-        int sampleCols = 0;
+        // No valid path = 0% airflow
+        if (!foundExit) return 0.0f;
 
-        for (int col = GameConfig.SpawnCol; col < GameConfig.GridWidth - 1; col++)
+        // Step 2: For each column between spawn and exit (exclusive of exit column),
+        // count how many rows are reachable and passable (vertical corridor width).
+        // Step 3: Find the minimum width (the chokepoint).
+        int exitCol = GameConfig.GridWidth - 1; // exit is the rightmost column
+        int minWidth = GameConfig.GridHeight;   // start at max possible
+
+        for (int col = GameConfig.SpawnCol; col < exitCol; col++)
         {
             int width = 0;
             for (int row = 0; row < rows; row++)
@@ -104,36 +125,12 @@ public class AirflowCalculator
                 if (reachable[col, row] && IsPassable(grid[col, row]))
                     width++;
             }
-
-            if (width == 0) continue; // no reachable tiles in this column
-
-            sampleCols++;
-
-            // Determine restriction weight for this column based on width
-            float colWeight;
-            if (width >= GameConfig.ChokeWidthHigh)
-                colWeight = GameConfig.ChokeWeightHigh;
-            else if (width == GameConfig.ChokeWidthMedium)
-                colWeight = GameConfig.ChokeWeightMedium;
-            else // width == 1
-                colWeight = GameConfig.ChokeWeightLow;
-
-            totalRestriction += colWeight;
-            openGridRestriction += GameConfig.ChokeWeightHigh; // best case = all wide open corridors
+            if (width < minWidth)
+                minWidth = width;
         }
 
-        if (sampleCols == 0)
-            return 1.0f;
-
-        float maxRestriction = GameConfig.ChokeWeightLow * sampleCols; // worst case = all single-tile
-        float range = maxRestriction - openGridRestriction;
-        if (range <= 0f)
-            return 1.0f; // all columns fully open, no restriction possible
-
-        // Normalize: 0.0 = open grid restriction, 1.0 = fully blocked
-        // Airflow is inverse of how restricted relative to worst case, scaled so open grid = 1.0
-        float normalizedRestriction = (totalRestriction - openGridRestriction) / range;
-        float airflow = 1.0f - normalizedRestriction;
+        // Step 4: Airflow% = min_width / GridHeight
+        float airflow = (float)minWidth / GameConfig.GridHeight;
 
         // Clamp to valid range
         if (airflow < 0f) airflow = 0f;

@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://biofilter_pausemenu"]
+
+[ext_resource type="Script" path="res://src/UI/PauseMenu.cs" id="1_pausemenu"]
+
+[node name="PauseMenu" type="CanvasLayer"]
+layer = 20
+visible = false
+script = ExtResource("1_pausemenu")

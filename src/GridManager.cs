@@ -9,6 +9,7 @@ public partial class GridManager : Node2D
 
     private TileType[,] _grid = new TileType[GameConfig.GridWidth, GameConfig.GridHeight];
     private Vector2I _hoverTile = new Vector2I(-1, -1);
+    private float _time = 0f;
 
     private readonly BioFilter.AirflowCalculator _airflowCalculator = new();
 
@@ -32,6 +33,14 @@ public partial class GridManager : Node2D
     private static readonly Color ColorExit = Constants.Colors.Exit;
     private static readonly Color ColorHover = new Color(1f, 1f, 1f, 0.3f);
     private static readonly Color ColorBlocked = new Color(1f, 0f, 0f, 0.4f); // flash on rejected placement
+
+    // Border colors for pixel art look
+    private static readonly Color BorderWall         = new Color("#4a6a4a");
+    private static readonly Color BorderWallHighlight = new Color("#5a8a5a");
+    private static readonly Color BorderBasicFilter   = new Color("#3daa50");
+    private static readonly Color BorderElectrostatic = new Color("#1a8a9a");
+    private static readonly Color BorderUVSteriliser  = new Color("#8a4aaa");
+    private static readonly Color BorderExit          = new Color("#e06000");
 
     public override void _Ready()
     {
@@ -147,6 +156,12 @@ public partial class GridManager : Node2D
         return copy;
     }
 
+    public override void _Process(double delta)
+    {
+        _time += (float)delta;
+        QueueRedraw(); // needed for pulsing spawn border
+    }
+
     public override void _Draw()
     {
         for (int col = 0; col < GameConfig.GridWidth; col++)
@@ -171,6 +186,32 @@ public partial class GridManager : Node2D
                 if (tile == TileType.Empty)
                 {
                     DrawRect(rect, ColorGridLine, false, 1f);
+                }
+
+                // Pixel art borders per tile type
+                switch (tile)
+                {
+                    case TileType.Wall:
+                        DrawRect(rect, BorderWall, false, 1f);
+                        // 2x2 highlight in top-left corner for depth
+                        DrawRect(new Rect2(rect.Position, new Vector2(2f, 2f)), BorderWallHighlight);
+                        break;
+
+                    case TileType.Tower:
+                        // Tower type stored separately in TowerManager
+                        DrawRect(rect, BorderBasicFilter, false, 1f);
+                        break;
+
+                    case TileType.Spawn:
+                        // Pulsing 2px red border
+                        float pulse = 0.5f + 0.5f * Mathf.Sin(_time * 4f);
+                        var spawnBorder = new Color(1f, 0.1f + 0.3f * pulse, 0.1f);
+                        DrawRect(rect, spawnBorder, false, 2f);
+                        break;
+
+                    case TileType.Exit:
+                        DrawRect(rect, BorderExit, false, 1f);
+                        break;
                 }
 
                 // Hover highlight

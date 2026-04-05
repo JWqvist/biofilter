@@ -18,6 +18,7 @@ public partial class Main : Node2D
     private StartWaveButton _startWaveButton = null!;
     private GameOver       _gameOverScreen  = null!;
     private WinScreen      _winScreen       = null!;
+    private PauseMenu      _pauseMenu       = null!;
 
     public override void _Ready()
     {
@@ -35,6 +36,7 @@ public partial class Main : Node2D
         _startWaveButton  = GetNode<StartWaveButton>("HUD/BottomBar/StartWaveButton");
         _gameOverScreen   = GetNode<GameOver>("GameOver");
         _winScreen        = GetNode<WinScreen>("WinScreen");
+        _pauseMenu        = GetNode<PauseMenu>("PauseMenu");
 
         // Wire airflow signal to HUD meter
         _gridManager.AirflowChanged += _airflowMeter.UpdateAirflow;
@@ -107,4 +109,12 @@ public partial class Main : Node2D
         GetTree().Paused = true;
         _winScreen.ProcessMode = ProcessModeEnum.Always;
     }
+
+    public override void _UnhandledInput(InputEvent e)
+    {
+        if (e.IsActionPressed("ui_cancel")) // Escape key
+            TogglePauseMenu();
+    }
+
+    private void TogglePauseMenu() => _pauseMenu.Toggle();
 }
