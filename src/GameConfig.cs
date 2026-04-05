@@ -82,4 +82,31 @@ public static class GameConfig
     public const float UpgradeRangeMultiplier = 1.3f;
     public const float UpgradeSlowMultiplier = 1.5f;
     public const float UpgradeFireRateMultiplier = 1.6f;
+
+    // ─── Hotkeys ─────────────────────────────────────────────────────────────
+    public const string HotkeyBasicFilter   = "hotkey_basic_filter";     // Key 1
+    public const string HotkeyElectrostatic = "hotkey_electrostatic";    // Key 2
+    public const string HotkeyUVSteriliser  = "hotkey_uv_steriliser";    // Key 3
+    public const string HotkeyWallMode      = "hotkey_wall_mode";         // Key W
+    public const string HotkeyDeselect      = "hotkey_deselect";          // Key R
+
+    // ─── Range Preview ──────────────────────────────────────────────────────
+    public const float RangePreviewAlpha = 0.25f;
+
+    // ─── Wave Preview ──────────────────────────────────────────────────────
+    public const float WavePreviewDuration = 3.0f;
+
+    // ─── Wave Bonuses ───────────────────────────────────────────────────────
+    public const int PerfectWaveBonus    = 50;   // +$50 for 0 escaped particles
+    public const int EfficiencyBonus     = 25;   // +$25 if airflow > threshold all wave
+    public const float EfficiencyAirflowThreshold = 0.60f; // 60% airflow threshold for efficiency bonus
+    public const float BonusNotificationDuration  = 2.5f;  // seconds bonus text fades
+
+    // ─── Speed Button ───────────────────────────────────────────────────────
+    public const float SpeedNormal = 1.0f;
+    public const float SpeedFast   = 2.0f;
+
+    // ─── Airflow Warning ────────────────────────────────────────────────────
+    public const float AirflowWarnFlashThreshold  = 0.30f; // 30% → flash meter red
+    public const float AirflowCriticalThreshold   = 0.20f; // 20% → vignette
 }

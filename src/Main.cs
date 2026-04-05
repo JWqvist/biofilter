@@ -22,6 +22,12 @@ public partial class Main : Node
     private Label          _statusLabel     = null!;
     private Timer          _statusTimer     = null!;
 
+    // Sprint 9 UI nodes (created programmatically)
+    private WavePreview       _wavePreview       = null!;
+    private BonusNotification _bonusNotification = null!;
+    private AirflowVignette   _airflowVignette   = null!;
+    private SpeedButton       _speedButton       = null!;
+
     public override void _Ready()
     {
         _gridManager      = GetNode<GridManager>("VBoxContainer/GameArea/GridManager");
@@ -41,6 +47,24 @@ public partial class Main : Node
         _pauseMenu        = GetNode<PauseMenu>("PauseMenu");
         _statusLabel      = GetNode<Label>("VBoxContainer/BottomBar/StatusLabel");
 
+        // ── Sprint 9: Create new UI nodes ─────────────────────────────────────
+        _wavePreview = new WavePreview();
+        AddChild(_wavePreview);
+
+        _bonusNotification = new BonusNotification();
+        AddChild(_bonusNotification);
+
+        _airflowVignette = new AirflowVignette();
+        AddChild(_airflowVignette);
+
+        // SpeedButton added to BottomBar before StartWaveButton
+        _speedButton = new SpeedButton();
+        _speedButton.CustomMinimumSize = new Vector2(60f, 0f);
+        var bottomBar = GetNode<HBoxContainer>("VBoxContainer/BottomBar");
+        // Insert before StartWaveButton (last child)
+        bottomBar.AddChild(_speedButton);
+        bottomBar.MoveChild(_speedButton, _startWaveButton.GetIndex());
+
         // Status timer — auto-clears status label after a few seconds
         _statusTimer = new Timer();
         _statusTimer.OneShot = true;
@@ -48,13 +72,16 @@ public partial class Main : Node
         _statusTimer.Timeout += () => _statusLabel.Text = "Wall mode";
         AddChild(_statusTimer);
 
-        // Wire airflow signal to HUD meter
+        // Wire airflow signal to HUD meter and vignette
         _gridManager.AirflowChanged += _airflowMeter.UpdateAirflow;
+        _gridManager.AirflowChanged += _airflowVignette.UpdateAirflow;
+        _gridManager.AirflowChanged += (af) => _gameState.RecordAirflow(af);
 
         // Wire GameState to HUD
         _gameState.PopulationChanged += _livesMeter.UpdatePopulation;
         _gameState.CurrencyChanged   += _currencyMeter.UpdateCurrency;
         _gameState.GameOver          += OnGameOver;
+        _gameState.BonusEarned       += (msg, _amount) => _bonusNotification.ShowBonus(msg);
 
         // Give ParticleManager its dependencies
         _particleManager.GridManager   = _gridManager;
@@ -103,10 +130,13 @@ public partial class Main : Node
         _towerManager.TowerClicked    += _buildMenu.ShowUpgradeButton;
         _towerManager.TowerDeselected += _buildMenu.HideUpgradeButton;
 
-        // Wire WaveManager
+        // Wire WaveManager (Sprint 9: inject WavePreview and GameState)
         _waveManager.ParticleManagerRef = _particleManager;
+        _waveManager.WavePreviewRef     = _wavePreview;
+        _waveManager.GameStateRef       = _gameState;
         _waveManager.WaveStarted        += _waveHUD.OnWaveStarted;
         _waveManager.WaveComplete       += _waveHUD.OnWaveComplete;
+        _waveManager.WaveComplete       += (_) => _speedButton.ResetSpeed();
         _waveManager.GameWon            += OnGameWon;
 
         // Wire StartWaveButton
@@ -123,6 +153,7 @@ public partial class Main : Node
     private void OnGameOver()
     {
         GD.Print("GAME OVER — population reached zero.");
+        _speedButton.ResetSpeed();
         _gameOverScreen.Show(0);
         GetTree().Paused = true;
         _gameOverScreen.ProcessMode = ProcessModeEnum.Always;
@@ -131,6 +162,7 @@ public partial class Main : Node
     private void OnGameWon()
     {
         GD.Print("GAME WON — all waves survived!");
+        _speedButton.ResetSpeed();
         _winScreen.Show(GameConfig.TotalWaves);
         GetTree().Paused = true;
         _winScreen.ProcessMode = ProcessModeEnum.Always;
@@ -139,7 +171,52 @@ public partial class Main : Node
     public override void _UnhandledInput(InputEvent e)
     {
         if (e.IsActionPressed("ui_cancel")) // Escape key
+        {
             TogglePauseMenu();
+            return;
+        }
+
+        // Hotkeys: only active during build phase
+        if (_waveManager.State == WaveManager.WaveState.Idle && !GetTree().Paused)
+        {
+            if (e is InputEventKey key && key.Pressed && !key.Echo)
+            {
+                switch (key.Keycode)
+                {
+                    case Key.Key1:
+                        SelectTower(TowerManager.TowerType.BasicFilter, 0);
+                        break;
+                    case Key.Key2:
+                        SelectTower(TowerManager.TowerType.Electrostatic, 1);
+                        break;
+                    case Key.Key3:
+                        SelectTower(TowerManager.TowerType.UVSteriliser, 2);
+                        break;
+                    case Key.W:
+                        DeselectTower();
+                        break;
+                    case Key.R:
+                        DeselectTower();
+                        break;
+                }
+            }
+        }
+    }
+
+    private void SelectTower(TowerManager.TowerType type, int menuIndex)
+    {
+        _towerManager.OnTowerSelected(menuIndex);
+        _gridManager.WallPlacementActive = false;
+        _statusLabel.Text = $"{type} selected [hotkey]";
+        _statusTimer.Stop();
+        _statusTimer.Start();
+    }
+
+    private void DeselectTower()
+    {
+        _towerManager.OnTowerDeselected();
+        _gridManager.WallPlacementActive = true;
+        _statusLabel.Text = "Wall mode";
     }
 
     private void TogglePauseMenu() => _pauseMenu.Toggle();

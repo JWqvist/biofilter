@@ -11,6 +11,11 @@ public partial class GridManager : Node2D
     private Vector2I _hoverTile = new Vector2I(-1, -1);
     private float _time = 0f;
 
+    // Range preview: set by TowerManager when a tower type is selected
+    private TowerManager.TowerType _previewTowerType = TowerManager.TowerType.None;
+    private float _previewRange = 0f;
+    private Color _previewColor = Colors.White;
+
     private readonly BioFilter.AirflowCalculator _airflowCalculator = new();
 
     /// <summary>
@@ -24,6 +29,10 @@ public partial class GridManager : Node2D
     /// <summary>Emitted whenever CurrentAirflow changes so the HUD can update.</summary>
     [Signal]
     public delegate void AirflowChangedEventHandler(float airflow);
+
+    /// <summary>Emitted when airflow drops below the critical warning threshold.</summary>
+    [Signal]
+    public delegate void AirflowCriticalEventHandler(float airflow);
 
     /// <summary>Emitted when a wall tile is right-click removed (for refund: walls cost 0 so no currency, but TowerManager hooks this for tower removal).</summary>
     [Signal]
@@ -147,11 +156,29 @@ public partial class GridManager : Node2D
         }
     }
 
+    /// <summary>Sets the range preview for hovering while a tower type is selected.</summary>
+    public void SetRangePreview(TowerManager.TowerType towerType, float range, Color color)
+    {
+        _previewTowerType = towerType;
+        _previewRange = range;
+        _previewColor = color;
+        QueueRedraw();
+    }
+
+    /// <summary>Clears the range preview circle.</summary>
+    public void ClearRangePreview()
+    {
+        _previewTowerType = TowerManager.TowerType.None;
+        QueueRedraw();
+    }
+
     /// <summary>Recalculates and caches CurrentAirflow, then emits AirflowChanged signal.</summary>
     private void RefreshAirflow()
     {
         CurrentAirflow = _airflowCalculator.CalculateAirflow(_grid);
         EmitSignal(SignalName.AirflowChanged, CurrentAirflow);
+        if (CurrentAirflow <= GameConfig.AirflowCriticalThreshold)
+            EmitSignal(SignalName.AirflowCritical, CurrentAirflow);
     }
 
     private TileType[,] CloneGrid()
@@ -227,6 +254,20 @@ public partial class GridManager : Node2D
                     DrawRect(rect, ColorHover);
                 }
             }
+        }
+
+        // Range preview circle: draw when hovering a valid placement tile with tower selected
+        if (_previewTowerType != TowerManager.TowerType.None &&
+            _hoverTile.X >= 0 && _hoverTile.Y >= 0 &&
+            IsValidCoord(_hoverTile.X, _hoverTile.Y) &&
+            _grid[_hoverTile.X, _hoverTile.Y] == TileType.Empty)
+        {
+            float radiusPx = _previewRange * GameConfig.TileSize;
+            var center = new Vector2(
+                _hoverTile.X * GameConfig.TileSize + GameConfig.TileSize * 0.5f,
+                _hoverTile.Y * GameConfig.TileSize + GameConfig.TileSize * 0.5f);
+            var circleColor = new Color(_previewColor, GameConfig.RangePreviewAlpha);
+            DrawCircle(center, radiusPx, circleColor);
         }
     }
 
