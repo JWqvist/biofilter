@@ -14,10 +14,13 @@ public partial class Electrostatic : TowerBase
     public override float Range => IsUpgraded ? UpgradedRange : GameConfig.ElectrostaticRange;
     public override int Cost => GameConfig.ElectrostaticCost;
     protected override Color TowerColor => Constants.Colors.Electrostatic;
+    protected override Color GetInnerColor() => Constants.Colors.ElectrostaticInner;
 
     // Upgraded stats (set by TowerUpgrade)
     public float UpgradedSlowPercent { get; set; } = GameConfig.ElectrostaticSlowPercent;
     public float UpgradedRange { get; set; } = GameConfig.ElectrostaticRange;
+
+    private float _localTime = 0f;
 
     private float ActiveSlowPercent => IsUpgraded ? UpgradedSlowPercent : GameConfig.ElectrostaticSlowPercent;
 
@@ -38,6 +41,7 @@ public partial class Electrostatic : TowerBase
 
     public override void _Process(double delta)
     {
+        _localTime += (float)delta;
         if (ParticleManagerRef == null) return;
 
         var inRange = new HashSet<Particle>(GetNearbyParticles(Range));
@@ -87,6 +91,29 @@ public partial class Electrostatic : TowerBase
     public override void _Draw()
     {
         base._Draw();
+
+        int ts = GameConfig.TileSize;
+
+        // Lightning bolt zigzag in center, animated brightness
+        float brightness = 0.6f + 0.4f * Mathf.Sin(_localTime * 8f);
+        var boltColor = new Color(0f, brightness, brightness, 0.9f);
+
+        // Zigzag pixel bolt: drawn as short diagonal segments
+        // From top-center down, offset left/right
+        float cx = 0f;
+        float top = -ts * 0.3f;
+        float bot = ts * 0.3f;
+        // Points of the bolt (pixel art style)
+        var pts = new Vector2[]
+        {
+            new Vector2(cx + 1, top),
+            new Vector2(cx - 2, 0),
+            new Vector2(cx + 2, 0),
+            new Vector2(cx - 1, bot),
+        };
+        for (int i = 0; i < pts.Length - 1; i++)
+            DrawLine(pts[i], pts[i + 1], boltColor, 1.5f);
+
         DrawLightningArcs();
     }
 

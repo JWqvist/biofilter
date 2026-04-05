@@ -55,15 +55,22 @@ public abstract partial class TowerBase : Node2D
     public override void _Draw()
     {
         int size = GameConfig.TileSize;
-        var rect = new Rect2(-size * 0.5f, -size * 0.5f, size, size);
-        DrawRect(rect, TowerColor);
+        float half = size * 0.5f;
+        var rect = new Rect2(-half, -half, size, size);
+
+        // Inner dark fill
+        DrawRect(new Rect2(-half + 1, -half + 1, size - 2, size - 2), GetInnerColor());
+        // Outer colored frame (1px border)
+        DrawRect(rect, TowerColor, false, 1f);
 
         // Draw a small gold corner indicator when upgraded
         if (IsUpgraded)
         {
             int corner = size / 4;
-            var badge = new Rect2(-size * 0.5f, -size * 0.5f, corner, corner);
-            DrawRect(badge, Colors.Gold);
+            DrawRect(new Rect2(-half, -half, corner, corner), Colors.Gold);
         }
     }
+
+    /// <summary>Override in subclasses to return the inner fill color. Default: dark metal.</summary>
+    protected virtual Color GetInnerColor() => Constants.Colors.MetalDark;
 }

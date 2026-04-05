@@ -13,7 +13,8 @@ public partial class BioNeutraliser : TowerBase
 {
     public override float Range => 1.5f; // visual only
     public override int Cost => GameConfig.BioNeutraliserCost;
-    protected override Color TowerColor => new Color("#9c27b0");
+    protected override Color TowerColor => Constants.Colors.BioNeutralPurple;
+    protected override Color GetInnerColor() => new Color("#1a0020");
 
     // Injected by TowerManager
     public TowerManager? TowerManagerRef { get; set; }
@@ -76,7 +77,23 @@ public partial class BioNeutraliser : TowerBase
     {
         base._Draw();
 
-        // Draw connecting lines to boosted neighbors
+        int ts = GameConfig.TileSize;
+
+        // 3x3 pixel atom/hex pattern in center
+        var atomColor = new Color(0.8f, 0.3f, 1.0f, 0.9f);
+        float r = ts * 0.22f;
+        // 6 dots around center (hexagonal)
+        for (int i = 0; i < 6; i++)
+        {
+            float angle = i * (Mathf.Pi / 3f);
+            float ax = Mathf.Cos(angle) * r;
+            float ay = Mathf.Sin(angle) * r;
+            DrawRect(new Rect2(ax - 1f, ay - 1f, 2f, 2f), atomColor);
+        }
+        // Center dot
+        DrawRect(new Rect2(-1f, -1f, 2f, 2f), atomColor);
+
+        // Draw connecting lines to boosted neighbors (pulsing)
         float pulse = 0.5f + 0.5f * Mathf.Sin(_time * 4f);
         var lineColor = new Color(0.8f, 0.2f, 1.0f, 0.6f * pulse);
 
@@ -85,8 +102,6 @@ public partial class BioNeutraliser : TowerBase
             if (!Godot.GodotObject.IsInstanceValid(neighbor)) continue;
             Vector2 localEnd = ToLocal(neighbor.GlobalPosition);
             DrawLine(Vector2.Zero, localEnd, lineColor, 1.5f);
-
-            // Small dot at neighbor end
             DrawCircle(localEnd, 2f, lineColor);
         }
     }

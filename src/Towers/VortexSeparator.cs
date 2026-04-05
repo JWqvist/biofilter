@@ -14,7 +14,8 @@ public partial class VortexSeparator : TowerBase
 {
     public override float Range => GameConfig.VortexSeparatorRange;
     public override int Cost => GameConfig.VortexSeparatorCost;
-    protected override Color TowerColor => new Color("#00bcd4");
+    protected override Color TowerColor => Constants.Colors.VortexCyan;
+    protected override Color GetInnerColor() => new Color("#001a1f");
 
     // Injected by TowerManager so we can trigger rerouting
     public GridManager? GridManagerRef { get; set; }
