@@ -12,6 +12,7 @@ public partial class ParticleManager : Node2D
     // ── Scene reference injected from Main ───────────────────────────────────
     public GridManager GridManager { get; set; }
     public GameState GameState { get; set; }
+    public WaveManager WaveManager { get; set; }
 
     private PackedScene _particleScene;
     private readonly List<Particle> _activeParticles = new();
@@ -127,5 +128,6 @@ public partial class ParticleManager : Node2D
     {
         _activeParticles.Remove(particle);
         particle.QueueFree();
+        WaveManager?.OnParticleRemoved();
     }
 }

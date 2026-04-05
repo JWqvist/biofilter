@@ -1,3 +1,4 @@
+using BioFilter;
 using BioFilter.UI;
 using Godot;
 
@@ -5,43 +6,51 @@ public partial class Main : Node2D
 {
     private GridManager _gridManager;
     private BioFilter.AirflowMeter _airflowMeter;
-    private BioFilter.GameState _gameState;
-    private BioFilter.ParticleManager _particleManager;
+    private GameState _gameState;
+    private ParticleManager _particleManager;
     private BioFilter.LivesMeter _livesMeter;
-    private BioFilter.TowerManager _towerManager;
+    private TowerManager _towerManager;
     private CurrencyMeter _currencyMeter;
     private BuildPanel _buildPanel;
-
-    // Simple spawn timer for testing
-    private float _spawnTimer = 0f;
+    private WaveManager _waveManager;
+    private WaveHUD _waveHUD;
+    private StartWaveButton _startWaveButton;
+    private GameOver _gameOverScreen;
+    private WinScreen _winScreen;
 
     public override void _Ready()
     {
-        _gridManager = GetNode<GridManager>("GridManager");
-        _airflowMeter = GetNode<BioFilter.AirflowMeter>("HUD/AirflowMeter");
-        _gameState = GetNode<BioFilter.GameState>("GameState");
-        _particleManager = GetNode<BioFilter.ParticleManager>("ParticleManager");
-        _livesMeter = GetNode<BioFilter.LivesMeter>("HUD/LivesMeter");
-        _towerManager = GetNode<BioFilter.TowerManager>("TowerManager");
-        _currencyMeter = GetNode<CurrencyMeter>("HUD/CurrencyMeter");
-        _buildPanel = GetNode<BuildPanel>("BuildPanel");
+        _gridManager      = GetNode<GridManager>("GridManager");
+        _airflowMeter     = GetNode<BioFilter.AirflowMeter>("HUD/AirflowMeter");
+        _gameState        = GetNode<GameState>("GameState");
+        _particleManager  = GetNode<ParticleManager>("ParticleManager");
+        _livesMeter       = GetNode<BioFilter.LivesMeter>("HUD/LivesMeter");
+        _towerManager     = GetNode<TowerManager>("TowerManager");
+        _currencyMeter    = GetNode<CurrencyMeter>("HUD/CurrencyMeter");
+        _buildPanel       = GetNode<BuildPanel>("BuildPanel");
+        _waveManager      = GetNode<WaveManager>("WaveManager");
+        _waveHUD          = GetNode<WaveHUD>("HUD/WaveHUD");
+        _startWaveButton  = GetNode<StartWaveButton>("HUD/StartWaveButton");
+        _gameOverScreen   = GetNode<GameOver>("GameOver");
+        _winScreen        = GetNode<WinScreen>("WinScreen");
 
         // Wire airflow signal to HUD meter
         _gridManager.AirflowChanged += _airflowMeter.UpdateAirflow;
 
         // Wire GameState to HUD
         _gameState.PopulationChanged += _livesMeter.UpdatePopulation;
-        _gameState.CurrencyChanged += _currencyMeter.UpdateCurrency;
-        _gameState.GameOver += OnGameOver;
+        _gameState.CurrencyChanged   += _currencyMeter.UpdateCurrency;
+        _gameState.GameOver          += OnGameOver;
 
         // Give ParticleManager its dependencies
-        _particleManager.GridManager = _gridManager;
-        _particleManager.GameState = _gameState;
+        _particleManager.GridManager   = _gridManager;
+        _particleManager.GameState     = _gameState;
+        _particleManager.WaveManager   = _waveManager;
         _particleManager.ConnectSignals();
 
         // Wire TowerManager
-        _towerManager.GridManagerRef = _gridManager;
-        _towerManager.GameStateRef = _gameState;
+        _towerManager.GridManagerRef     = _gridManager;
+        _towerManager.GameStateRef       = _gameState;
         _towerManager.ParticleManagerRef = _particleManager;
 
         // Wire BuildPanel to TowerManager and GridManager
@@ -56,6 +65,15 @@ public partial class Main : Node2D
             _gridManager.WallPlacementActive = true;
         };
 
+        // Wire WaveManager
+        _waveManager.ParticleManagerRef = _particleManager;
+        _waveManager.WaveStarted        += _waveHUD.OnWaveStarted;
+        _waveManager.WaveComplete       += _waveHUD.OnWaveComplete;
+        _waveManager.GameWon            += OnGameWon;
+
+        // Wire StartWaveButton
+        _startWaveButton.Initialize(_waveManager);
+
         // Set initial display
         _airflowMeter.UpdateAirflow(_gridManager.CurrentAirflow);
         _livesMeter.UpdatePopulation(_gameState.Population);
@@ -64,20 +82,17 @@ public partial class Main : Node2D
         GD.Print("BioFilter initialized.");
     }
 
-    public override void _Process(double delta)
-    {
-        // Auto-spawn particles every SpawnInterval seconds for testing
-        _spawnTimer += (float)delta;
-        if (_spawnTimer >= GameConfig.SpawnInterval)
-        {
-            _spawnTimer = 0f;
-            _particleManager.SpawnParticle();
-        }
-    }
-
     private void OnGameOver()
     {
         GD.Print("GAME OVER — population reached zero.");
+        _gameOverScreen.Show(0);
+        SetProcess(false);
+    }
+
+    private void OnGameWon()
+    {
+        GD.Print("GAME WON — all waves survived!");
+        _winScreen.Show(GameConfig.TotalWaves);
         SetProcess(false);
     }
 }
