@@ -59,6 +59,7 @@ public partial class WaveManager : Node2D
     public void OnParticleRemoved()
     {
         _particlesAlive--;
+        if (_particlesAlive < 0) _particlesAlive = 0; // guard against double-remove
         CheckWaveComplete();
     }
 
