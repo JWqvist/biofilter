@@ -1,0 +1,10 @@
+<Project Sdk="Godot.NET.Sdk/4.3.0">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworkVersion>v8.0</TargetFrameworkVersion>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>BioFilter</RootNamespace>
+    <AssemblyName>BioFilter</AssemblyName>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>

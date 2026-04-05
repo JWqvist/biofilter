@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://bxrjd3a1r66f2"]
+[gd_scene load_steps=16 format=3 uid="uid://bxrjd3a1r66f2"]
 
 [ext_resource type="Script" path="res://src/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://src/GridManager.cs" id="2_gridmanager"]
@@ -15,11 +15,13 @@
 [ext_resource type="PackedScene" path="res://scenes/UI/GameOver.tscn" id="13_gameover"]
 [ext_resource type="PackedScene" path="res://scenes/UI/WinScreen.tscn" id="14_winscreen"]
 [ext_resource type="Script" path="res://src/UI/BuildButton.cs" id="15_buildbutton"]
+[ext_resource type="PackedScene" path="res://scenes/UI/PauseMenu.tscn" id="16_pausemenu"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
 
 [node name="GridManager" type="Node2D" parent="."]
+position = Vector2(0, 16)
 script = ExtResource("2_gridmanager")
 
 [node name="GameState" type="Node" parent="."]
@@ -131,3 +133,5 @@ script = ExtResource("8_buildmenu")
 [node name="GameOver" parent="." instance=ExtResource("13_gameover")]
 
 [node name="WinScreen" parent="." instance=ExtResource("14_winscreen")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("16_pausemenu")]
