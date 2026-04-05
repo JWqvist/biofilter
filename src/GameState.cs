@@ -11,6 +11,11 @@ public partial class GameState : Node
     public int Population { get; private set; } = GameConfig.StartingPopulation;
     public int Currency { get; private set; } = GameConfig.StartingCurrency;
 
+    // ── Stats tracking (Sprint 13C) ──────────────────────────────────────────
+    public int ParticlesKilled  { get; private set; } = 0;
+    public int WavesSurvived    { get; private set; } = 0;
+    public float CurrentAirflow { get; private set; } = 1.0f;
+
     // ── Wave tracking ────────────────────────────────────────────────────────
     private int _particlesEscapedThisWave = 0;
     private float _minAirflowThisWave = 1.0f;
@@ -62,9 +67,16 @@ public partial class GameState : Node
     /// <summary>Called each frame during a wave to track minimum airflow.</summary>
     public void RecordAirflow(float airflow)
     {
+        CurrentAirflow = airflow;
         if (airflow < _minAirflowThisWave)
             _minAirflowThisWave = airflow;
     }
+
+    /// <summary>Called when a particle is destroyed by a tower.</summary>
+    public void RecordParticleKilled() => ParticlesKilled++;
+
+    /// <summary>Called when a wave is completed successfully.</summary>
+    public void RecordWaveSurvived() => WavesSurvived++;
 
     /// <summary>
     /// Called at wave complete. Calculates and awards bonuses.

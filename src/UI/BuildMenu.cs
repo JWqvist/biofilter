@@ -4,11 +4,9 @@ using Godot;
 namespace BioFilter.UI;
 
 /// <summary>
-/// Popup build menu that lists wall mode + towers.
-/// UI is built entirely in code — no sub-scene required.
-/// Open() / Close() / Toggle() control visibility.
-/// Auto-closes when an item is selected or the player clicks outside.
-/// Cannot be opened during the wave phase.
+/// Popup build menu — retro CRT terminal / military bio-lab style.
+/// Built entirely in code. UI is built in _Ready — no sub-scene required.
+/// Sprint 13C: Pixel Art Menus
 /// </summary>
 public partial class BuildMenu : CanvasLayer
 {
@@ -16,37 +14,48 @@ public partial class BuildMenu : CanvasLayer
     [Signal] public delegate void TowerDeselectedEventHandler();
     [Signal] public delegate void UpgradeRequestedEventHandler();
 
-    // ── State ─────────────────────────────────────────────────────────────
+    // ── State ──────────────────────────────────────────────────────────────
     private int  _selectedTower = -1;   // -1 = wall mode, -2 = upgrade mode
     private bool _isWaveActive  = false;
     private bool _isOpen        = false;
 
-    // ── UI references (built in _Ready) ──────────────────────────────────
-    private Panel         _popup        = null!;
-    private Button[]      _itemBtns     = null!;
-    private Button        _upgradeBtn   = null!;
-    private WaveManager   _waveManager  = null!;
+    // ── UI references ──────────────────────────────────────────────────────
+    private Panel         _popup           = null!;
+    private Button[]      _itemBtns        = null!;
+    private Button        _upgradeBtn      = null!;
+    private WaveManager   _waveManager     = null!;
+    private Label         _waveLockLabel   = null!;
+    private VBoxContainer _itemsBox        = null!;
 
-    // ── Item metadata ─────────────────────────────────────────────────────
-    // Index 0 = wall; indices 1-3 = towers (type 0-2)
-    private static readonly (string Name, string Cost, string Desc, Color Color)[] Items =
+    // Blinking cursor
+    private float _blinkTimer  = 0f;
+    private bool  _cursorOn    = true;
+    private Label _cursorLabel = null!;
+
+    // ── Item metadata ──────────────────────────────────────────────────────
+    // Index 0 = wall; indices 1+ = towers
+    private static readonly (string Name, string Cost, Color Color)[] Items =
     {
-        ("■ Wall [W]",             "[free]",                                   "Direct particle flow",     new Color("#8bc34a")),
-        ($"■ Basic Filter [1]",   $"[${GameConfig.BasicFilterCost}]",        "Damages particles nearby",  new Color("#00c853")),
-        ($"■ Electrostatic [2]",  $"[${GameConfig.ElectrostaticCost}]",      "Slows particles nearby",    new Color("#2979ff")),
-        ($"■ UV Steriliser [3]",  $"[${GameConfig.UVSteriliserCost}]",       "Shoots at particles",       new Color("#aa00ff")),
-        ($"■ Vortex Sep.",        $"[${GameConfig.VortexSeparatorCost}]",    "Forces longer routes",      new Color("#00bcd4")),
-        ($"■ Power Core",         $"[${GameConfig.PowerCoreCost}]",          "Earns +$5/wave",            new Color("#ffd700")),
-        ($"■ Bio Neutraliser",    $"[${GameConfig.BioNeutraliserCost}]",     "Boosts adjacent +25%",      new Color("#9c27b0")),
-        ($"■ Magnetic Cage",      $"[${GameConfig.MagneticCageCost}]",       "Traps particles 2s",        new Color("#795548")),
+        ("■ Wall [W]",             "[free]",                                   new Color("#8bc34a")),
+        ($"■ Basic Filter [1]",   $"[${GameConfig.BasicFilterCost}]",        new Color("#00c853")),
+        ($"■ Electrostatic [2]",  $"[${GameConfig.ElectrostaticCost}]",      new Color("#2979ff")),
+        ($"■ UV Steriliser [3]",  $"[${GameConfig.UVSteriliserCost}]",       new Color("#aa00ff")),
+        ($"■ Vortex Sep.",        $"[${GameConfig.VortexSeparatorCost}]",    new Color("#00bcd4")),
+        ($"■ Power Core",         $"[${GameConfig.PowerCoreCost}]",          new Color("#ffd700")),
+        ($"■ Bio Neutraliser",    $"[${GameConfig.BioNeutraliserCost}]",     new Color("#9c27b0")),
+        ($"■ Magnetic Cage",      $"[${GameConfig.MagneticCageCost}]",       new Color("#795548")),
     };
+
+    private static readonly Color BorderGreen  = new Color("#2d5a3d");
+    private static readonly Color BgDark       = new Color("#0d1208");
+    private static readonly Color RowSelected  = new Color("#1a3a1a");
+    private static readonly Color RowHover     = new Color("#1e3e1e");
 
     public override void _Ready()
     {
-        // ── Popup panel ──────────────────────────────────────────────────
+        // ── Popup panel ───────────────────────────────────────────────────
         _popup = new Panel();
-        // Width ~220px, positioned above bottom bar (offset_bottom = -50)
-        _popup.LayoutMode = 3; // anchors
+        _popup.LayoutMode = 3;
         _popup.AnchorLeft   = 0f;
         _popup.AnchorTop    = 1f;
         _popup.AnchorRight  = 0f;
@@ -58,74 +67,131 @@ public partial class BuildMenu : CanvasLayer
         _popup.OffsetBottom = -GameConfig.BuildMenuBottomMargin;
         _popup.Visible      = false;
 
-        // Dark background via StyleBoxFlat
         var style = new StyleBoxFlat();
-        style.BgColor       = new Color("#1a1a2e");
-        style.BorderColor   = new Color("#5c5c8a");
-        style.SetBorderWidthAll(1);
-        style.SetCornerRadiusAll(4);
+        style.BgColor     = BgDark;
+        style.BorderColor = BorderGreen;
+        style.SetBorderWidthAll(2);
+        style.SetCornerRadiusAll(0);
         _popup.AddThemeStyleboxOverride("panel", style);
         AddChild(_popup);
 
-        // ── VBox layout ──────────────────────────────────────────────────
+        // ── VBox ─────────────────────────────────────────────────────────
         var vbox = new VBoxContainer();
         vbox.LayoutMode = 1;
-        vbox.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect, Control.LayoutPresetMode.KeepSize, 0);
-        vbox.GrowHorizontal = Control.GrowDirection.Both;
-        vbox.GrowVertical   = Control.GrowDirection.Both;
-        // Fill the panel
         vbox.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        vbox.AddThemeConstantOverride("separation", 0);
         _popup.AddChild(vbox);
 
-        // ── Title bar ─────────────────────────────────────────────────────
+        // ── Title bar ────────────────────────────────────────────────────
         var titleBar = new HBoxContainer();
         titleBar.CustomMinimumSize = new Vector2(0, GameConfig.BuildMenuTitleHeight);
+
+        var titleStyle = new StyleBoxFlat();
+        titleStyle.BgColor = new Color("#0a1a0a");
+        titleStyle.SetBorderWidthAll(0);
+        titleBar.AddThemeStyleboxOverride("panel", titleStyle);
         vbox.AddChild(titleBar);
 
         var titleLabel = new Label();
-        titleLabel.Text = "🛠 Build Menu";
+        titleLabel.Text = "▣ BUILD MENU";
         titleLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        titleLabel.AddThemeColorOverride("font_color", new Color("#e0e0e0"));
+        titleLabel.AddThemeColorOverride("font_color", new Color("#4caf50"));
         titleLabel.AddThemeFontSizeOverride("font_size", 11);
         titleLabel.VerticalAlignment = VerticalAlignment.Center;
         titleBar.AddChild(titleLabel);
 
+        _cursorLabel = new Label();
+        _cursorLabel.Text = "|";
+        _cursorLabel.AddThemeColorOverride("font_color", new Color("#4caf50"));
+        _cursorLabel.AddThemeFontSizeOverride("font_size", 11);
+        _cursorLabel.VerticalAlignment = VerticalAlignment.Center;
+        titleBar.AddChild(_cursorLabel);
+
+        var closeSpacer = new Control();
+        closeSpacer.CustomMinimumSize = new Vector2(4, 0);
+        titleBar.AddChild(closeSpacer);
+
         var closeBtn = new Button();
         closeBtn.Text    = "✕";
-        closeBtn.Flat    = true;
+        closeBtn.Flat    = false;
         closeBtn.CustomMinimumSize = new Vector2(GameConfig.BuildMenuTitleHeight, GameConfig.BuildMenuTitleHeight);
+        closeBtn.AddThemeColorOverride("font_color", new Color("#cc4444"));
+        closeBtn.AddThemeFontSizeOverride("font_size", 11);
+        var closeBtnStyle = new StyleBoxFlat();
+        closeBtnStyle.BgColor     = new Color("#1a0a0a");
+        closeBtnStyle.BorderColor = new Color("#3a1a1a");
+        closeBtnStyle.SetBorderWidthAll(1);
+        closeBtnStyle.SetCornerRadiusAll(0);
+        closeBtn.AddThemeStyleboxOverride("normal", closeBtnStyle);
+        var closeBtnHover = new StyleBoxFlat();
+        closeBtnHover.BgColor     = new Color("#2a1a1a");
+        closeBtnHover.BorderColor = new Color("#cc4444");
+        closeBtnHover.SetBorderWidthAll(1);
+        closeBtnHover.SetCornerRadiusAll(0);
+        closeBtn.AddThemeStyleboxOverride("hover", closeBtnHover);
         closeBtn.Pressed += Close;
         titleBar.AddChild(closeBtn);
 
-        // ── Separator ────────────────────────────────────────────────────
-        vbox.AddChild(new HSeparator());
+        // ── Divider ──────────────────────────────────────────────────────
+        var div = new ColorRect();
+        div.CustomMinimumSize = new Vector2(0, 2f);
+        div.Color = BorderGreen;
+        vbox.AddChild(div);
 
-        // ── Item rows ─────────────────────────────────────────────────────
+        // ── Wave-locked message (hidden by default) ───────────────────────
+        _waveLockLabel = new Label();
+        _waveLockLabel.Text = "  ⚠ WAVE PHASE — BUILD LOCKED";
+        _waveLockLabel.AddThemeColorOverride("font_color", new Color("#cc3333"));
+        _waveLockLabel.AddThemeFontSizeOverride("font_size", 10);
+        _waveLockLabel.Visible = false;
+        _waveLockLabel.CustomMinimumSize = new Vector2(0, 24f);
+        _waveLockLabel.VerticalAlignment = VerticalAlignment.Center;
+        vbox.AddChild(_waveLockLabel);
+
+        // ── Items container ───────────────────────────────────────────────
+        _itemsBox = new VBoxContainer();
+        _itemsBox.AddThemeConstantOverride("separation", 0);
+        vbox.AddChild(_itemsBox);
+
         _itemBtns = new Button[GameConfig.BuildMenuItemCount];
         for (int i = 0; i < GameConfig.BuildMenuItemCount; i++)
         {
             int captured = i;
-            var (name, cost, desc, color) = Items[i];
+            var (name, cost, color) = Items[i];
 
-            // Wrapper VBox for button + desc
-            var itemVBox = new VBoxContainer();
-            itemVBox.CustomMinimumSize = new Vector2(0, GameConfig.BuildMenuItemHeight);
-            vbox.AddChild(itemVBox);
-
-            // Row button
             var btn = new Button();
             btn.Flat = true;
             btn.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            btn.CustomMinimumSize   = new Vector2(0, GameConfig.BuildMenuItemHeight - 14);
+            btn.CustomMinimumSize   = new Vector2(0, GameConfig.BuildMenuItemHeight);
+            btn.MouseFilter = Control.MouseFilterEnum.Stop;
             btn.Pressed += () => OnItemPressed(captured);
             _itemBtns[i] = btn;
 
-            // HBox inside button for color square + name + cost
+            var normalStyle = new StyleBoxFlat();
+            normalStyle.BgColor = BgDark;
+            normalStyle.SetBorderWidthAll(0);
+            btn.AddThemeStyleboxOverride("normal", normalStyle);
+            var hoverStyle = new StyleBoxFlat();
+            hoverStyle.BgColor = RowHover;
+            hoverStyle.SetBorderWidthAll(0);
+            btn.AddThemeStyleboxOverride("hover", hoverStyle);
+            var pressStyle = new StyleBoxFlat();
+            pressStyle.BgColor = RowSelected;
+            pressStyle.SetBorderWidthAll(0);
+            btn.AddThemeStyleboxOverride("pressed", pressStyle);
+
+            // Content inside button
             var hbox = new HBoxContainer();
-            hbox.MouseFilter = Control.MouseFilterEnum.Ignore;
             hbox.LayoutMode  = 1;
             hbox.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+            hbox.MouseFilter = Control.MouseFilterEnum.Ignore;
+            hbox.AddThemeConstantOverride("separation", 4);
             btn.AddChild(hbox);
+
+            // Color square icon
+            var spacerLeft = new Control();
+            spacerLeft.CustomMinimumSize = new Vector2(4, 0);
+            hbox.AddChild(spacerLeft);
 
             var colorRect = new ColorRect();
             colorRect.CustomMinimumSize = new Vector2(10, 10);
@@ -133,44 +199,54 @@ public partial class BuildMenu : CanvasLayer
             colorRect.Color = color;
             hbox.AddChild(colorRect);
 
-            var hSpacer = new Control();
-            hSpacer.CustomMinimumSize = new Vector2(4, 0);
-            hbox.AddChild(hSpacer);
-
             var nameLabel = new Label();
             nameLabel.Text = name;
             nameLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            nameLabel.AddThemeColorOverride("font_color", new Color("#e0e0e0"));
+            nameLabel.AddThemeColorOverride("font_color", new Color("#c8e6c0"));
             nameLabel.AddThemeFontSizeOverride("font_size", 10);
             nameLabel.MouseFilter = Control.MouseFilterEnum.Ignore;
+            nameLabel.VerticalAlignment = VerticalAlignment.Center;
             hbox.AddChild(nameLabel);
 
             var costLabel = new Label();
             costLabel.Text = cost;
-            costLabel.AddThemeColorOverride("font_color", new Color("#aaaaaa"));
-            costLabel.AddThemeFontSizeOverride("font_size", 10);
+            costLabel.AddThemeColorOverride("font_color", new Color("#6a8a6a"));
+            costLabel.AddThemeFontSizeOverride("font_size", 9);
             costLabel.MouseFilter = Control.MouseFilterEnum.Ignore;
+            costLabel.VerticalAlignment = VerticalAlignment.Center;
             hbox.AddChild(costLabel);
 
-            itemVBox.AddChild(btn);
+            var spacerRight = new Control();
+            spacerRight.CustomMinimumSize = new Vector2(4, 0);
+            hbox.AddChild(spacerRight);
 
-            var descLabel = new Label();
-            descLabel.Text = desc;
-            descLabel.AddThemeColorOverride("font_color", new Color("#888888"));
-            descLabel.AddThemeFontSizeOverride("font_size", 9);
-            descLabel.OffsetLeft = 14;
-            descLabel.MouseFilter = Control.MouseFilterEnum.Ignore;
-            itemVBox.AddChild(descLabel);
+            _itemsBox.AddChild(btn);
 
-            vbox.AddChild(new HSeparator());
+            // Row divider (thin dim line)
+            if (i < GameConfig.BuildMenuItemCount - 1)
+            {
+                var rowDiv = new ColorRect();
+                rowDiv.CustomMinimumSize = new Vector2(0, 1f);
+                rowDiv.Color = new Color("#1a2a1a");
+                _itemsBox.AddChild(rowDiv);
+            }
         }
 
-        // ── Upgrade button (hidden until a tower is right-clicked) ────────
+        // ── Upgrade button ────────────────────────────────────────────────
         _upgradeBtn = new Button();
         _upgradeBtn.Text    = "Upgrade";
         _upgradeBtn.Flat    = false;
         _upgradeBtn.Visible = false;
         _upgradeBtn.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+
+        var upgNormal = new StyleBoxFlat();
+        upgNormal.BgColor     = new Color("#0a2a0a");
+        upgNormal.BorderColor = BorderGreen;
+        upgNormal.SetBorderWidthAll(1);
+        upgNormal.SetCornerRadiusAll(0);
+        _upgradeBtn.AddThemeStyleboxOverride("normal", upgNormal);
+        _upgradeBtn.AddThemeColorOverride("font_color", new Color("#4caf50"));
+        _upgradeBtn.AddThemeFontSizeOverride("font_size", 11);
         _upgradeBtn.Pressed += OnUpgradeBtnPressed;
         vbox.AddChild(_upgradeBtn);
 
@@ -180,7 +256,20 @@ public partial class BuildMenu : CanvasLayer
         _waveManager.WaveComplete += OnWaveComplete;
     }
 
-    // ── Public API ─────────────────────────────────────────────────────────
+    public override void _Process(double delta)
+    {
+        if (!_isOpen) return;
+        _blinkTimer += (float)delta;
+        if (_blinkTimer >= 0.5f)
+        {
+            _blinkTimer = 0f;
+            _cursorOn   = !_cursorOn;
+            if (_cursorLabel != null)
+                _cursorLabel.Modulate = _cursorOn ? Colors.White : new Color(1f, 1f, 1f, 0f);
+        }
+    }
+
+    // ── Public API ────────────────────────────────────────────────────────
 
     public void Open()
     {
@@ -202,7 +291,6 @@ public partial class BuildMenu : CanvasLayer
         else         Open();
     }
 
-    /// <summary>Called by TowerManager when a tower tile is right-clicked.</summary>
     public void ShowUpgradeButton(int upgradeCost, bool canAfford)
     {
         if (_isWaveActive) return;
@@ -223,7 +311,7 @@ public partial class BuildMenu : CanvasLayer
             _upgradeBtn.Visible = false;
     }
 
-    // ── Private helpers ────────────────────────────────────────────────────
+    // ── Private ───────────────────────────────────────────────────────────
 
     private void OnItemPressed(int index)
     {
@@ -231,7 +319,6 @@ public partial class BuildMenu : CanvasLayer
 
         if (index == 0)
         {
-            // Wall mode — deselect any tower
             _selectedTower = -1;
             EmitSignal(SignalName.TowerDeselected);
         }
@@ -259,8 +346,20 @@ public partial class BuildMenu : CanvasLayer
         Close();
     }
 
-    private void OnWaveStarted(int _) { _isWaveActive = true;  Close(); }
-    private void OnWaveComplete(int _) { _isWaveActive = false; }
+    private void OnWaveStarted(int _)
+    {
+        _isWaveActive = true;
+        _waveLockLabel.Visible = true;
+        _itemsBox.Visible = false;
+        Close();
+    }
+
+    private void OnWaveComplete(int _)
+    {
+        _isWaveActive = false;
+        _waveLockLabel.Visible = false;
+        _itemsBox.Visible = true;
+    }
 
     private void RefreshHighlights()
     {
@@ -269,11 +368,13 @@ public partial class BuildMenu : CanvasLayer
         {
             bool active = (i == 0 && _selectedTower == -1) ||
                           (i > 0  && _selectedTower == i - 1);
-            _itemBtns[i].Modulate = active ? Colors.Yellow : Colors.White;
+
+            var activeStyle = new StyleBoxFlat();
+            activeStyle.BgColor = active ? RowSelected : BgDark;
+            activeStyle.SetBorderWidthAll(0);
+            _itemBtns[i].AddThemeStyleboxOverride("normal", activeStyle);
         }
     }
-
-    // ── Click-outside detection ────────────────────────────────────────────
 
     public override void _UnhandledInput(InputEvent ev)
     {
