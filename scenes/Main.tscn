@@ -17,93 +17,106 @@
 [ext_resource type="Script" path="res://src/UI/BuildButton.cs" id="15_buildbutton"]
 [ext_resource type="PackedScene" path="res://scenes/UI/PauseMenu.tscn" id="16_pausemenu"]
 
-[node name="Main" type="Node2D"]
+[node name="Main" type="Node"]
 script = ExtResource("1_main")
-
-[node name="GridManager" type="Node2D" parent="."]
-position = Vector2(0, 16)
-script = ExtResource("2_gridmanager")
 
 [node name="GameState" type="Node" parent="."]
 script = ExtResource("4_gamestate")
 
-[node name="ParticleManager" type="Node2D" parent="."]
-script = ExtResource("5_particlemanager")
-
-[node name="TowerManager" type="Node2D" parent="."]
-script = ExtResource("7_towermanager")
-
-[node name="WaveManager" type="Node2D" parent="."]
-script = ExtResource("10_wavemanager")
-
-[node name="HUD" type="CanvasLayer" parent="."]
-layer = 1
-
-[node name="TopBar" type="HBoxContainer" parent="HUD"]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 3
-anchors_preset = 5
-anchor_left = 0.0
-anchor_top = 0.0
+anchors_preset = 15
 anchor_right = 1.0
-anchor_bottom = 0.0
-offset_top = 0.0
-offset_bottom = 28.0
+anchor_bottom = 1.0
 grow_horizontal = 2
-grow_vertical = 1
+grow_vertical = 2
 
-[node name="LeftGroup" type="HBoxContainer" parent="HUD/TopBar"]
+[node name="TopBar" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 40)
 theme_override_constants/separation = 16
 
-[node name="WaveHUD" type="Label" parent="HUD/TopBar/LeftGroup"]
+[node name="TitleLabel" type="Label" parent="VBoxContainer/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+text = "BIOFILTER"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.784, 0.902, 0.753, 1.0)
+
+[node name="Spacer0" type="Control" parent="VBoxContainer/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="WaveHUD" type="Label" parent="VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_vertical = 4
 text = "Wave: 0 / 10"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.784, 0.902, 0.753, 1.0)
 script = ExtResource("11_wavehud")
 
-[node name="LivesMeter" type="Label" parent="HUD/TopBar/LeftGroup"]
+[node name="LivesMeter" type="Label" parent="VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_vertical = 4
-text = "Population: 100"
+text = "Pop: 100"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.784, 0.902, 0.753, 1.0)
 script = ExtResource("6_livesmeter")
 
-[node name="CurrencyMeter" type="Label" parent="HUD/TopBar/LeftGroup"]
+[node name="CurrencyMeter" type="Label" parent="VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_vertical = 4
-text = "Currency: 200"
+text = "$200"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.961, 0.773, 0.094, 1.0)
 script = ExtResource("9_currencymeter")
 
-[node name="RightGroup" type="HBoxContainer" parent="HUD/TopBar"]
-layout_mode = 2
-size_flags_horizontal = 3
-alignment = 2
-
-[node name="AirflowMeter" type="Label" parent="HUD/TopBar/RightGroup"]
+[node name="AirflowMeter" type="Label" parent="VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_vertical = 4
 text = "Airflow: 100%"
+theme_override_font_sizes/font_size = 12
 script = ExtResource("3_airflowmeter")
 
-[node name="BottomBar" type="HBoxContainer" parent="HUD"]
-layout_mode = 3
-anchors_preset = 7
-anchor_left = 0.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -36.0
-offset_bottom = 0.0
-grow_vertical = 0
+[node name="GameArea" type="Control" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(480, 320)
+
+[node name="GridManager" type="Node2D" parent="VBoxContainer/GameArea"]
+position = Vector2(0, 0)
+script = ExtResource("2_gridmanager")
+
+[node name="ParticleManager" type="Node2D" parent="VBoxContainer/GameArea"]
+script = ExtResource("5_particlemanager")
+
+[node name="TowerManager" type="Node2D" parent="VBoxContainer/GameArea"]
+script = ExtResource("7_towermanager")
+
+[node name="WaveManager" type="Node2D" parent="VBoxContainer/GameArea"]
+script = ExtResource("10_wavemanager")
+
+[node name="BottomBar" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
 theme_override_constants/separation = 8
 
-[node name="BuildButton" type="Button" parent="HUD/BottomBar"]
+[node name="BuildButton" type="Button" parent="VBoxContainer/BottomBar"]
 layout_mode = 2
 size_flags_vertical = 4
 text = "🛠 Build"
+theme_override_font_sizes/font_size = 11
 script = ExtResource("15_buildbutton")
 
-[node name="StatusLabel" type="Label" parent="HUD/BottomBar"]
+[node name="PhaseLabel" type="Label" parent="VBoxContainer/BottomBar"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "🛠 BUILD PHASE"
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.0, 0.784, 0.325, 1.0)
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer/BottomBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -111,23 +124,15 @@ text = "Wall mode"
 theme_override_font_sizes/font_size = 10
 theme_override_colors/font_color = Color(0.75, 0.75, 0.85, 1.0)
 
-[node name="PhaseLabel" type="Label" parent="HUD/BottomBar"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-text = "🛠 BUILD PHASE"
-horizontal_alignment = 2
-theme_override_font_sizes/font_size = 9
-theme_override_colors/font_color = Color(0.0, 0.784, 0.325, 1.0)
-
-[node name="StartWaveButton" type="Button" parent="HUD/BottomBar"]
+[node name="StartWaveButton" type="Button" parent="VBoxContainer/BottomBar"]
 layout_mode = 2
 size_flags_vertical = 4
 text = "▶ Start Wave"
+theme_override_font_sizes/font_size = 11
 script = ExtResource("12_startwavebutton")
 
 [node name="BuildMenu" type="CanvasLayer" parent="."]
-layer = 5
+layer = 10
 script = ExtResource("8_buildmenu")
 
 [node name="GameOver" parent="." instance=ExtResource("13_gameover")]

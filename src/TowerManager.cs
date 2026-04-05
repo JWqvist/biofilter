@@ -25,6 +25,8 @@ public partial class TowerManager : Node2D
     // Emitted when player clicks an existing tower tile (upgrade flow)
     [Signal] public delegate void TowerClickedEventHandler(int upgradeCost, bool canAfford);
     [Signal] public delegate void TowerDeselectedEventHandler();
+    /// <summary>Emitted when a tile is refunded so BuildButton can show the status message.</summary>
+    [Signal] public delegate void TileRefundedEventHandler(int refundAmount);
 
     private PackedScene _basicFilterScene = null!;
     private PackedScene _electrostaticScene = null!;
@@ -75,10 +77,19 @@ public partial class TowerManager : Node2D
     public override void _Input(InputEvent @event)
     {
         if (@event is not InputEventMouseButton mb) return;
-        if (!mb.Pressed || mb.ButtonIndex != MouseButton.Left) return;
+        if (!mb.Pressed) return;
         if (GridManagerRef == null) return;
 
+        // Use GridManager's local coordinate system for tile lookup
         Vector2I tile = GridManagerRef.WorldToGrid(mb.Position);
+
+        if (mb.ButtonIndex == MouseButton.Right)
+        {
+            // Right-click handled by GridManager.TileRightClicked → Main → RefundTile
+            return;
+        }
+
+        if (mb.ButtonIndex != MouseButton.Left) return;
 
         if (SelectedTower == TowerType.None)
         {
@@ -155,10 +166,62 @@ public partial class TowerManager : Node2D
         GD.Print($"TowerManager: placed {SelectedTower} at ({col},{row})");
     }
 
+    // ── Refund ────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Called on right-click. Removes the tile, refunds 50% of its cost, and emits TileRefunded.
+    /// Returns the refund amount (0 if nothing to refund).
+    /// </summary>
+    public int RefundTile(int col, int row)
+    {
+        if (GridManagerRef == null || GameStateRef == null) return 0;
+
+        TileType tileType = GridManagerRef.GetTileType(col, row);
+        if (tileType == TileType.Empty || tileType == TileType.Spawn || tileType == TileType.Exit)
+            return 0;
+
+        int originalCost = GetCostForTileType(tileType, col, row);
+        int refundAmount = (int)(originalCost * GameConfig.RefundPercent);
+
+        // Remove tower node if it's a placed tower
+        var gridPos = new Vector2I(col, row);
+        if (_placedTowers.TryGetValue(gridPos, out var tower))
+        {
+            tower.QueueFree();
+            _placedTowers.Remove(gridPos);
+        }
+
+        // Clear the grid tile
+        GridManagerRef.RemoveTile(col, row);
+
+        // Refund currency
+        if (refundAmount > 0)
+            GameStateRef.AddCurrency(refundAmount);
+
+        EmitSignal(SignalName.TileRefunded, refundAmount);
+        GD.Print($"TowerManager: refunded {tileType} at ({col},{row}) for ${refundAmount}");
+        return refundAmount;
+    }
+
+    private int GetCostForTileType(TileType tileType, int col, int row)
+    {
+        // Walls are free; towers have costs
+        if (tileType == TileType.Wall) return 0;
+        if (tileType != TileType.Tower) return 0;
+
+        // Determine tower type from placed tower node
+        var gridPos = new Vector2I(col, row);
+        if (_placedTowers.TryGetValue(gridPos, out var tower))
+            return tower.Cost;
+
+        return 0;
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private Vector2 TileCenter(int col, int row)
     {
+        // Returns world position of tile center, relative to TowerManager's parent
         return new Vector2(
             col * GameConfig.TileSize + GameConfig.TileSize * 0.5f,
             row * GameConfig.TileSize + GameConfig.TileSize * 0.5f

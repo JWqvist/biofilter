@@ -2,7 +2,7 @@ using BioFilter;
 using BioFilter.UI;
 using Godot;
 
-public partial class Main : Node2D
+public partial class Main : Node
 {
     private GridManager    _gridManager     = null!;
     private BioFilter.AirflowMeter _airflowMeter = null!;
@@ -19,24 +19,34 @@ public partial class Main : Node2D
     private GameOver       _gameOverScreen  = null!;
     private WinScreen      _winScreen       = null!;
     private PauseMenu      _pauseMenu       = null!;
+    private Label          _statusLabel     = null!;
+    private Timer          _statusTimer     = null!;
 
     public override void _Ready()
     {
-        _gridManager      = GetNode<GridManager>("GridManager");
-        _airflowMeter     = GetNode<BioFilter.AirflowMeter>("HUD/TopBar/RightGroup/AirflowMeter");
+        _gridManager      = GetNode<GridManager>("VBoxContainer/GameArea/GridManager");
+        _airflowMeter     = GetNode<BioFilter.AirflowMeter>("VBoxContainer/TopBar/AirflowMeter");
         _gameState        = GetNode<GameState>("GameState");
-        _particleManager  = GetNode<ParticleManager>("ParticleManager");
-        _livesMeter       = GetNode<BioFilter.LivesMeter>("HUD/TopBar/LeftGroup/LivesMeter");
-        _towerManager     = GetNode<TowerManager>("TowerManager");
-        _currencyMeter    = GetNode<CurrencyMeter>("HUD/TopBar/LeftGroup/CurrencyMeter");
+        _particleManager  = GetNode<ParticleManager>("VBoxContainer/GameArea/ParticleManager");
+        _livesMeter       = GetNode<BioFilter.LivesMeter>("VBoxContainer/TopBar/LivesMeter");
+        _towerManager     = GetNode<TowerManager>("VBoxContainer/GameArea/TowerManager");
+        _currencyMeter    = GetNode<CurrencyMeter>("VBoxContainer/TopBar/CurrencyMeter");
         _buildMenu        = GetNode<BuildMenu>("BuildMenu");
-        _buildButton      = GetNode<BuildButton>("HUD/BottomBar/BuildButton");
-        _waveManager      = GetNode<WaveManager>("WaveManager");
-        _waveHUD          = GetNode<WaveHUD>("HUD/TopBar/LeftGroup/WaveHUD");
-        _startWaveButton  = GetNode<StartWaveButton>("HUD/BottomBar/StartWaveButton");
+        _buildButton      = GetNode<BuildButton>("VBoxContainer/BottomBar/BuildButton");
+        _waveManager      = GetNode<WaveManager>("VBoxContainer/GameArea/WaveManager");
+        _waveHUD          = GetNode<WaveHUD>("VBoxContainer/TopBar/WaveHUD");
+        _startWaveButton  = GetNode<StartWaveButton>("VBoxContainer/BottomBar/StartWaveButton");
         _gameOverScreen   = GetNode<GameOver>("GameOver");
         _winScreen        = GetNode<WinScreen>("WinScreen");
         _pauseMenu        = GetNode<PauseMenu>("PauseMenu");
+        _statusLabel      = GetNode<Label>("VBoxContainer/BottomBar/StatusLabel");
+
+        // Status timer — auto-clears status label after a few seconds
+        _statusTimer = new Timer();
+        _statusTimer.OneShot = true;
+        _statusTimer.WaitTime = 2.0;
+        _statusTimer.Timeout += () => _statusLabel.Text = "Wall mode";
+        AddChild(_statusTimer);
 
         // Wire airflow signal to HUD meter
         _gridManager.AirflowChanged += _airflowMeter.UpdateAirflow;
@@ -56,6 +66,22 @@ public partial class Main : Node2D
         _towerManager.GridManagerRef     = _gridManager;
         _towerManager.GameStateRef       = _gameState;
         _towerManager.ParticleManagerRef = _particleManager;
+
+        // Wire right-click refund: GridManager.TileRightClicked → TowerManager.RefundTile
+        _gridManager.TileRightClicked += (col, row) =>
+        {
+            _towerManager.RefundTile(col, row);
+        };
+
+        // Wire refund status message
+        _towerManager.TileRefunded += (refundAmount) =>
+        {
+            _statusLabel.Text = refundAmount > 0
+                ? $"Refunded: ${refundAmount}"
+                : "Removed";
+            _statusTimer.Stop();
+            _statusTimer.Start();
+        };
 
         // Wire BuildButton → BuildMenu
         _buildButton.Initialize(_buildMenu);

@@ -23,6 +23,6 @@ public partial class WaveHUD : Label
 
     private void UpdateDisplay(int current, int total)
     {
-        Text = $"Wave: {current} / {total}";
+        Text = $"Wave: {current}/{total}";
     }
 }

@@ -25,6 +25,10 @@ public partial class GridManager : Node2D
     [Signal]
     public delegate void AirflowChangedEventHandler(float airflow);
 
+    /// <summary>Emitted when a wall tile is right-click removed (for refund: walls cost 0 so no currency, but TowerManager hooks this for tower removal).</summary>
+    [Signal]
+    public delegate void TileRightClickedEventHandler(int col, int row);
+
     // Colors
     private static readonly Color ColorEmpty = Constants.Colors.Background;
     private static readonly Color ColorGridLine = Constants.Colors.GridLine;
@@ -93,18 +97,19 @@ public partial class GridManager : Node2D
     }
 
     /// <summary>
-    /// Removes a tile and recalculates airflow.
+    /// Removes a tile and recalculates airflow. Returns the TileType that was removed.
     /// </summary>
-    public bool RemoveTile(int col, int row)
+    public TileType RemoveTile(int col, int row)
     {
-        if (!IsValidCoord(col, row)) return false;
-        if (_grid[col, row] == TileType.Spawn) return false;
-        if (_grid[col, row] == TileType.Exit) return false;
+        if (!IsValidCoord(col, row)) return TileType.Empty;
+        if (_grid[col, row] == TileType.Spawn) return TileType.Empty;
+        if (_grid[col, row] == TileType.Exit) return TileType.Empty;
 
+        TileType removed = _grid[col, row];
         _grid[col, row] = TileType.Empty;
         RefreshAirflow();
         QueueRedraw();
-        return true;
+        return removed;
     }
 
     /// <summary>Returns a snapshot of the current grid for pathfinding.</summary>
@@ -124,10 +129,12 @@ public partial class GridManager : Node2D
         return col >= 0 && col < GameConfig.GridWidth && row >= 0 && row < GameConfig.GridHeight;
     }
 
-    public Vector2I WorldToGrid(Vector2 worldPos)
+    public Vector2I WorldToGrid(Vector2 viewportPos)
     {
-        int col = (int)(worldPos.X / GameConfig.TileSize);
-        int row = (int)(worldPos.Y / GameConfig.TileSize);
+        // Convert viewport/canvas position to GridManager-local coordinate space
+        Vector2 localPos = ToLocal(viewportPos);
+        int col = (int)(localPos.X / GameConfig.TileSize);
+        int row = (int)(localPos.Y / GameConfig.TileSize);
         return new Vector2I(col, row);
     }
 
@@ -227,7 +234,9 @@ public partial class GridManager : Node2D
     {
         if (@event is InputEventMouseMotion mouseMotion)
         {
-            Vector2I tile = WorldToGrid(mouseMotion.Position);
+            // Convert to local grid coordinates
+            Vector2 localPos = ToLocal(mouseMotion.Position);
+            Vector2I tile = new Vector2I((int)(localPos.X / GameConfig.TileSize), (int)(localPos.Y / GameConfig.TileSize));
             if (IsValidCoord(tile.X, tile.Y))
                 SetHoverTile(tile);
             else
@@ -235,7 +244,8 @@ public partial class GridManager : Node2D
         }
         else if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed)
         {
-            Vector2I tile = WorldToGrid(mouseButton.Position);
+            Vector2 localPos = ToLocal(mouseButton.Position);
+            Vector2I tile = new Vector2I((int)(localPos.X / GameConfig.TileSize), (int)(localPos.Y / GameConfig.TileSize));
             if (!IsValidCoord(tile.X, tile.Y)) return;
 
             if (mouseButton.ButtonIndex == MouseButton.Left)
@@ -245,8 +255,8 @@ public partial class GridManager : Node2D
             }
             else if (mouseButton.ButtonIndex == MouseButton.Right)
             {
-                if (GetTileType(tile.X, tile.Y) == TileType.Wall)
-                    RemoveTile(tile.X, tile.Y);
+                // Emit signal so TowerManager can handle refunds (for both walls and towers)
+                EmitSignal(SignalName.TileRightClicked, tile.X, tile.Y);
             }
         }
     }
