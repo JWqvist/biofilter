@@ -48,7 +48,7 @@ public static class GameConfig
     public const float SpawnInterval = 1.0f;         // seconds between particle spawns
 
     // ─── Build Menu ───────────────────────────────────────────────────────────
-    public const int BuildMenuItemCount  = 4;   // wall + 3 tower types
+    public const int BuildMenuItemCount  = 8;   // wall + 7 tower types
     public const int BuildMenuWidth      = 220;  // popup width in pixels
     public const int BuildMenuItemHeight = 44;   // height per item row
     public const int BuildMenuTitleHeight = 24;  // height of title bar
@@ -109,6 +109,18 @@ public static class GameConfig
     // ─── Airflow Warning ────────────────────────────────────────────────────
     public const float AirflowWarnFlashThreshold  = 0.30f; // 30% → flash meter red
     public const float AirflowCriticalThreshold   = 0.20f; // 20% → vignette
+
+    // ─── New Filter Modules (Sprint 12) ──────────────────────────────────────
+    public const int VortexSeparatorCost = 125;
+    public const float VortexSeparatorRange = 3f;
+    public const int PowerCoreCost = 150;
+    public const int PowerCoreIncomePerWave = 5;
+    public const int BioNeutraliserCost = 100;
+    public const float BioNeutraliserBoost = 1.25f;
+    public const int MagneticCageCost = 175;
+    public const float MagneticCageHoldSeconds = 2.0f;
+    public const float MagneticCageRange = 2.5f;
+    public const float VortexPenaltyWeight = 6f;   // extra A* cost per tile near vortex
 
     // ─── Enemy Types (Sprint 11) ─────────────────────────────────────────────
     // SporeSpeck — fast scout

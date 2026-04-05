@@ -172,7 +172,10 @@ public partial class GridManager : Node2D
         QueueRedraw();
     }
 
-    /// <summary>Recalculates and caches CurrentAirflow, then emits AirflowChanged signal.</summary>
+    /// <summary>Public method to force airflow recalculation and emit AirflowChanged (used by VortexSeparator).</summary>
+    public void TriggerAirflowRefresh() => RefreshAirflow();
+
+        /// <summary>Recalculates and caches CurrentAirflow, then emits AirflowChanged signal.</summary>
     private void RefreshAirflow()
     {
         CurrentAirflow = _airflowCalculator.CalculateAirflow(_grid);

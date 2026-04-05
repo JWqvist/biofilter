@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://biofilter_powercore"]
+
+[ext_resource type="Script" path="res://src/Towers/PowerCore.cs" id="1_powercore"]
+
+[node name="PowerCore" type="Node2D"]
+script = ExtResource("1_powercore")

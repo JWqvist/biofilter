@@ -56,7 +56,7 @@ public partial class BasicFilter : TowerBase
     {
         var particles = GetNearbyParticles(Range);
         foreach (var p in particles)
-            p.TakeDamage(ActiveDamage);
+            p.TakeDamage(ActiveDamage * DamageMultiplier);
         return particles.Count > 0;
     }
 
