@@ -1,28 +1,29 @@
-using BioFilter;
 using Godot;
+using BioFilter.UI;
 
 namespace BioFilter.UI;
 
-/// <summary>HUD label showing current wave progress: "Wave: X / Y"</summary>
-public partial class WaveHUD : Label
+/// <summary>
+/// HUD: Wave progress — now delegates to WaveWidget (pixel art).
+/// </summary>
+public partial class WaveHUD : Control
 {
+    private WaveWidget _widget = null!;
+
     public override void _Ready()
     {
-        UpdateDisplay(0, GameConfig.TotalWaves);
+        _widget = new WaveWidget();
+        AddChild(_widget);
+        _widget.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
     }
 
     public void OnWaveStarted(int waveNumber)
     {
-        UpdateDisplay(waveNumber, GameConfig.TotalWaves);
+        _widget?.OnWaveStarted(waveNumber);
     }
 
     public void OnWaveComplete(int waveNumber)
     {
-        UpdateDisplay(waveNumber, GameConfig.TotalWaves);
-    }
-
-    private void UpdateDisplay(int current, int total)
-    {
-        Text = $"Wave: {current}/{total}";
+        _widget?.OnWaveComplete(waveNumber);
     }
 }

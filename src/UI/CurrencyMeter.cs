@@ -1,15 +1,25 @@
 using Godot;
+using BioFilter.UI;
 
 namespace BioFilter.UI;
 
 /// <summary>
-/// HUD label showing current currency.
-/// Connects to GameState.CurrencyChanged signal.
+/// HUD: Currency display — now delegates to CurrencyWidget (pixel art).
 /// </summary>
-public partial class CurrencyMeter : Label
+public partial class CurrencyMeter : Control
 {
+    private CurrencyWidget _widget = null!;
+
+    public override void _Ready()
+    {
+        _widget = new CurrencyWidget();
+        AddChild(_widget);
+        _widget.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _widget.UpdateCurrency(GameConfig.StartingCurrency);
+    }
+
     public void UpdateCurrency(int amount)
     {
-        Text = $"${amount}";
+        _widget?.UpdateCurrency(amount);
     }
 }

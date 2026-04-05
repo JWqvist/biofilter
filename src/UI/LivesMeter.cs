@@ -1,22 +1,27 @@
 using Godot;
+using BioFilter.UI;
 
 namespace BioFilter;
 
-/// <summary>HUD label showing current population.</summary>
-public partial class LivesMeter : Label
+/// <summary>
+/// HUD: Population display — now delegates to PopulationWidget (pixel art).
+/// Kept as a thin wrapper so Main.tscn node names don't need changing.
+/// </summary>
+public partial class LivesMeter : Control
 {
+    private PopulationWidget _widget = null!;
+
     public override void _Ready()
     {
-        UpdateDisplay(GameConfig.StartingPopulation);
+        _widget = new PopulationWidget();
+        AddChild(_widget);
+        // Stretch widget to fill this control
+        _widget.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _widget.UpdatePopulation(GameConfig.StartingPopulation);
     }
 
     public void UpdatePopulation(int population)
     {
-        UpdateDisplay(population);
-    }
-
-    private void UpdateDisplay(int population)
-    {
-        Text = $"Pop: {population}";
+        _widget?.UpdatePopulation(population);
     }
 }

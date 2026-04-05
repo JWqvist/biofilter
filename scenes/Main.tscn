@@ -33,8 +33,8 @@ grow_vertical = 2
 
 [node name="TopBar" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 40)
-theme_override_constants/separation = 16
+custom_minimum_size = Vector2(0, 85)
+theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="VBoxContainer/TopBar"]
 layout_mode = 2
@@ -48,35 +48,29 @@ theme_override_colors/font_color = Color(0.784, 0.902, 0.753, 1.0)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="WaveHUD" type="Label" parent="VBoxContainer/TopBar"]
+[node name="WaveHUD" type="Control" parent="VBoxContainer/TopBar"]
 layout_mode = 2
-size_flags_vertical = 4
-text = "Wave: 0 / 10"
-theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.784, 0.902, 0.753, 1.0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(300, 80)
 script = ExtResource("11_wavehud")
 
-[node name="LivesMeter" type="Label" parent="VBoxContainer/TopBar"]
+[node name="LivesMeter" type="Control" parent="VBoxContainer/TopBar"]
 layout_mode = 2
-size_flags_vertical = 4
-text = "Pop: 100"
-theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.784, 0.902, 0.753, 1.0)
+size_flags_vertical = 3
+custom_minimum_size = Vector2(180, 80)
 script = ExtResource("6_livesmeter")
 
-[node name="CurrencyMeter" type="Label" parent="VBoxContainer/TopBar"]
+[node name="CurrencyMeter" type="Control" parent="VBoxContainer/TopBar"]
 layout_mode = 2
-size_flags_vertical = 4
-text = "$200"
-theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.961, 0.773, 0.094, 1.0)
+size_flags_vertical = 3
+custom_minimum_size = Vector2(110, 70)
 script = ExtResource("9_currencymeter")
 
-[node name="AirflowMeter" type="Label" parent="VBoxContainer/TopBar"]
+[node name="AirflowMeter" type="Control" parent="VBoxContainer/TopBar"]
 layout_mode = 2
-size_flags_vertical = 4
-text = "Airflow: 100%"
-theme_override_font_sizes/font_size = 12
+size_flags_vertical = 3
+custom_minimum_size = Vector2(140, 85)
 script = ExtResource("3_airflowmeter")
 
 [node name="GameArea" type="Control" parent="VBoxContainer"]
