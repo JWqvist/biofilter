@@ -17,6 +17,6 @@ public partial class LivesMeter : Label
 
     private void UpdateDisplay(int population)
     {
-        Text = $"Population: {population}";
+        Text = $"Pop: {population}";
     }
 }

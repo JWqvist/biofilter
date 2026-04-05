@@ -54,6 +54,13 @@ public static class GameConfig
     public const int BuildMenuTitleHeight = 24;  // height of title bar
     public const int BuildMenuBottomMargin = 50; // pixels above bottom of screen
 
+    // ─── UI Layout ─────────────────────────────────────────────────────────────
+    public const int TopBarHeight    = 40;  // pixels
+    public const int BottomBarHeight = 40;  // pixels
+
+    // ─── Economy (Refund) ────────────────────────────────────────────────────
+    public const float RefundPercent = 0.5f; // 50% refund on tower removal
+
     // ─── Towers ─────────────────────────────────────────────────────────────
     public const int BasicFilterCost = 50;
     public const float BasicFilterDamage = 8f;       // was 10 — lower to require more towers

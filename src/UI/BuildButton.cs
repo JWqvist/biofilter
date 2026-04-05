@@ -16,7 +16,7 @@ public partial class BuildButton : Button
 
     public override void _Ready()
     {
-        _waveManager = GetNode<WaveManager>("/root/Main/WaveManager");
+        _waveManager = GetNode<WaveManager>("/root/Main/VBoxContainer/GameArea/WaveManager");
         _waveManager.WaveStarted  += OnWaveStarted;
         _waveManager.WaveComplete += OnWaveComplete;
 

@@ -52,7 +52,7 @@ public partial class BuildPanel : CanvasLayer
         _uvSteriliserBtn.Text = $"UV Steriliser [${GameConfig.UVSteriliserCost}]";
 
         // Connect to WaveManager signals
-        _waveManager = GetNode<WaveManager>("/root/Main/WaveManager");
+        _waveManager = GetNode<WaveManager>("/root/Main/VBoxContainer/GameArea/WaveManager");
         _waveManager.WaveStarted += OnWaveStarted;
         _waveManager.WaveComplete += OnWaveComplete;
     }

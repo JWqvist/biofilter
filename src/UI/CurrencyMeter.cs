@@ -10,6 +10,6 @@ public partial class CurrencyMeter : Label
 {
     public void UpdateCurrency(int amount)
     {
-        Text = $"Currency: {amount}";
+        Text = $"${amount}";
     }
 }

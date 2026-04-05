@@ -171,7 +171,7 @@ public partial class BuildMenu : CanvasLayer
         vbox.AddChild(_upgradeBtn);
 
         // ── Connect WaveManager ───────────────────────────────────────────
-        _waveManager = GetNode<WaveManager>("/root/Main/WaveManager");
+        _waveManager = GetNode<WaveManager>("/root/Main/VBoxContainer/GameArea/WaveManager");
         _waveManager.WaveStarted  += OnWaveStarted;
         _waveManager.WaveComplete += OnWaveComplete;
     }
