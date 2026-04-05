@@ -158,7 +158,7 @@ public partial class Main : Node
 
         // ── Sprint 10: VFX nodes ──────────────────────────────────────────────
         _airflowVisualizer = new AirflowVisualizer();
-        var gameArea = GetNode<Node2D>("VBoxContainer/GameArea");
+        var gameArea = GetNode<Control>("VBoxContainer/GameArea");
         gameArea.AddChild(_airflowVisualizer);
 
         _ambientDust = new AmbientDust();

@@ -31,10 +31,14 @@ public partial class BuildMenu : CanvasLayer
     // Index 0 = wall; indices 1-3 = towers (type 0-2)
     private static readonly (string Name, string Cost, string Desc, Color Color)[] Items =
     {
-        ("■ Wall [W]",                    "[free]",                            "Direct particle flow",    new Color("#8bc34a")),
-        ($"■ Basic Filter [1]",            $"[${GameConfig.BasicFilterCost}]",  "Damages particles nearby", new Color("#00bcd4")),
-        ($"■ Electrostatic [2]",           $"[${GameConfig.ElectrostaticCost}]","Slows particles nearby",   new Color("#ce93d8")),
-        ($"■ UV Steriliser [3]",           $"[${GameConfig.UVSteriliserCost}]", "Shoots at particles",      new Color("#fff176")),
+        ("■ Wall [W]",             "[free]",                                   "Direct particle flow",     new Color("#8bc34a")),
+        ($"■ Basic Filter [1]",   $"[${GameConfig.BasicFilterCost}]",        "Damages particles nearby",  new Color("#00c853")),
+        ($"■ Electrostatic [2]",  $"[${GameConfig.ElectrostaticCost}]",      "Slows particles nearby",    new Color("#2979ff")),
+        ($"■ UV Steriliser [3]",  $"[${GameConfig.UVSteriliserCost}]",       "Shoots at particles",       new Color("#aa00ff")),
+        ($"■ Vortex Sep.",        $"[${GameConfig.VortexSeparatorCost}]",    "Forces longer routes",      new Color("#00bcd4")),
+        ($"■ Power Core",         $"[${GameConfig.PowerCoreCost}]",          "Earns +$5/wave",            new Color("#ffd700")),
+        ($"■ Bio Neutraliser",    $"[${GameConfig.BioNeutraliserCost}]",     "Boosts adjacent +25%",      new Color("#9c27b0")),
+        ($"■ Magnetic Cage",      $"[${GameConfig.MagneticCageCost}]",       "Traps particles 2s",        new Color("#795548")),
     };
 
     public override void _Ready()
