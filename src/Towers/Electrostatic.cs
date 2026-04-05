@@ -10,9 +10,15 @@ namespace BioFilter.Towers;
 /// </summary>
 public partial class Electrostatic : TowerBase
 {
-    public override float Range => GameConfig.ElectrostaticRange;
+    public override float Range => IsUpgraded ? UpgradedRange : GameConfig.ElectrostaticRange;
     public override int Cost => GameConfig.ElectrostaticCost;
     protected override Color TowerColor => Constants.Colors.Electrostatic;
+
+    // Upgraded stats (set by TowerUpgrade)
+    public float UpgradedSlowPercent { get; set; } = GameConfig.ElectrostaticSlowPercent;
+    public float UpgradedRange { get; set; } = GameConfig.ElectrostaticRange;
+
+    private float ActiveSlowPercent => IsUpgraded ? UpgradedSlowPercent : GameConfig.ElectrostaticSlowPercent;
 
     // Tracks which particles we're currently slowing so we can reset on exit
     private readonly HashSet<Particle> _slowedParticles = new();
@@ -26,7 +32,7 @@ public partial class Electrostatic : TowerBase
         // Apply slow to newly in-range particles
         foreach (var p in inRange)
         {
-            p.SlowMultiplier = GameConfig.ElectrostaticSlowPercent;
+            p.SlowMultiplier = ActiveSlowPercent;
             _slowedParticles.Add(p);
         }
 

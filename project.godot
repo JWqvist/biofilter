@@ -18,6 +18,16 @@ config/name="BioFilter"
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.6")
 
+[display]
+
+window/size/viewport_width=480
+window/size/viewport_height=320
+window/size/initial_position_type=2
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+window/size/window_width_override=960
+window/size/window_height_override=640
+
 [dotnet]
 
 project/assembly_name="BioFilter"

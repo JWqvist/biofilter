@@ -9,12 +9,20 @@ namespace BioFilter.Towers;
 /// </summary>
 public partial class UVSteriliser : TowerBase
 {
-    public override float Range => GameConfig.UVSteriliserRange;
+    public override float Range => IsUpgraded ? UpgradedRange : GameConfig.UVSteriliserRange;
     public override int Cost => GameConfig.UVSteriliserCost;
     protected override Color TowerColor => Constants.Colors.UVSterilizer;
 
+    // Upgraded stats (set by TowerUpgrade)
+    public float UpgradedDamage { get; set; } = GameConfig.UVSteriliserDamage;
+    public float UpgradedRange { get; set; } = GameConfig.UVSteriliserRange;
+    public float UpgradedFireRate { get; set; } = GameConfig.UVSteriliserFireRate;
+
+    private float ActiveDamage => IsUpgraded ? UpgradedDamage : GameConfig.UVSteriliserDamage;
+    private float ActiveFireRate => IsUpgraded ? UpgradedFireRate : GameConfig.UVSteriliserFireRate;
+    private float FireInterval => 1.0f / ActiveFireRate;
+
     private float _fireTimer = 0f;
-    private float FireInterval => 1.0f / GameConfig.UVSteriliserFireRate;
 
     private PackedScene _projectileScene;
 
@@ -57,6 +65,6 @@ public partial class UVSteriliser : TowerBase
         var projectile = _projectileScene.Instantiate<Projectile>();
         GetTree().Root.AddChild(projectile);
         projectile.GlobalPosition = GlobalPosition;
-        projectile.Initialize(nearest);
+        projectile.Initialize(nearest, ActiveDamage);
     }
 }

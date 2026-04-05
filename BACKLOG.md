@@ -101,12 +101,42 @@ Tasks:
 
 ---
 
-### 🎨 Sprint 6 — Polish (Post-MVP) ← Current
-- [ ] Upgrade system for towers
-- [ ] Particle visual variety (types 2+)
-- [ ] Sound effects
-- [ ] Screen scaling / fullscreen toggle
-- [ ] Map 2
+### 🎨 Sprint 6 — Polish & Balance ✅
+**Goal:** Upgrade system, wave simulator for balance tuning, window scaling, GameConfig balance pass.
+
+Tasks:
+- [x] Upgrade system for towers (TowerUpgrade.cs)
+- [x] Upgrade button in BuildPanel (click tower → show upgrade button)
+- [x] WaveSimulator.cs — headless balance tool
+- [x] Window size: 480x320 @ 2x scale (960x640 window)
+- [x] GameConfig balance pass (see simulation notes)
+- [ ] Particle visual variety (deferred)
+- [ ] Sound effects (deferred)
+- [ ] Map 2 (deferred)
+
+**GameConfig changes (simulation-driven):**
+- `ParticleBaseHealth`: 30 → 100 (3x — needed for meaningful health scaling)
+- `WaveHealthMultiplierIncrease`: 0.3 → 0.45 (steeper ramp, W10 = 5.05x base health)
+- `BasicFilterDamage`: 10 → 8 (lower to require more towers for clear)
+- `UVSteriliserDamage`: 20 → 15 (balanced down)
+- `UVSteriliserFireRate`: 1.0 → 1.2 (fires slightly faster)
+- `CurrencyPerKill`: 10 → 12 (slightly better income to enable upgrades)
+
+**Completed:** 2026-04-05 — PR: Sprint 6: Polish & Balance
+
+---
+
+### 🗺️ Sprint 7 — Content & Feel ← Current
+**Goal:** More content, sound, visual polish.
+
+Tasks:
+- [ ] Sound effects (placement, kill, wave start/end)
+- [ ] Particle visual variety (type 2: radiation particle)
+- [ ] Map 2 (different grid layout)
+- [ ] Selling/refunding towers
+- [ ] Particle health bars
+
+**Acceptance criteria:** Game has audio feedback. At least 2 particle types. Map selection screen.
 
 ---
 
@@ -120,8 +150,11 @@ Tasks:
 
 ---
 
-## Current Sprint: Sprint 6
+## Current Sprint: Sprint 7
 Status: 🔴 Not started
+
+## Sprint 6
+Status: ✅ Done
 
 ## Sprint 5
 Status: ✅ Done
