@@ -14,6 +14,9 @@ public partial class MainMenu : Control
     {
         _playButton = GetNode<Button>("CenterContainer/VBoxContainer/PlayButton");
         _playButton.Pressed += OnPlayPressed;
+        // Ensure button can receive input
+        _playButton.MouseFilter = Control.MouseFilterEnum.Stop;
+        _playButton.FocusMode = Control.FocusModeEnum.All;
     }
 
     private void OnPlayPressed()
