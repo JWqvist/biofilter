@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://biofilter_winscreen"]
+[gd_scene load_steps=1 format=3 uid="uid://biofilter_winscreen"]
 
 [ext_resource type="Script" path="res://src/UI/WinScreen.cs" id="1_winscreen"]
 
