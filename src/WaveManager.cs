@@ -50,19 +50,16 @@ public partial class WaveManager : Node2D
         _particlesAlive = 0;
         _spawnTimer = 0f;
 
-        // Record wave start in GameState for bonus tracking
         GameStateRef?.RecordWaveStart();
 
         if (WavePreviewRef != null)
         {
-            // Show preview; actual spawning starts when PreviewFinished fires
             State = WaveState.Preview;
             WavePreviewRef.ShowPreview(CurrentWaveNumber, _particlesToSpawn);
             WavePreviewRef.PreviewFinished += OnPreviewFinished;
         }
         else
         {
-            // No preview available — spawn immediately
             BeginSpawning();
         }
     }
@@ -92,6 +89,62 @@ public partial class WaveManager : Node2D
         CheckWaveComplete();
     }
 
+    /// <summary>
+    /// Called when a CellDivision splits — adds extra particles to the alive counter
+    /// so the wave doesn't end prematurely.
+    /// </summary>
+    public void RegisterExtraParticle()
+    {
+        _particlesAlive++;
+    }
+
+    // ── Enemy type selection ──────────────────────────────────────────────────
+
+    /// <summary>Returns the particle type to spawn for a given spawn index in this wave.</summary>
+    private ParticleType GetTypeForSpawn(int spawnIndex)
+    {
+        int wave = CurrentWaveNumber;
+
+        return wave switch
+        {
+            // Waves 1-3: BioParticle only
+            <= 3 => ParticleType.BioParticle,
+
+            // Wave 4: alternating BioParticle + SporeSpeck
+            4 => (spawnIndex % 2 == 0) ? ParticleType.BioParticle : ParticleType.SporeSpeck,
+
+            // Waves 5-6: SporeSpeck + RadiationBlob (1 blob every 3)
+            5 or 6 => (spawnIndex % 3 == 0) ? ParticleType.RadiationBlob : ParticleType.SporeSpeck,
+
+            // Wave 7: BacterialSwarm + BioParticle (every other)
+            7 => (spawnIndex % 2 == 0) ? ParticleType.BacterialSwarm : ParticleType.BioParticle,
+
+            // Wave 8: CellDivision + SporeSpeck
+            8 => (spawnIndex % 2 == 0) ? ParticleType.CellDivision : ParticleType.SporeSpeck,
+
+            // Wave 9: mix of all types
+            9 => (spawnIndex % 5) switch
+            {
+                0 => ParticleType.BioParticle,
+                1 => ParticleType.SporeSpeck,
+                2 => ParticleType.RadiationBlob,
+                3 => ParticleType.BacterialSwarm,
+                _ => ParticleType.CellDivision,
+            },
+
+            // Wave 10 boss: heavy RadiationBlob every 3rd, rest CellDivision
+            _ => (spawnIndex % 3 == 0) ? ParticleType.RadiationBlob : ParticleType.CellDivision,
+        };
+    }
+
+    /// <summary>Health multiplier override for specific waves/types (boss wave 10).</summary>
+    private float GetHealthMultForType(ParticleType type)
+    {
+        if (CurrentWaveNumber >= 10 && type == ParticleType.RadiationBlob)
+            return _healthMultiplier * 3f; // 3x on boss wave
+        return _healthMultiplier;
+    }
+
     // ── Per-frame ─────────────────────────────────────────────────────────────
     public override void _Process(double delta)
     {
@@ -101,9 +154,13 @@ public partial class WaveManager : Node2D
             if (_spawnTimer >= GameConfig.SpawnInterval && _particlesSpawned < _particlesToSpawn)
             {
                 _spawnTimer = 0f;
-                ParticleManagerRef?.SpawnParticle(_healthMultiplier);
+
+                var type = GetTypeForSpawn(_particlesSpawned);
+                float hm = GetHealthMultForType(type);
+
+                int aliveCount = ParticleManagerRef?.SpawnParticle(hm, type) ?? 1;
+                _particlesAlive += aliveCount;
                 _particlesSpawned++;
-                _particlesAlive++;
 
                 if (_particlesSpawned >= _particlesToSpawn)
                     State = WaveState.WaitingForClear;
@@ -122,7 +179,6 @@ public partial class WaveManager : Node2D
 
         GD.Print($"[WaveManager] Wave {completedWave + 1} complete.");
 
-        // Award bonuses before signalling complete
         GameStateRef?.AwardWaveBonuses();
 
         if (_currentWave >= GameConfig.TotalWaves)

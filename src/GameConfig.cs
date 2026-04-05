@@ -109,4 +109,23 @@ public static class GameConfig
     // ─── Airflow Warning ────────────────────────────────────────────────────
     public const float AirflowWarnFlashThreshold  = 0.30f; // 30% → flash meter red
     public const float AirflowCriticalThreshold   = 0.20f; // 20% → vignette
+
+    // ─── Enemy Types (Sprint 11) ─────────────────────────────────────────────
+    // SporeSpeck — fast scout
+    public const float SporeSpeckHealth = 30f;
+    public const float SporeSpeckSpeed  = 3.0f;
+
+    // RadiationBlob — slow tank (immune to slow)
+    public const float RadiationBlobHealth = 400f;
+    public const float RadiationBlobSpeed  = 0.8f;
+
+    // BacterialSwarm — spawns SwarmUnit particles
+    public const float SwarmUnitHealth = 15f;
+    public const float SwarmUnitSpeed  = 2.0f;
+    public const int   SwarmUnitCount  = 8;
+
+    // CellDivision — splits on death into 2 children
+    public const float CellDivisionHealth      = 80f;
+    public const float CellDivisionChildHealth = 30f;
+    public const float CellDivisionSpeed       = 1.5f;
 }
