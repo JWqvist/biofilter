@@ -6,6 +6,7 @@ namespace BioFilter.Towers;
 /// <summary>
 /// UV Steriliser — projectile shooter.
 /// Fires a projectile at the nearest particle in range at a fixed fire rate.
+/// Shows a brief white muzzle flash when firing.
 /// </summary>
 public partial class UVSteriliser : TowerBase
 {
@@ -24,6 +25,11 @@ public partial class UVSteriliser : TowerBase
 
     private float _fireTimer = 0f;
 
+    // Muzzle flash
+    private float _flashTimer = 0f;
+    private bool _flashing = false;
+    private const float FlashDuration = 0.15f;
+
     private PackedScene _projectileScene = null!;
 
     public override void _Ready()
@@ -39,6 +45,14 @@ public partial class UVSteriliser : TowerBase
         {
             _fireTimer = 0f;
             TryFire();
+        }
+
+        if (_flashing)
+        {
+            _flashTimer += (float)delta;
+            if (_flashTimer >= FlashDuration)
+                _flashing = false;
+            QueueRedraw();
         }
     }
 
@@ -66,5 +80,23 @@ public partial class UVSteriliser : TowerBase
         GetTree().Root.AddChild(projectile);
         projectile.GlobalPosition = GlobalPosition;
         projectile.Initialize(nearest, ActiveDamage);
+
+        // Trigger muzzle flash
+        _flashing = true;
+        _flashTimer = 0f;
+        QueueRedraw();
+    }
+
+    public override void _Draw()
+    {
+        base._Draw();
+
+        if (_flashing)
+        {
+            float t = _flashTimer / FlashDuration;
+            float alpha = (1f - t) * 0.8f;
+            DrawCircle(Vector2.Zero, GameConfig.TileSize * 0.6f,
+                new Color(1f, 1f, 1f, alpha));
+        }
     }
 }

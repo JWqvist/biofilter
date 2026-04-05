@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BioFilter.Effects;
 using Godot;
 
 namespace BioFilter;
@@ -115,6 +116,7 @@ public partial class ParticleManager : Node2D
 
     private void OnParticleReachedExit(Particle particle)
     {
+        SpawnFloatingText("-1", particle.GlobalPosition, Colors.Red);
         GameState?.LosePopulation(GameConfig.PopLostPerParticle);
         GameState?.RecordParticleEscaped();
         RemoveParticle(particle);
@@ -122,8 +124,17 @@ public partial class ParticleManager : Node2D
 
     private void OnParticleDied(Particle particle, int reward)
     {
+        SpawnFloatingText($"+{reward}", particle.GlobalPosition, Constants.Colors.HazardYellow);
         GameState?.AddCurrency(reward);
         RemoveParticle(particle);
+    }
+
+    private void SpawnFloatingText(string text, Vector2 worldPos, Color color)
+    {
+        var ft = new FloatingText();
+        ft.Initialize(text, color);
+        AddChild(ft);
+        ft.GlobalPosition = worldPos + new Vector2(0f, -8f);
     }
 
     private void RemoveParticle(Particle particle)

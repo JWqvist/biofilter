@@ -6,6 +6,7 @@ namespace BioFilter.Towers;
 /// <summary>
 /// Basic Filter — damage aura tower.
 /// Deals damage to all particles within range every tick.
+/// Flashes a green glow circle when dealing damage.
 /// </summary>
 public partial class BasicFilter : TowerBase
 {
@@ -23,20 +24,53 @@ public partial class BasicFilter : TowerBase
 
     private float _tickTimer = 0f;
 
+    // Glow pulse effect
+    private float _glowTimer = 0f;
+    private const float GlowDuration = 0.2f;
+    private bool _glowing = false;
+
     public override void _Process(double delta)
     {
         _tickTimer += (float)delta;
         if (_tickTimer >= ActiveTickRate)
         {
             _tickTimer = 0f;
-            DamageNearby();
+            if (DamageNearby())
+            {
+                _glowing = true;
+                _glowTimer = 0f;
+                QueueRedraw();
+            }
+        }
+
+        if (_glowing)
+        {
+            _glowTimer += (float)delta;
+            if (_glowTimer >= GlowDuration)
+                _glowing = false;
+            QueueRedraw();
         }
     }
 
-    private void DamageNearby()
+    private bool DamageNearby()
     {
         var particles = GetNearbyParticles(Range);
         foreach (var p in particles)
             p.TakeDamage(ActiveDamage);
+        return particles.Count > 0;
+    }
+
+    public override void _Draw()
+    {
+        base._Draw();
+
+        if (_glowing)
+        {
+            float t = _glowTimer / GlowDuration;
+            float alpha = (1f - t) * 0.5f;
+            float radius = GameConfig.TileSize * 0.7f;
+            DrawCircle(Vector2.Zero, radius,
+                new Color(0.49f, 1.0f, 0.23f, alpha)); // #7fff3a-ish glow
+        }
     }
 }

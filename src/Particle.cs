@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BioFilter.Effects;
 using Godot;
 
 namespace BioFilter;
@@ -60,6 +61,7 @@ public partial class Particle : Node2D
         if (Health <= 0f)
         {
             _isDead = true;
+            SpawnDeathSplash();
             int reward = (int)(GameConfig.CurrencyPerKill);
             EmitSignal(SignalName.Died, reward);
         }
@@ -96,6 +98,14 @@ public partial class Particle : Node2D
 
         Position += _velocity * dt;
         QueueRedraw();
+    }
+
+    private void SpawnDeathSplash()
+    {
+        var splash = new DeathSplash();
+        // Add to the same parent so it stays in world space
+        GetParent()?.AddChild(splash);
+        splash.GlobalPosition = GlobalPosition;
     }
 
     public override void _Draw()
