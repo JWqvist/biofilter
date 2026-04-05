@@ -35,6 +35,9 @@ public partial class Main : Node
 
     public override void _Ready()
     {
+        // Force fullscreen on startup
+        DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
+
         _gridManager      = GetNode<GridManager>("VBoxContainer/GameArea/GridManager");
         _airflowMeter     = GetNode<BioFilter.AirflowMeter>("VBoxContainer/TopBar/AirflowMeter");
         _gameState        = GetNode<GameState>("GameState");
