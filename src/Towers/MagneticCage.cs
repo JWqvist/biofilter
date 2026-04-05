@@ -14,7 +14,8 @@ public partial class MagneticCage : TowerBase
 {
     public override float Range => GameConfig.MagneticCageRange;
     public override int Cost => GameConfig.MagneticCageCost;
-    protected override Color TowerColor => new Color("#795548");
+    protected override Color TowerColor => Constants.Colors.MagneticBrown;
+    protected override Color GetInnerColor() => new Color("#1a0f0a");
 
     private float _time = 0f;
 

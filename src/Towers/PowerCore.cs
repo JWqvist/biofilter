@@ -12,7 +12,8 @@ public partial class PowerCore : TowerBase
 {
     public override float Range => 0f; // no range — passive
     public override int Cost => GameConfig.PowerCoreCost;
-    protected override Color TowerColor => new Color("#ffd700");
+    protected override Color TowerColor => Constants.Colors.PowerGold;
+    protected override Color GetInnerColor() => new Color("#1a1500");
 
     // Injected by TowerManager
     public WaveManager? WaveManagerRef { get; set; }
@@ -54,20 +55,30 @@ public partial class PowerCore : TowerBase
     {
         base._Draw();
 
+        int ts = GameConfig.TileSize;
+
         // Pulsing glow
         float pulse = 0.4f + 0.4f * Mathf.Sin(_time * 3f);
-        float radius = GameConfig.TileSize * 0.45f * (0.8f + 0.2f * pulse);
-        DrawCircle(Vector2.Zero, radius, new Color(1f, 0.85f, 0f, pulse * 0.4f));
+        float glowR = ts * 0.42f * (0.85f + 0.15f * pulse);
+        DrawCircle(Vector2.Zero, glowR, new Color(1f, 0.85f, 0f, pulse * 0.35f));
 
-        // 4 rays at 45° angles
-        float rayLen = GameConfig.TileSize * 0.55f;
-        var rayColor = new Color(1f, 0.9f, 0.1f, 0.85f);
+        // Diamond shape (rotated square): 4 triangles
+        float d = ts * 0.28f * (0.9f + 0.1f * pulse);
+        var gold = new Color(Constants.Colors.PowerGold, 0.9f);
+        // Diamond outline via lines
+        DrawLine(new Vector2(0, -d), new Vector2(d, 0), gold, 1.5f);
+        DrawLine(new Vector2(d, 0), new Vector2(0, d), gold, 1.5f);
+        DrawLine(new Vector2(0, d), new Vector2(-d, 0), gold, 1.5f);
+        DrawLine(new Vector2(-d, 0), new Vector2(0, -d), gold, 1.5f);
+
+        // 4 rays at 45° angles, rotating gently
+        float rayLen = ts * 0.5f;
+        var rayColor = new Color(1f, 0.9f, 0.1f, 0.8f);
         for (int i = 0; i < 4; i++)
         {
             float angle = _time * 0.8f + i * Mathf.Pi * 0.5f;
-            Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-            Vector2 inner = dir * 3f;
-            Vector2 outer = dir * rayLen;
+            Vector2 inner = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * (d + 1f);
+            Vector2 outer = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * rayLen;
             DrawLine(inner, outer, rayColor, 1.5f);
         }
     }

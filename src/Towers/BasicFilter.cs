@@ -13,6 +13,7 @@ public partial class BasicFilter : TowerBase
     public override float Range => IsUpgraded ? UpgradedRange : GameConfig.BasicFilterRange;
     public override int Cost => GameConfig.BasicFilterCost;
     protected override Color TowerColor => Constants.Colors.BasicFilter;
+    protected override Color GetInnerColor() => Constants.Colors.BasicFilterInner;
 
     // Upgraded stats (set by TowerUpgrade)
     public float UpgradedDamage { get; set; } = GameConfig.BasicFilterDamage;
@@ -64,13 +65,30 @@ public partial class BasicFilter : TowerBase
     {
         base._Draw();
 
+        int ts = GameConfig.TileSize;
+        float half = ts * 0.5f;
+        var bright = Constants.Colors.BasicFilterBright;
+
+        // Center 3x3 cross/plus in bright green
+        // Horizontal bar: 5 wide x 1 tall (centered)
+        DrawRect(new Rect2(-2, -1, 5, 1), bright);
+        // Vertical bar: 1 wide x 5 tall (centered)
+        DrawRect(new Rect2(-1, -2, 1, 5), bright);
+
+        // Corner dots: 1x1 px at each inner corner (3px from edge)
+        float d = half - 3f;
+        DrawRect(new Rect2(-d - 1, -d - 1, 2, 2), bright);
+        DrawRect(new Rect2(d - 1,  -d - 1, 2, 2), bright);
+        DrawRect(new Rect2(-d - 1,  d - 1, 2, 2), bright);
+        DrawRect(new Rect2(d - 1,   d - 1, 2, 2), bright);
+
+        // Glow on damage
         if (_glowing)
         {
             float t = _glowTimer / GlowDuration;
             float alpha = (1f - t) * 0.5f;
-            float radius = GameConfig.TileSize * 0.7f;
-            DrawCircle(Vector2.Zero, radius,
-                new Color(0.49f, 1.0f, 0.23f, alpha)); // #7fff3a-ish glow
+            DrawCircle(Vector2.Zero, ts * 0.7f,
+                new Color(0.49f, 1.0f, 0.23f, alpha));
         }
     }
 }

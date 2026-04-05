@@ -11,6 +11,14 @@ public partial class GridManager : Node2D
     private Vector2I _hoverTile = new Vector2I(-1, -1);
     private float _time = 0f;
 
+    // Ambient corrupted-pixel effect
+    private readonly RandomNumberGenerator _rng = new();
+    private Vector2I _corruptedTile = new Vector2I(-1, -1);
+    private float _corruptedTimer = 0f;
+    private float _corruptedInterval = 2.5f;
+    private float _corruptedFlash = 0f;
+    private const float CorruptedFlashDuration = 0.15f;
+
     // Range preview: set by TowerManager when a tower type is selected
     private TowerManager.TowerType _previewTowerType = TowerManager.TowerType.None;
     private float _previewRange = 0f;
@@ -38,25 +46,19 @@ public partial class GridManager : Node2D
     [Signal]
     public delegate void TileRightClickedEventHandler(int col, int row);
 
-    // Colors
-    private static readonly Color ColorEmpty = Constants.Colors.Background;
-    private static readonly Color ColorGridLine = Constants.Colors.GridLine;
-    private static readonly Color ColorWall = Constants.Colors.Wall;
-    private static readonly Color ColorSpawn = Constants.Colors.ParticleSpawn;
-    private static readonly Color ColorExit = Constants.Colors.Exit;
-    private static readonly Color ColorHover = new Color(1f, 1f, 1f, 0.3f);
-    private static readonly Color ColorBlocked = new Color(1f, 0f, 0f, 0.4f); // flash on rejected placement
-
-    // Border colors for pixel art look
-    private static readonly Color BorderWall         = new Color("#4a6a4a");
-    private static readonly Color BorderWallHighlight = new Color("#5a8a5a");
-    private static readonly Color BorderBasicFilter   = new Color("#3daa50");
-    private static readonly Color BorderElectrostatic = new Color("#1a8a9a");
-    private static readonly Color BorderUVSteriliser  = new Color("#8a4aaa");
-    private static readonly Color BorderExit          = new Color("#e06000");
+    // Colors (sourced from Constants.Colors)
+    private static readonly Color ColorEmpty      = Constants.Colors.Background;
+    private static readonly Color ColorScanline   = Constants.Colors.ScanlineAlt;
+    private static readonly Color ColorGridLine   = Constants.Colors.GridLine;
+    private static readonly Color ColorWall       = Constants.Colors.Wall;
+    private static readonly Color ColorSpawn      = Constants.Colors.Spawn;
+    private static readonly Color ColorExit       = Constants.Colors.Exit;
+    private static readonly Color ColorHover      = new Color(1f, 1f, 1f, 0.3f);
+    private static readonly Color ColorBlocked    = new Color(1f, 0f, 0f, 0.4f);
 
     public override void _Ready()
     {
+        _rng.Randomize();
         InitializeGrid();
         RefreshAirflow();
     }
@@ -196,70 +198,95 @@ public partial class GridManager : Node2D
     public override void _Process(double delta)
     {
         _time += (float)delta;
-        QueueRedraw(); // needed for pulsing spawn border
+
+        // Corrupted pixel ambient effect
+        _corruptedTimer += (float)delta;
+        if (_corruptedTimer >= _corruptedInterval)
+        {
+            _corruptedTimer = 0f;
+            _corruptedInterval = _rng.RandfRange(2.0f, 3.5f);
+            // Pick a random empty tile
+            int attempts = 20;
+            while (attempts-- > 0)
+            {
+                int tc = _rng.RandiRange(0, GameConfig.GridWidth - 2); // avoid exit col
+                int tr = _rng.RandiRange(0, GameConfig.GridHeight - 1);
+                if (_grid[tc, tr] == TileType.Empty)
+                {
+                    _corruptedTile = new Vector2I(tc, tr);
+                    _corruptedFlash = CorruptedFlashDuration;
+                    break;
+                }
+            }
+        }
+        if (_corruptedFlash > 0f)
+        {
+            _corruptedFlash -= (float)delta;
+            if (_corruptedFlash < 0f) _corruptedFlash = 0f;
+        }
+
+        QueueRedraw();
     }
 
     public override void _Draw()
     {
+        int ts = GameConfig.TileSize;
+
         for (int col = 0; col < GameConfig.GridWidth; col++)
         {
             for (int row = 0; row < GameConfig.GridHeight; row++)
             {
-                var rect = new Rect2(col * GameConfig.TileSize, row * GameConfig.TileSize, GameConfig.TileSize, GameConfig.TileSize);
+                float x = col * ts;
+                float y = row * ts;
+                var rect = new Rect2(x, y, ts, ts);
                 TileType tile = _grid[col, row];
 
-                // Fill tile
-                Color fillColor = tile switch
-                {
-                    TileType.Wall => ColorWall,
-                    TileType.Tower => ColorWall,
-                    TileType.Spawn => ColorSpawn,
-                    TileType.Exit => ColorExit,
-                    _ => ColorEmpty
-                };
-                DrawRect(rect, fillColor);
-
-                // Grid line: draw 1px border in darker shade for empty tiles
-                if (tile == TileType.Empty)
-                {
-                    DrawRect(rect, ColorGridLine, false, 1f);
-                }
-
-                // Pixel art borders per tile type
                 switch (tile)
                 {
+                    case TileType.Empty:
+                        // Scanline effect: alternate rows get slightly lighter base
+                        DrawRect(rect, row % 2 == 0 ? ColorEmpty : ColorScanline);
+                        // 1px grid border
+                        DrawRect(rect, ColorGridLine, false, 1f);
+                        break;
+
                     case TileType.Wall:
-                        DrawRect(rect, BorderWall, false, 1f);
-                        // 2x2 highlight in top-left corner for depth
-                        DrawRect(new Rect2(rect.Position, new Vector2(2f, 2f)), BorderWallHighlight);
+                        DrawWallTile(x, y, ts);
                         break;
 
                     case TileType.Tower:
-                        // Tower type stored separately in TowerManager
-                        DrawRect(rect, BorderBasicFilter, false, 1f);
+                        // Tower draws itself; leave transparent
                         break;
 
                     case TileType.Spawn:
-                        // Pulsing 2px red border
-                        float pulse = 0.5f + 0.5f * Mathf.Sin(_time * 4f);
-                        var spawnBorder = new Color(1f, 0.1f + 0.3f * pulse, 0.1f);
-                        DrawRect(rect, spawnBorder, false, 2f);
+                        DrawSpawnTile(x, y, ts);
                         break;
 
                     case TileType.Exit:
-                        DrawRect(rect, BorderExit, false, 1f);
+                        DrawExitTile(x, y, ts);
                         break;
                 }
 
                 // Hover highlight
                 if (_hoverTile.X == col && _hoverTile.Y == row)
-                {
                     DrawRect(rect, ColorHover);
-                }
             }
         }
 
-        // Range preview circle: draw when hovering a valid placement tile with tower selected
+        // Corrupted pixel ambient flash
+        if (_corruptedFlash > 0f && _corruptedTile.X >= 0 && _corruptedTile.Y >= 0)
+        {
+            float cx = _corruptedTile.X * ts;
+            float cy = _corruptedTile.Y * ts;
+            float alpha = (_corruptedFlash / CorruptedFlashDuration) * 0.6f;
+            var cpColor = new Color(Constants.Colors.CorruptedPixel, alpha);
+            DrawRect(new Rect2(cx + ts * 0.5f - 1f, cy + ts * 0.5f - 1f, 2f, 2f), cpColor);
+        }
+
+        // Corner markers: pixel bracket decorations at grid corners
+        DrawCornerMarkers(ts);
+
+        // Range preview circle
         if (_previewTowerType != TowerManager.TowerType.None &&
             _hoverTile.X >= 0 && _hoverTile.Y >= 0 &&
             IsValidCoord(_hoverTile.X, _hoverTile.Y) &&
@@ -267,11 +294,107 @@ public partial class GridManager : Node2D
         {
             float radiusPx = _previewRange * GameConfig.TileSize;
             var center = new Vector2(
-                _hoverTile.X * GameConfig.TileSize + GameConfig.TileSize * 0.5f,
-                _hoverTile.Y * GameConfig.TileSize + GameConfig.TileSize * 0.5f);
+                _hoverTile.X * ts + ts * 0.5f,
+                _hoverTile.Y * ts + ts * 0.5f);
             var circleColor = new Color(_previewColor, GameConfig.RangePreviewAlpha);
             DrawCircle(center, radiusPx, circleColor);
         }
+    }
+
+    private void DrawWallTile(float x, float y, int ts)
+    {
+        var rect = new Rect2(x, y, ts, ts);
+        // Main fill
+        DrawRect(rect, ColorWall);
+        // Top-left highlight edges (1px)
+        DrawLine(new Vector2(x, y), new Vector2(x + ts - 1, y), Constants.Colors.WallHighlight, 1f);          // top
+        DrawLine(new Vector2(x, y), new Vector2(x, y + ts - 1), Constants.Colors.WallHighlight, 1f);          // left
+        // Bottom-right shadow edges (1px)
+        DrawLine(new Vector2(x, y + ts - 1), new Vector2(x + ts, y + ts - 1), Constants.Colors.WallShadow, 1f);  // bottom
+        DrawLine(new Vector2(x + ts - 1, y), new Vector2(x + ts - 1, y + ts), Constants.Colors.WallShadow, 1f);  // right
+        // Corner rivets: 2x2 pixel dots 4px from each corner
+        var rivet = Constants.Colors.WallRivet;
+        if (ts >= 12)
+        {
+            DrawRect(new Rect2(x + 2, y + 2, 2, 2), rivet);                   // top-left
+            DrawRect(new Rect2(x + ts - 4, y + 2, 2, 2), rivet);              // top-right
+            DrawRect(new Rect2(x + 2, y + ts - 4, 2, 2), rivet);              // bottom-left
+            DrawRect(new Rect2(x + ts - 4, y + ts - 4, 2, 2), rivet);         // bottom-right
+        }
+    }
+
+    private void DrawSpawnTile(float x, float y, int ts)
+    {
+        var rect = new Rect2(x, y, ts, ts);
+        // Base fill
+        DrawRect(rect, ColorSpawn);
+        // 3 animated concentric rings pulsing outward
+        var center = new Vector2(x + ts * 0.5f, y + ts * 0.5f);
+        float maxR = ts * 0.48f;
+        for (int i = 0; i < 3; i++)
+        {
+            float phase = _time * 2.5f + i * (Mathf.Tau / 3f);
+            float t = (phase % Mathf.Tau) / Mathf.Tau; // 0..1
+            float radius = t * maxR;
+            float alpha = (1f - t) * 0.85f;
+            DrawArc(center, radius, 0f, Mathf.Tau, 16,
+                new Color(Constants.Colors.SpawnRing, alpha), 1f);
+        }
+    }
+
+    private void DrawExitTile(float x, float y, int ts)
+    {
+        var rect = new Rect2(x, y, ts, ts);
+        DrawRect(rect, ColorExit);
+        // Vertical scan line: bright green bar sweeping top→bottom
+        float scanSpeed = 24f; // px/sec
+        float gridH = GameConfig.GridHeight * ts;
+        float scanY = ((_time * scanSpeed) % gridH);
+        // Only draw if scan line passes through this tile
+        float tileTop = y;
+        float tileBot = y + ts;
+        float lineY = scanY;
+        // scan line is relative to grid top, so check if it falls in this tile
+        if (lineY >= tileTop && lineY < tileBot)
+        {
+            float localY = lineY - tileTop;
+            DrawLine(
+                new Vector2(x, y + localY),
+                new Vector2(x + ts, y + localY),
+                new Color(Constants.Colors.ExitScanLine, 0.85f), 1f);
+        }
+        // Dim trailing glow (2px above scan line)
+        float trailY = lineY - 2f;
+        if (trailY >= tileTop && trailY < tileBot)
+        {
+            float localY = trailY - tileTop;
+            DrawLine(
+                new Vector2(x, y + localY),
+                new Vector2(x + ts, y + localY),
+                new Color(Constants.Colors.ExitScanLine, 0.3f), 1f);
+        }
+    }
+
+    private void DrawCornerMarkers(int ts)
+    {
+        int gw = GameConfig.GridWidth * ts;
+        int gh = GameConfig.GridHeight * ts;
+        int arm = 4; // bracket arm length in pixels
+        var c = Constants.Colors.CornerMarker;
+        float w = 1.5f;
+
+        // Top-left
+        DrawLine(new Vector2(0, 0), new Vector2(arm, 0), c, w);
+        DrawLine(new Vector2(0, 0), new Vector2(0, arm), c, w);
+        // Top-right
+        DrawLine(new Vector2(gw, 0), new Vector2(gw - arm, 0), c, w);
+        DrawLine(new Vector2(gw, 0), new Vector2(gw, arm), c, w);
+        // Bottom-left
+        DrawLine(new Vector2(0, gh), new Vector2(arm, gh), c, w);
+        DrawLine(new Vector2(0, gh), new Vector2(0, gh - arm), c, w);
+        // Bottom-right
+        DrawLine(new Vector2(gw, gh), new Vector2(gw - arm, gh), c, w);
+        DrawLine(new Vector2(gw, gh), new Vector2(gw, gh - arm), c, w);
     }
 
     public override void _UnhandledInput(InputEvent @event)

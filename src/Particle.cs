@@ -176,6 +176,61 @@ public partial class Particle : Node2D
     public override void _Draw()
     {
         float half = _visualSize * 0.5f;
-        DrawRect(new Rect2(-half, -half, _visualSize, _visualSize), _color);
+
+        switch (Type)
+        {
+            case ParticleType.BioParticle:
+                // Slight glow: larger dim square behind
+                DrawRect(new Rect2(-half - 2, -half - 2, _visualSize + 4, _visualSize + 4),
+                    new Color(_color, 0.2f));
+                // Cross+extensions (rounded square minus corners)
+                DrawRect(new Rect2(-half + 1, -half, _visualSize - 2, _visualSize), _color); // vertical
+                DrawRect(new Rect2(-half, -half + 1, _visualSize, _visualSize - 2), _color); // horizontal
+                break;
+
+            case ParticleType.SporeSpeck:
+                // Tiny bright center dot
+                DrawRect(new Rect2(-1, -1, 2, 2), _color);
+                // 1px cross/spark around it
+                DrawRect(new Rect2(-2, 0, 1, 1), _color);
+                DrawRect(new Rect2(1,  0, 1, 1), _color);
+                DrawRect(new Rect2(0, -2, 1, 1), _color);
+                DrawRect(new Rect2(0,  1, 1, 1), _color);
+                break;
+
+            case ParticleType.RadiationBlob:
+                // Main square
+                DrawRect(new Rect2(-half, -half, _visualSize, _visualSize), _color);
+                // Radiation triangle overlay (simplified 3 segments from center)
+                var radDark = new Color(0.3f, 0.1f, 0f, 0.9f);
+                for (int i = 0; i < 3; i++)
+                {
+                    float angle = i * (Mathf.Tau / 3f) - Mathf.Pi / 6f;
+                    float len = half * 0.7f;
+                    Vector2 tip = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * len;
+                    DrawLine(Vector2.Zero, tip, radDark, 1.5f);
+                }
+                // Center dot
+                DrawRect(new Rect2(-1, -1, 2, 2), radDark);
+                break;
+
+            case ParticleType.SwarmUnit:
+                // Tiny 2x2 square
+                DrawRect(new Rect2(-1, -1, 2, 2), _color);
+                break;
+
+            case ParticleType.CellDivision:
+                // Pink square
+                DrawRect(new Rect2(-half, -half, _visualSize, _visualSize), _color);
+                // Thin X drawn across it
+                var xColor = new Color(1f, 1f, 1f, 0.6f);
+                DrawLine(new Vector2(-half + 1, -half + 1), new Vector2(half - 1, half - 1), xColor, 1f);
+                DrawLine(new Vector2(half - 1, -half + 1), new Vector2(-half + 1, half - 1), xColor, 1f);
+                break;
+
+            default:
+                DrawRect(new Rect2(-half, -half, _visualSize, _visualSize), _color);
+                break;
+        }
     }
 }
