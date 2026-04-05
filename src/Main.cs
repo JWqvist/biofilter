@@ -4,19 +4,19 @@ using Godot;
 
 public partial class Main : Node2D
 {
-    private GridManager _gridManager;
-    private BioFilter.AirflowMeter _airflowMeter;
-    private GameState _gameState;
-    private ParticleManager _particleManager;
-    private BioFilter.LivesMeter _livesMeter;
-    private TowerManager _towerManager;
-    private CurrencyMeter _currencyMeter;
-    private BuildPanel _buildPanel;
-    private WaveManager _waveManager;
-    private WaveHUD _waveHUD;
-    private StartWaveButton _startWaveButton;
-    private GameOver _gameOverScreen;
-    private WinScreen _winScreen;
+    private GridManager _gridManager = null!;
+    private BioFilter.AirflowMeter _airflowMeter = null!;
+    private GameState _gameState = null!;
+    private ParticleManager _particleManager = null!;
+    private BioFilter.LivesMeter _livesMeter = null!;
+    private TowerManager _towerManager = null!;
+    private CurrencyMeter _currencyMeter = null!;
+    private BuildPanel _buildPanel = null!;
+    private WaveManager _waveManager = null!;
+    private WaveHUD _waveHUD = null!;
+    private StartWaveButton _startWaveButton = null!;
+    private GameOver _gameOverScreen = null!;
+    private WinScreen _winScreen = null!;
 
     public override void _Ready()
     {

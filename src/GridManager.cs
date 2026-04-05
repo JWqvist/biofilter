@@ -1,3 +1,4 @@
+using BioFilter;
 using Godot;
 
 public partial class GridManager : Node2D

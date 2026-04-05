@@ -8,10 +8,10 @@ namespace BioFilter.UI;
 /// </summary>
 public partial class GameOver : CanvasLayer
 {
-    private Label _titleLabel;
-    private Label _subtitleLabel;
-    private Label _statLabel;
-    private Button _restartButton;
+    private Label _titleLabel = null!;
+    private Label _subtitleLabel = null!;
+    private Label _statLabel = null!;
+    private Button _restartButton = null!;
 
     public override void _Ready()
     {

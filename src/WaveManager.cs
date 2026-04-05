@@ -19,7 +19,7 @@ public partial class WaveManager : Node2D
     public WaveState State { get; private set; } = WaveState.Idle;
 
     // ── Wired by Main ─────────────────────────────────────────────────────────
-    public ParticleManager ParticleManagerRef { get; set; }
+    public ParticleManager? ParticleManagerRef { get; set; }
 
     // ── Internal state ────────────────────────────────────────────────────────
     private int _currentWave = 0;          // 0-indexed; 1-indexed for display

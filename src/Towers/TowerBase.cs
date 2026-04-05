@@ -15,7 +15,7 @@ public abstract partial class TowerBase : Node2D
     protected abstract Color TowerColor { get; }
 
     // Injected by TowerManager after placement
-    public ParticleManager ParticleManagerRef { get; set; }
+    public ParticleManager? ParticleManagerRef { get; set; }
 
     // ── Upgrade state ──────────────────────────────────────────────────────
     public bool IsUpgraded { get; set; } = false;

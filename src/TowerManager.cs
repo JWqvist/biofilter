@@ -18,23 +18,23 @@ public partial class TowerManager : Node2D
     public TowerType SelectedTower { get; private set; } = TowerType.None;
 
     // Injected by Main
-    public GridManager GridManagerRef { get; set; }
-    public GameState GameStateRef { get; set; }
-    public ParticleManager ParticleManagerRef { get; set; }
+    public GridManager? GridManagerRef { get; set; }
+    public GameState? GameStateRef { get; set; }
+    public ParticleManager? ParticleManagerRef { get; set; }
 
     // Emitted when player clicks an existing tower tile (upgrade flow)
     [Signal] public delegate void TowerClickedEventHandler(int upgradeCost, bool canAfford);
     [Signal] public delegate void TowerDeselectedEventHandler();
 
-    private PackedScene _basicFilterScene;
-    private PackedScene _electrostaticScene;
-    private PackedScene _uvSteriliserScene;
+    private PackedScene _basicFilterScene = null!;
+    private PackedScene _electrostaticScene = null!;
+    private PackedScene _uvSteriliserScene = null!;
 
     // Map from grid position → placed tower node
     private readonly Dictionary<Vector2I, TowerBase> _placedTowers = new();
 
     // Currently selected tower for upgrade UI
-    private TowerBase _selectedForUpgrade;
+    private TowerBase? _selectedForUpgrade;
 
     public override void _Ready()
     {
@@ -173,7 +173,7 @@ public partial class TowerManager : Node2D
         _ => 0
     };
 
-    private PackedScene GetSceneForType(TowerType type) => type switch
+    private PackedScene? GetSceneForType(TowerType type) => type switch
     {
         TowerType.BasicFilter => _basicFilterScene,
         TowerType.Electrostatic => _electrostaticScene,

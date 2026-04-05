@@ -13,7 +13,7 @@ public static class Pathfinder
     private class Node
     {
         public Vector2I Position;
-        public Node Parent;
+        public Node? Parent;
         public float G; // cost from start
         public float H; // heuristic to goal
         public float F => G + H;
@@ -23,7 +23,7 @@ public static class Pathfinder
     /// Find a path from <paramref name="start"/> to the nearest tile of type Exit on the right edge.
     /// Returns null if no path exists.
     /// </summary>
-    public static List<Vector2I> FindPath(TileType[,] grid, Vector2I start)
+    public static List<Vector2I>? FindPath(TileType[,] grid, Vector2I start)
     {
         int cols = grid.GetLength(0);
         int rows = grid.GetLength(1);
@@ -88,7 +88,7 @@ public static class Pathfinder
                 float gNew = current.G + 1f;
                 float hNew = HeuristicToExits(neighborPos, exits);
 
-                if (openSet.TryGetValue(neighborPos, out Node existing))
+                if (openSet.TryGetValue(neighborPos, out Node? existing))
                 {
                     if (gNew < existing.G)
                     {
@@ -125,7 +125,7 @@ public static class Pathfinder
         return best;
     }
 
-    private static List<Vector2I> ReconstructPath(Node node)
+    private static List<Vector2I> ReconstructPath(Node? node)
     {
         var path = new List<Vector2I>();
         while (node != null)

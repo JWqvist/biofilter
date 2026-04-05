@@ -8,7 +8,7 @@ namespace BioFilter.UI;
 /// </summary>
 public partial class MainMenu : Control
 {
-    private Button _playButton;
+    private Button _playButton = null!;
 
     public override void _Ready()
     {

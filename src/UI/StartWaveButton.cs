@@ -1,3 +1,4 @@
+using BioFilter;
 using Godot;
 
 namespace BioFilter.UI;
@@ -8,7 +9,7 @@ namespace BioFilter.UI;
 /// </summary>
 public partial class StartWaveButton : Button
 {
-    private WaveManager _waveManager;
+    private WaveManager _waveManager = null!;
 
     public void Initialize(WaveManager waveManager)
     {

@@ -9,7 +9,7 @@ namespace BioFilter;
 /// </summary>
 public partial class Projectile : Node2D
 {
-    private Particle _target;
+    private Particle? _target;
     private float _damage;
     private const float Speed = 150f; // pixels per second
     private const float HitRadius = 4f; // pixels
