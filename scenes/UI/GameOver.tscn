@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://biofilter_gameover"]
+[gd_scene load_steps=1 format=3 uid="uid://biofilter_gameover"]
 
 [ext_resource type="Script" path="res://src/UI/GameOver.cs" id="1_gameover"]
 

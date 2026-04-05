@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://bxrjd3a1r66f2"]
+[gd_scene load_steps=14 format=3 uid="uid://bxrjd3a1r66f2"]
 
 [ext_resource type="Script" path="res://src/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://src/GridManager.cs" id="2_gridmanager"]
