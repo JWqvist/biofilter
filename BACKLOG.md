@@ -211,7 +211,23 @@ Tasks:
 ---
 
 
-## Current Sprint: Sprint 12
+## Current Sprint: Sprint 13C
+Status: ✅ Done
+
+### Sprint 13C — Pixel Art Menus
+
+#### Implemented
+- **BuildMenu** — dark bg panel with green pixel-art border (#2d5a3d, 2px). Title bar '▣ BUILD MENU' with animated blinking cursor (0.5s). Colored square icon per item. Row selection/hover highlighting. 'WAVE PHASE — BUILD LOCKED' red message during wave. Pixel ✕ close button.
+- **PauseMenu** — semi-transparent overlay + terminal-style panel. '▣ SYSTEM PAUSE' blinking header. Military labels: RESUME MISSION / ABORT TO MAIN MENU / TERMINATE PROGRAM. Warning footer.
+- **GameOver** — rebuilt entirely in code (removed scene node deps). '██████ CRITICAL FAILURE ██████' blinking red title. Red border (#cc0000). Live stats: waves survived, particles neutralised, bunker population. Buttons: RETRY MISSION / RETURN TO BASE.
+- **WinScreen** — rebuilt entirely in code. '██████ MISSION SUCCESS ██████' blinking green title. Green border (#00c853). Stats: particles neutralised, final population, airflow %. Buttons: DEPLOY AGAIN / RETURN TO BASE.
+- **MainMenu** — scanline effect sweeping down. Blinking '⚠ BIOHAZARD ALERT ⚠' in hazard yellow. '▶ ENTER BUNKER' button with pixel art border + green glow. Version text bottom-right.
+- **GameState** — added `ParticlesKilled` (int), `WavesSurvived` (int), `CurrentAirflow` (float) properties. ParticleManager increments ParticlesKilled on kill. Main.cs increments WavesSurvived on WaveComplete.
+- Build: 0 errors, 0 warnings.
+
+---
+
+## Sprint 12
 Status: ✅ Done
 
 ### Sprint 12 — New Filter Modules
