@@ -25,11 +25,11 @@ public partial class GridManager : Node2D
     public delegate void AirflowChangedEventHandler(float airflow);
 
     // Colors
-    private static readonly Color ColorEmpty = new Color("#1a1a2e");
-    private static readonly Color ColorGridLine = new Color("#2a2a3e");
-    private static readonly Color ColorWall = new Color("#4a4a6a");
-    private static readonly Color ColorSpawn = new Color("#d50000");
-    private static readonly Color ColorExit = new Color("#ff6d00");
+    private static readonly Color ColorEmpty = Constants.Colors.Background;
+    private static readonly Color ColorGridLine = Constants.Colors.GridLine;
+    private static readonly Color ColorWall = Constants.Colors.Wall;
+    private static readonly Color ColorSpawn = Constants.Colors.ParticleSpawn;
+    private static readonly Color ColorExit = Constants.Colors.Exit;
     private static readonly Color ColorHover = new Color(1f, 1f, 1f, 0.3f);
     private static readonly Color ColorBlocked = new Color(1f, 0f, 0f, 0.4f); // flash on rejected placement
 
