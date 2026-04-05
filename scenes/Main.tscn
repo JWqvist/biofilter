@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://bxrjd3a1r66f2"]
+[gd_scene load_steps=15 format=3 uid="uid://bxrjd3a1r66f2"]
 
 [ext_resource type="Script" path="res://src/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://src/GridManager.cs" id="2_gridmanager"]
@@ -7,13 +7,14 @@
 [ext_resource type="Script" path="res://src/ParticleManager.cs" id="5_particlemanager"]
 [ext_resource type="Script" path="res://src/UI/LivesMeter.cs" id="6_livesmeter"]
 [ext_resource type="Script" path="res://src/TowerManager.cs" id="7_towermanager"]
-[ext_resource type="Script" path="res://src/UI/BuildPanel.cs" id="8_buildpanel"]
+[ext_resource type="Script" path="res://src/UI/BuildMenu.cs" id="8_buildmenu"]
 [ext_resource type="Script" path="res://src/UI/CurrencyMeter.cs" id="9_currencymeter"]
 [ext_resource type="Script" path="res://src/WaveManager.cs" id="10_wavemanager"]
 [ext_resource type="Script" path="res://src/UI/WaveHUD.cs" id="11_wavehud"]
 [ext_resource type="Script" path="res://src/UI/StartWaveButton.cs" id="12_startwavebutton"]
 [ext_resource type="PackedScene" path="res://scenes/UI/GameOver.tscn" id="13_gameover"]
 [ext_resource type="PackedScene" path="res://scenes/UI/WinScreen.tscn" id="14_winscreen"]
+[ext_resource type="Script" path="res://src/UI/BuildButton.cs" id="15_buildbutton"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -82,87 +83,51 @@ size_flags_vertical = 4
 text = "Airflow: 100%"
 script = ExtResource("3_airflowmeter")
 
-[node name="BuildPanel" type="CanvasLayer" parent="."]
-layer = 2
-script = ExtResource("8_buildpanel")
-
-[node name="Panel" type="Panel" parent="BuildPanel"]
+[node name="BottomBar" type="HBoxContainer" parent="HUD"]
 layout_mode = 3
 anchors_preset = 7
 anchor_left = 0.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -40.0
+offset_top = -36.0
 offset_bottom = 0.0
 grow_vertical = 0
+theme_override_constants/separation = 8
 
-[node name="HBoxContainer" type="HBoxContainer" parent="BuildPanel/Panel"]
-layout_mode = 0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = 476.0
-offset_bottom = 36.0
+[node name="BuildButton" type="Button" parent="HUD/BottomBar"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "🛠 Build"
+script = ExtResource("15_buildbutton")
 
-[node name="BasicFilterBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
+[node name="StatusLabel" type="Label" parent="HUD/BottomBar"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Basic Filter [$50]"
-
-[node name="ElectrostaticBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Electrostatic [$75]"
-
-[node name="UVSteriliserBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "UV Steriliser [$100]"
-
-[node name="UpgradeBtn" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
-visible = false
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Upgrade"
-
-[node name="StartWaveButton" type="Button" parent="BuildPanel/Panel/HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 0
-text = "▶ Start Wave"
-script = ExtResource("12_startwavebutton")
-
-[node name="StatusLabel" type="Label" parent="BuildPanel/Panel"]
-layout_mode = 3
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.0
-anchor_right = 0.5
-anchor_bottom = 0.0
-offset_left = -80.0
-offset_top = -14.0
-offset_right = 80.0
-offset_bottom = 0.0
-grow_horizontal = 2
+size_flags_vertical = 4
 text = "Wall mode"
-horizontal_alignment = 1
 theme_override_font_sizes/font_size = 10
 theme_override_colors/font_color = Color(0.75, 0.75, 0.85, 1.0)
 
-[node name="PhaseLabel" type="Label" parent="BuildPanel/Panel"]
-layout_mode = 3
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -60.0
-offset_top = -22.0
-offset_right = 60.0
-offset_bottom = -8.0
-grow_horizontal = 2
+[node name="PhaseLabel" type="Label" parent="HUD/BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
 text = "🛠 BUILD PHASE"
-horizontal_alignment = 1
+horizontal_alignment = 2
 theme_override_font_sizes/font_size = 9
 theme_override_colors/font_color = Color(0.0, 0.784, 0.325, 1.0)
+
+[node name="StartWaveButton" type="Button" parent="HUD/BottomBar"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "▶ Start Wave"
+script = ExtResource("12_startwavebutton")
+
+[node name="BuildMenu" type="CanvasLayer" parent="."]
+layer = 5
+script = ExtResource("8_buildmenu")
+
+[node name="GameOver" parent="." instance=ExtResource("13_gameover")]
 
 [node name="WinScreen" parent="." instance=ExtResource("14_winscreen")]
