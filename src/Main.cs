@@ -146,6 +146,7 @@ public partial class Main : Node
         _waveManager.WaveStarted        += _waveHUD.OnWaveStarted;
         _waveManager.WaveComplete       += _waveHUD.OnWaveComplete;
         _waveManager.WaveComplete       += (_) => _speedButton.ResetSpeed();
+        _waveManager.WaveComplete       += (_) => _gameState.RecordWaveSurvived();
         _waveManager.GameWon            += OnGameWon;
 
         // Wire StartWaveButton
@@ -212,7 +213,7 @@ public partial class Main : Node
     {
         GD.Print("GAME OVER — population reached zero.");
         _speedButton.ResetSpeed();
-        _gameOverScreen.Show(0);
+        _gameOverScreen.Show(_gameState.Population);
         GetTree().Paused = true;
         _gameOverScreen.ProcessMode = ProcessModeEnum.Always;
     }

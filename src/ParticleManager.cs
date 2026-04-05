@@ -197,6 +197,7 @@ public partial class ParticleManager : Node2D
 
         SpawnFloatingText($"+{reward}", particle.GlobalPosition, Constants.Colors.HazardYellow);
         GameState?.AddCurrency(reward);
+        GameState?.RecordParticleKilled();
         RemoveParticle(particle);
     }
 

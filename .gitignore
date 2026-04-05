@@ -36,3 +36,4 @@ obj/
 # Windows
 Thumbs.db
 Desktop.ini
+*.uid
