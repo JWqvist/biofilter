@@ -183,6 +183,23 @@ Tasks:
 
 ---
 
+### 🎨 Sprint 9 — UI/UX Improvements ✅
+**Goal:** Range preview, hotkeys, wave preview, wave bonuses, speed button, airflow warning.
+
+Tasks:
+- [x] Range preview circle: translucent circle shown when hovering tiles with tower selected
+- [x] Hotkeys: 1/2/3 select towers, W = wall mode, R = deselect
+- [x] Hotkey hints shown in BuildMenu items: "Basic Filter [1] $50"
+- [x] Pre-wave intel screen: 3-second WavePreview overlay before each wave
+- [x] Wave bonuses: +50 perfect wave, +25 efficiency; HUD notifications
+- [x] Speed button (▶ 1x / ▶▶ 2x) in BottomBar
+- [x] Airflow warning: flashing AirflowMeter below 30%; red vignette below 20%
+- [x] AirflowCritical signal added to GridManager
+
+**Completed:** 2026-04-05 — PR: Sprint 9: UI/UX Improvements
+
+---
+
 ## Backlog Items (unscheduled)
 - Map editor
 - Multiple particle types (radiation, chemical)
@@ -193,7 +210,10 @@ Tasks:
 
 ---
 
-## Current Sprint: Sprint 8
+## Current Sprint: Sprint 9
+Status: ✅ Done
+
+## Sprint 8
 Status: 🔴 Not started
 
 ## Sprint 7

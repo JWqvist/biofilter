@@ -116,6 +116,7 @@ public partial class ParticleManager : Node2D
     private void OnParticleReachedExit(Particle particle)
     {
         GameState?.LosePopulation(GameConfig.PopLostPerParticle);
+        GameState?.RecordParticleEscaped();
         RemoveParticle(particle);
     }
 

@@ -1,10 +1,11 @@
+using BioFilter.UI;
 using Godot;
 
 namespace BioFilter;
 
 /// <summary>
-/// Manages wave progression: Idle (build phase) → Spawning → WaveComplete → Idle.
-/// Drives ParticleManager spawning and tracks wave completion.
+/// Manages wave progression: Idle (build phase) → Preview → Spawning → WaveComplete → Idle.
+/// Shows WavePreview for GameConfig.WavePreviewDuration before spawning particles.
 /// </summary>
 public partial class WaveManager : Node2D
 {
@@ -14,12 +15,14 @@ public partial class WaveManager : Node2D
     [Signal] public delegate void GameWonEventHandler();
 
     // ── State machine ─────────────────────────────────────────────────────────
-    public enum WaveState { Idle, Spawning, WaitingForClear }
+    public enum WaveState { Idle, Preview, Spawning, WaitingForClear }
 
     public WaveState State { get; private set; } = WaveState.Idle;
 
     // ── Wired by Main ─────────────────────────────────────────────────────────
     public ParticleManager? ParticleManagerRef { get; set; }
+    public WavePreview?     WavePreviewRef     { get; set; }
+    public GameState?       GameStateRef       { get; set; }
 
     // ── Internal state ────────────────────────────────────────────────────────
     private int _currentWave = 0;          // 0-indexed; 1-indexed for display
@@ -34,7 +37,7 @@ public partial class WaveManager : Node2D
     public int TotalWaves => GameConfig.TotalWaves;
 
     // ── Wave start ────────────────────────────────────────────────────────────
-    /// <summary>Called by StartWaveButton. Begins spawning for the next wave.</summary>
+    /// <summary>Called by StartWaveButton. Shows preview then begins spawning.</summary>
     public void StartWave()
     {
         if (State != WaveState.Idle) return;
@@ -47,6 +50,32 @@ public partial class WaveManager : Node2D
         _particlesAlive = 0;
         _spawnTimer = 0f;
 
+        // Record wave start in GameState for bonus tracking
+        GameStateRef?.RecordWaveStart();
+
+        if (WavePreviewRef != null)
+        {
+            // Show preview; actual spawning starts when PreviewFinished fires
+            State = WaveState.Preview;
+            WavePreviewRef.ShowPreview(CurrentWaveNumber, _particlesToSpawn);
+            WavePreviewRef.PreviewFinished += OnPreviewFinished;
+        }
+        else
+        {
+            // No preview available — spawn immediately
+            BeginSpawning();
+        }
+    }
+
+    private void OnPreviewFinished()
+    {
+        if (WavePreviewRef != null)
+            WavePreviewRef.PreviewFinished -= OnPreviewFinished;
+        BeginSpawning();
+    }
+
+    private void BeginSpawning()
+    {
         State = WaveState.Spawning;
         EmitSignal(SignalName.WaveStarted, CurrentWaveNumber);
 
@@ -59,7 +88,7 @@ public partial class WaveManager : Node2D
     public void OnParticleRemoved()
     {
         _particlesAlive--;
-        if (_particlesAlive < 0) _particlesAlive = 0; // guard against double-remove
+        if (_particlesAlive < 0) _particlesAlive = 0;
         CheckWaveComplete();
     }
 
@@ -88,11 +117,13 @@ public partial class WaveManager : Node2D
         if (State != WaveState.WaitingForClear) return;
         if (_particlesAlive > 0) return;
 
-        // Wave is fully cleared
         int completedWave = _currentWave;
         _currentWave++;
 
         GD.Print($"[WaveManager] Wave {completedWave + 1} complete.");
+
+        // Award bonuses before signalling complete
+        GameStateRef?.AwardWaveBonuses();
 
         if (_currentWave >= GameConfig.TotalWaves)
         {

@@ -51,6 +51,13 @@ public partial class TowerManager : Node2D
     {
         SelectedTower = (TowerType)towerType;
         _selectedForUpgrade = null;
+        // Update range preview on GridManager
+        if (GridManagerRef != null)
+        {
+            float range = GetRangeForType(SelectedTower);
+            Color color = GetColorForType(SelectedTower);
+            GridManagerRef.SetRangePreview(SelectedTower, range, color);
+        }
         GD.Print($"TowerManager: selected {SelectedTower}");
     }
 
@@ -58,6 +65,7 @@ public partial class TowerManager : Node2D
     {
         SelectedTower = TowerType.None;
         _selectedForUpgrade = null;
+        GridManagerRef?.ClearRangePreview();
         GD.Print("TowerManager: deselected (wall mode)");
     }
 
@@ -234,6 +242,22 @@ public partial class TowerManager : Node2D
         TowerType.Electrostatic => GameConfig.ElectrostaticCost,
         TowerType.UVSteriliser => GameConfig.UVSteriliserCost,
         _ => 0
+    };
+
+    private float GetRangeForType(TowerType type) => type switch
+    {
+        TowerType.BasicFilter   => GameConfig.BasicFilterRange,
+        TowerType.Electrostatic => GameConfig.ElectrostaticRange,
+        TowerType.UVSteriliser  => GameConfig.UVSteriliserRange,
+        _ => 0f
+    };
+
+    private Color GetColorForType(TowerType type) => type switch
+    {
+        TowerType.BasicFilter   => new Color("#3daa50"),  // green
+        TowerType.Electrostatic => new Color("#1a8a9a"),  // teal
+        TowerType.UVSteriliser  => new Color("#8a4aaa"),  // purple
+        _ => Colors.White
     };
 
     private PackedScene? GetSceneForType(TowerType type) => type switch

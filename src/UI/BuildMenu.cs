@@ -31,10 +31,10 @@ public partial class BuildMenu : CanvasLayer
     // Index 0 = wall; indices 1-3 = towers (type 0-2)
     private static readonly (string Name, string Cost, string Desc, Color Color)[] Items =
     {
-        ("■ Wall",          "[free]",                         "Direct particle flow",    new Color("#8bc34a")),
-        ("■ Basic Filter",  $"[${GameConfig.BasicFilterCost}]",  "Damages particles nearby", new Color("#00bcd4")),
-        ("■ Electrostatic", $"[${GameConfig.ElectrostaticCost}]","Slows particles nearby",   new Color("#ce93d8")),
-        ("■ UV Steriliser", $"[${GameConfig.UVSteriliserCost}]", "Shoots at particles",      new Color("#fff176")),
+        ("■ Wall [W]",                    "[free]",                            "Direct particle flow",    new Color("#8bc34a")),
+        ($"■ Basic Filter [1]",            $"[${GameConfig.BasicFilterCost}]",  "Damages particles nearby", new Color("#00bcd4")),
+        ($"■ Electrostatic [2]",           $"[${GameConfig.ElectrostaticCost}]","Slows particles nearby",   new Color("#ce93d8")),
+        ($"■ UV Steriliser [3]",           $"[${GameConfig.UVSteriliserCost}]", "Shoots at particles",      new Color("#fff176")),
     };
 
     public override void _Ready()
