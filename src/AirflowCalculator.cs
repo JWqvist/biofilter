@@ -117,7 +117,9 @@ public class AirflowCalculator
         int exitCol = GameConfig.GridWidth - 1; // exit is the rightmost column
         int minWidth = GameConfig.GridHeight;   // start at max possible
 
-        for (int col = GameConfig.SpawnCol; col < exitCol; col++)
+        // Skip spawn col (col 0) - it has only 1 passable tile by design
+        // Start from col 1 to measure actual corridor widths player creates
+        for (int col = GameConfig.SpawnCol + 1; col < exitCol; col++)
         {
             int width = 0;
             for (int row = 0; row < rows; row++)

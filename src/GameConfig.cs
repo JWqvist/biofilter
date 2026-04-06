@@ -17,7 +17,7 @@ public static class GameConfig
     // Exit = entire right edge (col GridWidth - 1)
 
     // ─── Airflow ────────────────────────────────────────────────────────────
-    public const float AirflowMinPercent = 0.20f;    // 20% minimum before building blocked
+    public const float AirflowMinPercent = 0.30f;    // 30% = 6 tiles minimum corridor width
     public const int ChokeWidthHigh = 3;             // 3+ tiles wide = low restriction
     public const int ChokeWidthMedium = 2;           // 2 tiles wide = medium restriction
     // 1 tile wide = high restriction
