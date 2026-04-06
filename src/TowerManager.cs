@@ -110,7 +110,7 @@ public partial class TowerManager : Node2D
 
     // ── Input handling ────────────────────────────────────────────────────────
 
-    public override void _UnhandledInput(InputEvent @event)
+    public override void _Input(InputEvent @event)
     {
         if (@event is not InputEventMouseButton mb) return;
         if (!mb.Pressed) return;

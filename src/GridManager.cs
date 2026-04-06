@@ -198,6 +198,13 @@ public partial class GridManager : Node2D
     {
         _time += (float)delta;
 
+        // Update hover tile every frame (works regardless of UI input blocking)
+        Vector2I hoverTile = MouseToTile();
+        if (IsValidCoord(hoverTile.X, hoverTile.Y))
+            SetHoverTile(hoverTile);
+        else
+            SetHoverTile(new Vector2I(-1, -1));
+
         // Corrupted pixel ambient effect
         _corruptedTimer += (float)delta;
         if (_corruptedTimer >= _corruptedInterval)
@@ -407,17 +414,9 @@ public partial class GridManager : Node2D
         return new Vector2I((int)(localPos.X / GameConfig.TileSize), (int)(localPos.Y / GameConfig.TileSize));
     }
 
-    public override void _UnhandledInput(InputEvent @event)
+    public override void _Input(InputEvent @event)
     {
-        if (@event is InputEventMouseMotion)
-        {
-            Vector2I tile = MouseToTile();
-            if (IsValidCoord(tile.X, tile.Y))
-                SetHoverTile(tile);
-            else
-                SetHoverTile(new Vector2I(-1, -1));
-        }
-        else if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed)
+        if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed)
         {
             Vector2I tile = MouseToTile();
             if (!IsValidCoord(tile.X, tile.Y)) return;
