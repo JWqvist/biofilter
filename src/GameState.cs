@@ -18,7 +18,9 @@ public partial class GameState : Node
 
     // ── Wave tracking ────────────────────────────────────────────────────────
     private int _particlesEscapedThisWave = 0;
-    private float _minAirflowThisWave = 1.0f;
+    private int _populationAtWaveStart = 0;
+    private float _totalAirflowThisWave = 0f;
+    private int _airflowSampleCount = 0;
 
     [Signal] public delegate void PopulationChangedEventHandler(int newValue);
     [Signal] public delegate void CurrencyChangedEventHandler(int newValue);
@@ -55,7 +57,9 @@ public partial class GameState : Node
     public void RecordWaveStart()
     {
         _particlesEscapedThisWave = 0;
-        _minAirflowThisWave = 1.0f;
+        _populationAtWaveStart = Population;
+        _totalAirflowThisWave = 0f;
+        _airflowSampleCount = 0;
     }
 
     /// <summary>Called whenever a particle reaches the exit.</summary>
@@ -68,8 +72,8 @@ public partial class GameState : Node
     public void RecordAirflow(float airflow)
     {
         CurrentAirflow = airflow;
-        if (airflow < _minAirflowThisWave)
-            _minAirflowThisWave = airflow;
+        _totalAirflowThisWave += airflow;
+        _airflowSampleCount++;
     }
 
     /// <summary>Called when a particle is destroyed by a tower.</summary>
@@ -86,18 +90,26 @@ public partial class GameState : Node
     {
         int total = 0;
 
-        if (_particlesEscapedThisWave == 0)
+        bool lostPopThisWave = Population < _populationAtWaveStart;
+        float avgAirflow = _airflowSampleCount > 0 ? _totalAirflowThisWave / _airflowSampleCount : 1.0f;
+
+        // Perfect wave: 0 particles escaped AND no population lost
+        if (_particlesEscapedThisWave == 0 && !lostPopThisWave)
         {
             AddCurrency(GameConfig.PerfectWaveBonus);
             total += GameConfig.PerfectWaveBonus;
             EmitSignal(SignalName.BonusEarned, "+50 PERFECT WAVE!", GameConfig.PerfectWaveBonus);
         }
 
-        if (_minAirflowThisWave >= GameConfig.EfficiencyAirflowThreshold)
+        // Efficiency bonus: average airflow above threshold AND no population lost
+        if (avgAirflow >= GameConfig.EfficiencyAirflowThreshold && !lostPopThisWave)
         {
-            AddCurrency(GameConfig.EfficiencyBonus);
-            total += GameConfig.EfficiencyBonus;
-            EmitSignal(SignalName.BonusEarned, "+25 EFFICIENCY BONUS!", GameConfig.EfficiencyBonus);
+            // Scale bonus by airflow average (100% airflow = full bonus, 60% = minimum)
+            float scale = (avgAirflow - GameConfig.EfficiencyAirflowThreshold) / (1f - GameConfig.EfficiencyAirflowThreshold);
+            int bonus = (int)(GameConfig.EfficiencyBonus * (0.5f + scale * 0.5f));
+            AddCurrency(bonus);
+            total += bonus;
+            EmitSignal(SignalName.BonusEarned, $"+{bonus} EFFICIENCY!", bonus);
         }
 
         return total;
