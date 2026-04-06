@@ -4,9 +4,8 @@ using Godot;
 namespace BioFilter.UI;
 
 /// <summary>
-/// Popup build menu — retro CRT terminal / military bio-lab style.
-/// Built entirely in code. UI is built in _Ready — no sub-scene required.
-/// Sprint 13C: Pixel Art Menus
+/// Fullscreen build menu overlay with pixel-art module cards.
+/// Opens on Build button press, closes on Escape or clicking outside cards.
 /// </summary>
 public partial class BuildMenu : CanvasLayer
 {
@@ -14,379 +13,292 @@ public partial class BuildMenu : CanvasLayer
     [Signal] public delegate void TowerDeselectedEventHandler();
     [Signal] public delegate void UpgradeRequestedEventHandler();
 
-    // ── State ──────────────────────────────────────────────────────────────
-    private int  _selectedTower = -1;   // -1 = wall mode, -2 = upgrade mode
+    private int  _selectedTower = -1;
     private bool _isWaveActive  = false;
     private bool _isOpen        = false;
 
-    // ── UI references ──────────────────────────────────────────────────────
-    private Panel         _popup           = null!;
-    private Button[]      _itemBtns        = null!;
-    private Button        _upgradeBtn      = null!;
-    private WaveManager   _waveManager     = null!;
-    private Label         _waveLockLabel   = null!;
-    private VBoxContainer _itemsBox        = null!;
+    /// <summary>True when open — GridManager uses this to block click-through.</summary>
+    public static bool IsOpen { get; private set; } = false;
 
-    // Blinking cursor
-    private float _blinkTimer  = 0f;
-    private bool  _cursorOn    = true;
-    private Label _cursorLabel = null!;
-
-    // ── Item metadata ──────────────────────────────────────────────────────
-    // Index 0 = wall; indices 1+ = towers
-    private static readonly (string Name, string Cost, Color Color)[] Items =
+    // Module definitions: (name, hotkey, cost label, description, tower type index, card color)
+    private static readonly (string Name, string Hotkey, string Cost, string Desc, int Type, Color Color)[] _modules =
     {
-        ("■ Wall [W]",             "[free]",                                   new Color("#8bc34a")),
-        ($"■ Basic Filter [1]",   $"[${GameConfig.BasicFilterCost}]",        new Color("#00c853")),
-        ($"■ Electrostatic [2]",  $"[${GameConfig.ElectrostaticCost}]",      new Color("#2979ff")),
-        ($"■ UV Steriliser [3]",  $"[${GameConfig.UVSteriliserCost}]",       new Color("#aa00ff")),
-        ($"■ Vortex Sep.",        $"[${GameConfig.VortexSeparatorCost}]",    new Color("#00bcd4")),
-        ($"■ Power Core",         $"[${GameConfig.PowerCoreCost}]",          new Color("#ffd700")),
-        ($"■ Bio Neutraliser",    $"[${GameConfig.BioNeutraliserCost}]",     new Color("#9c27b0")),
-        ($"■ Magnetic Cage",      $"[${GameConfig.MagneticCageCost}]",       new Color("#795548")),
+        ("WALL",            "[W]", "FREE",   "Direct particle flow",  -1, new Color("#3a5a3a")),
+        ("BASIC FILTER",    "[1]", $"${GameConfig.BasicFilterCost}",   "Damages particles nearby", 0, new Color("#00c853")),
+        ("ELECTROSTATIC",   "[2]", $"${GameConfig.ElectrostaticCost}", "Slows particles nearby",   1, new Color("#2979ff")),
+        ("UV STERILISER",   "[3]", $"${GameConfig.UVSteriliserCost}",  "Shoots at particles",      2, new Color("#aa00ff")),
+        ("VORTEX SEP.",     "",    $"${GameConfig.VortexSeparatorCost}","Forces longer routes",    3, new Color("#00bcd4")),
+        ("POWER CORE",      "",    $"${GameConfig.PowerCoreCost}",      "+$5 per wave",             4, new Color("#ffd700")),
+        ("BIO NEUTRALISER", "",    $"${GameConfig.BioNeutraliserCost}", "Boosts adjacent +25%",    5, new Color("#9c27b0")),
+        ("MAGNETIC CAGE",   "",    $"${GameConfig.MagneticCageCost}",   "Traps particles 2s",       6, new Color("#795548")),
     };
 
-    private static readonly Color BorderGreen  = new Color("#2d5a3d");
-    private static readonly Color BgDark       = new Color("#0d1208");
-    private static readonly Color RowSelected  = new Color("#1a3a1a");
-    private static readonly Color RowHover     = new Color("#1e3e1e");
+    private Panel _overlay = null!;
+    private int _hoverIndex = -1;
 
     public override void _Ready()
     {
-        // ── Popup panel ───────────────────────────────────────────────────
-        _popup = new Panel();
-        _popup.LayoutMode = 3;
-        _popup.AnchorLeft   = 0f;
-        _popup.AnchorTop    = 1f;
-        _popup.AnchorRight  = 0f;
-        _popup.AnchorBottom = 1f;
-        _popup.OffsetLeft   = 4f;
-        _popup.OffsetTop    = -(GameConfig.BuildMenuItemCount * GameConfig.BuildMenuItemHeight
-                                + GameConfig.BuildMenuTitleHeight + GameConfig.BuildMenuBottomMargin);
-        _popup.OffsetRight  = GameConfig.BuildMenuWidth + 4f;
-        _popup.OffsetBottom = -GameConfig.BuildMenuBottomMargin;
-        _popup.Visible      = false;
+        Layer = 10;
 
-        var style = new StyleBoxFlat();
-        style.BgColor     = BgDark;
-        style.BorderColor = BorderGreen;
-        style.SetBorderWidthAll(2);
-        style.SetCornerRadiusAll(0);
-        _popup.AddThemeStyleboxOverride("panel", style);
-        AddChild(_popup);
+        // Full-screen semi-transparent overlay
+        _overlay = new Panel();
+        _overlay.LayoutMode = 3;
+        _overlay.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        _overlay.Visible = false;
 
-        // ── VBox ─────────────────────────────────────────────────────────
-        var vbox = new VBoxContainer();
-        vbox.LayoutMode = 1;
-        vbox.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        vbox.AddThemeConstantOverride("separation", 0);
-        _popup.AddChild(vbox);
+        var bgStyle = new StyleBoxFlat();
+        bgStyle.BgColor = new Color(0.02f, 0.06f, 0.02f, 0.93f);
+        bgStyle.BorderColor = new Color("#2d5a3d");
+        bgStyle.SetBorderWidthAll(2);
+        _overlay.AddThemeStyleboxOverride("panel", bgStyle);
+        AddChild(_overlay);
 
-        // ── Title bar ────────────────────────────────────────────────────
-        var titleBar = new HBoxContainer();
-        titleBar.CustomMinimumSize = new Vector2(0, GameConfig.BuildMenuTitleHeight);
-
-        var titleStyle = new StyleBoxFlat();
-        titleStyle.BgColor = new Color("#0a1a0a");
-        titleStyle.SetBorderWidthAll(0);
-        titleBar.AddThemeStyleboxOverride("panel", titleStyle);
-        vbox.AddChild(titleBar);
-
+        // Title bar
         var titleLabel = new Label();
-        titleLabel.Text = "▣ BUILD MENU";
-        titleLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        titleLabel.AddThemeColorOverride("font_color", new Color("#4caf50"));
+        titleLabel.Text = "▣ SELECT MODULE";
+        titleLabel.LayoutMode = 3;
+        titleLabel.AnchorLeft = 0f; titleLabel.AnchorTop = 0f;
+        titleLabel.AnchorRight = 1f; titleLabel.AnchorBottom = 0f;
+        titleLabel.OffsetTop = 4f; titleLabel.OffsetBottom = 22f;
+        titleLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        titleLabel.AddThemeColorOverride("font_color", new Color("#4a9e6a"));
         titleLabel.AddThemeFontSizeOverride("font_size", 11);
-        titleLabel.VerticalAlignment = VerticalAlignment.Center;
-        titleBar.AddChild(titleLabel);
+        _overlay.AddChild(titleLabel);
 
-        _cursorLabel = new Label();
-        _cursorLabel.Text = "|";
-        _cursorLabel.AddThemeColorOverride("font_color", new Color("#4caf50"));
-        _cursorLabel.AddThemeFontSizeOverride("font_size", 11);
-        _cursorLabel.VerticalAlignment = VerticalAlignment.Center;
-        titleBar.AddChild(_cursorLabel);
-
-        var closeSpacer = new Control();
-        closeSpacer.CustomMinimumSize = new Vector2(4, 0);
-        titleBar.AddChild(closeSpacer);
-
+        // Close button
         var closeBtn = new Button();
-        closeBtn.Text    = "✕";
-        closeBtn.Flat    = false;
-        closeBtn.CustomMinimumSize = new Vector2(GameConfig.BuildMenuTitleHeight, GameConfig.BuildMenuTitleHeight);
-        closeBtn.AddThemeColorOverride("font_color", new Color("#cc4444"));
-        closeBtn.AddThemeFontSizeOverride("font_size", 11);
-        var closeBtnStyle = new StyleBoxFlat();
-        closeBtnStyle.BgColor     = new Color("#1a0a0a");
-        closeBtnStyle.BorderColor = new Color("#3a1a1a");
-        closeBtnStyle.SetBorderWidthAll(1);
-        closeBtnStyle.SetCornerRadiusAll(0);
-        closeBtn.AddThemeStyleboxOverride("normal", closeBtnStyle);
-        var closeBtnHover = new StyleBoxFlat();
-        closeBtnHover.BgColor     = new Color("#2a1a1a");
-        closeBtnHover.BorderColor = new Color("#cc4444");
-        closeBtnHover.SetBorderWidthAll(1);
-        closeBtnHover.SetCornerRadiusAll(0);
-        closeBtn.AddThemeStyleboxOverride("hover", closeBtnHover);
+        closeBtn.Text = "✕";
+        closeBtn.LayoutMode = 3;
+        closeBtn.AnchorLeft = 1f; closeBtn.AnchorTop = 0f;
+        closeBtn.AnchorRight = 1f; closeBtn.AnchorBottom = 0f;
+        closeBtn.OffsetLeft = -20f; closeBtn.OffsetTop = 2f;
+        closeBtn.OffsetRight = -2f; closeBtn.OffsetBottom = 20f;
+        closeBtn.AddThemeColorOverride("font_color", new Color("#cc0000"));
         closeBtn.Pressed += Close;
-        titleBar.AddChild(closeBtn);
+        _overlay.AddChild(closeBtn);
 
-        // ── Divider ──────────────────────────────────────────────────────
-        var div = new ColorRect();
-        div.CustomMinimumSize = new Vector2(0, 2f);
-        div.Color = BorderGreen;
-        vbox.AddChild(div);
+        // Module cards grid
+        const int cols = 3;
+        const int cardW = 140;
+        const int cardH = 110;
+        const int padX = 8;
+        const int padY = 28;
+        const int gapX = 6;
+        const int gapY = 6;
 
-        // ── Wave-locked message (hidden by default) ───────────────────────
-        _waveLockLabel = new Label();
-        _waveLockLabel.Text = "  ⚠ WAVE PHASE — BUILD LOCKED";
-        _waveLockLabel.AddThemeColorOverride("font_color", new Color("#cc3333"));
-        _waveLockLabel.AddThemeFontSizeOverride("font_size", 10);
-        _waveLockLabel.Visible = false;
-        _waveLockLabel.CustomMinimumSize = new Vector2(0, 24f);
-        _waveLockLabel.VerticalAlignment = VerticalAlignment.Center;
-        vbox.AddChild(_waveLockLabel);
-
-        // ── Items container ───────────────────────────────────────────────
-        _itemsBox = new VBoxContainer();
-        _itemsBox.AddThemeConstantOverride("separation", 0);
-        vbox.AddChild(_itemsBox);
-
-        _itemBtns = new Button[GameConfig.BuildMenuItemCount];
-        for (int i = 0; i < GameConfig.BuildMenuItemCount; i++)
+        for (int i = 0; i < _modules.Length; i++)
         {
+            var (name, hotkey, cost, desc, type, color) = _modules[i];
+            int col = i % cols;
+            int row = i / cols;
+            float x = padX + col * (cardW + gapX);
+            float y = padY + row * (cardH + gapY);
+
+            var card = new ModuleCard(i, name, hotkey, cost, desc, color, cardW, cardH);
+            card.LayoutMode = 3;
+            card.AnchorLeft = 0f; card.AnchorTop = 0f;
+            card.OffsetLeft = x; card.OffsetTop = y;
+            card.OffsetRight = x + cardW; card.OffsetBottom = y + cardH;
             int captured = i;
-            var (name, cost, color) = Items[i];
-
-            var btn = new Button();
-            btn.Flat = true;
-            btn.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            btn.CustomMinimumSize   = new Vector2(0, GameConfig.BuildMenuItemHeight);
-            btn.MouseFilter = Control.MouseFilterEnum.Stop;
-            btn.Pressed += () => OnItemPressed(captured);
-            _itemBtns[i] = btn;
-
-            var normalStyle = new StyleBoxFlat();
-            normalStyle.BgColor = BgDark;
-            normalStyle.SetBorderWidthAll(0);
-            btn.AddThemeStyleboxOverride("normal", normalStyle);
-            var hoverStyle = new StyleBoxFlat();
-            hoverStyle.BgColor = RowHover;
-            hoverStyle.SetBorderWidthAll(0);
-            btn.AddThemeStyleboxOverride("hover", hoverStyle);
-            var pressStyle = new StyleBoxFlat();
-            pressStyle.BgColor = RowSelected;
-            pressStyle.SetBorderWidthAll(0);
-            btn.AddThemeStyleboxOverride("pressed", pressStyle);
-
-            // Content inside button
-            var hbox = new HBoxContainer();
-            hbox.LayoutMode  = 1;
-            hbox.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-            hbox.MouseFilter = Control.MouseFilterEnum.Ignore;
-            hbox.AddThemeConstantOverride("separation", 4);
-            btn.AddChild(hbox);
-
-            // Color square icon
-            var spacerLeft = new Control();
-            spacerLeft.CustomMinimumSize = new Vector2(4, 0);
-            hbox.AddChild(spacerLeft);
-
-            var colorRect = new ColorRect();
-            colorRect.CustomMinimumSize = new Vector2(10, 10);
-            colorRect.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
-            colorRect.Color = color;
-            hbox.AddChild(colorRect);
-
-            var nameLabel = new Label();
-            nameLabel.Text = name;
-            nameLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            nameLabel.AddThemeColorOverride("font_color", new Color("#c8e6c0"));
-            nameLabel.AddThemeFontSizeOverride("font_size", 10);
-            nameLabel.MouseFilter = Control.MouseFilterEnum.Ignore;
-            nameLabel.VerticalAlignment = VerticalAlignment.Center;
-            hbox.AddChild(nameLabel);
-
-            var costLabel = new Label();
-            costLabel.Text = cost;
-            costLabel.AddThemeColorOverride("font_color", new Color("#6a8a6a"));
-            costLabel.AddThemeFontSizeOverride("font_size", 9);
-            costLabel.MouseFilter = Control.MouseFilterEnum.Ignore;
-            costLabel.VerticalAlignment = VerticalAlignment.Center;
-            hbox.AddChild(costLabel);
-
-            var spacerRight = new Control();
-            spacerRight.CustomMinimumSize = new Vector2(4, 0);
-            hbox.AddChild(spacerRight);
-
-            _itemsBox.AddChild(btn);
-
-            // Row divider (thin dim line)
-            if (i < GameConfig.BuildMenuItemCount - 1)
-            {
-                var rowDiv = new ColorRect();
-                rowDiv.CustomMinimumSize = new Vector2(0, 1f);
-                rowDiv.Color = new Color("#1a2a1a");
-                _itemsBox.AddChild(rowDiv);
-            }
+            card.GuiInput += (e) => OnCardInput(e, captured);
+            card.MouseEntered += () => { _hoverIndex = captured; QueueRedrawCards(); };
+            card.MouseExited  += () => { if (_hoverIndex == captured) { _hoverIndex = -1; QueueRedrawCards(); } };
+            _overlay.AddChild(card);
         }
 
-        // ── Upgrade button ────────────────────────────────────────────────
-        _upgradeBtn = new Button();
-        _upgradeBtn.Text    = "Upgrade";
-        _upgradeBtn.Flat    = false;
-        _upgradeBtn.Visible = false;
-        _upgradeBtn.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-
-        var upgNormal = new StyleBoxFlat();
-        upgNormal.BgColor     = new Color("#0a2a0a");
-        upgNormal.BorderColor = BorderGreen;
-        upgNormal.SetBorderWidthAll(1);
-        upgNormal.SetCornerRadiusAll(0);
-        _upgradeBtn.AddThemeStyleboxOverride("normal", upgNormal);
-        _upgradeBtn.AddThemeColorOverride("font_color", new Color("#4caf50"));
-        _upgradeBtn.AddThemeFontSizeOverride("font_size", 11);
-        _upgradeBtn.Pressed += OnUpgradeBtnPressed;
-        vbox.AddChild(_upgradeBtn);
-
-        // ── Connect WaveManager ───────────────────────────────────────────
-        _waveManager = GetNode<WaveManager>("/root/Main/VBoxContainer/GameArea/WaveManager");
-        _waveManager.WaveStarted  += OnWaveStarted;
-        _waveManager.WaveComplete += OnWaveComplete;
+        _overlay.GuiInput += OnOverlayInput;
     }
 
-    public override void _Process(double delta)
+    private void QueueRedrawCards()
     {
-        if (!_isOpen) return;
-        _blinkTimer += (float)delta;
-        if (_blinkTimer >= 0.5f)
+        foreach (var child in _overlay.GetChildren())
+            if (child is ModuleCard mc) mc.QueueRedraw();
+    }
+
+    private void OnCardInput(InputEvent e, int index)
+    {
+        if (e is InputEventMouseButton mb && mb.Pressed && mb.ButtonIndex == MouseButton.Left)
         {
-            _blinkTimer = 0f;
-            _cursorOn   = !_cursorOn;
-            if (_cursorLabel != null)
-                _cursorLabel.Modulate = _cursorOn ? Colors.White : new Color(1f, 1f, 1f, 0f);
+            SelectModule(index);
+            GetViewport().SetInputAsHandled();
         }
     }
 
-    // ── Public API ────────────────────────────────────────────────────────
+    private void OnOverlayInput(InputEvent e)
+    {
+        if (e is InputEventMouseButton mb && mb.Pressed)
+            GetViewport().SetInputAsHandled(); // eat all clicks on overlay
+    }
+
+    private void SelectModule(int index)
+    {
+        var (_, _, _, _, type, _) = _modules[index];
+        _selectedTower = type;
+        if (type == -1)
+            EmitSignal(SignalName.TowerDeselected);
+        else
+            EmitSignal(SignalName.TowerSelected, type);
+        Close();
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (_isOpen && @event.IsActionPressed("ui_cancel"))
+        {
+            Close();
+            GetViewport().SetInputAsHandled();
+        }
+    }
 
     public void Open()
     {
         if (_isWaveActive) return;
-        _isOpen        = true;
-        _popup.Visible = true;
-        RefreshHighlights();
+        _isOpen = true;
+        BuildMenu.IsOpen = true;
+        _overlay.Visible = true;
     }
 
     public void Close()
     {
-        _isOpen        = false;
-        _popup.Visible = false;
+        _isOpen = false;
+        BuildMenu.IsOpen = false;
+        _overlay.Visible = false;
     }
 
     public void Toggle()
     {
-        if (_isOpen) Close();
-        else         Open();
+        if (_isOpen) Close(); else Open();
     }
 
-    public void ShowUpgradeButton(int upgradeCost, bool canAfford)
+    public void OnWaveStarted(int _)  { _isWaveActive = true;  Close(); }
+    public void OnWaveComplete(int _) { _isWaveActive = false; }
+
+    public void ShowUpgradeButton(int cost, bool canAfford) { /* upgrade handled by TowerManager directly */ }
+    public void HideUpgradeButton() { }
+
+    // ── Inner class: Module card ─────────────────────────────────────────────
+
+    private partial class ModuleCard : Control
     {
-        if (_isWaveActive) return;
-        _selectedTower = -2;
-        RefreshHighlights();
-        HideUpgradeButton();
+        private readonly int    _index;
+        private readonly string _name;
+        private readonly string _hotkey;
+        private readonly string _cost;
+        private readonly string _desc;
+        private readonly Color  _color;
+        private readonly int    _w;
+        private readonly int    _h;
 
-        _upgradeBtn.Text     = upgradeCost <= 0 ? "MAX TIER" : $"Upgrade [${upgradeCost}]";
-        _upgradeBtn.Disabled = upgradeCost <= 0 || !canAfford;
-        _upgradeBtn.Visible  = true;
-
-        Open();
-    }
-
-    public void HideUpgradeButton()
-    {
-        if (_upgradeBtn != null)
-            _upgradeBtn.Visible = false;
-    }
-
-    // ── Private ───────────────────────────────────────────────────────────
-
-    private void OnItemPressed(int index)
-    {
-        HideUpgradeButton();
-
-        if (index == 0)
+        public ModuleCard(int index, string name, string hotkey, string cost, string desc, Color color, int w, int h)
         {
-            _selectedTower = -1;
-            EmitSignal(SignalName.TowerDeselected);
-        }
-        else
-        {
-            int towerType = index - 1;
-            if (_selectedTower == towerType)
-            {
-                _selectedTower = -1;
-                EmitSignal(SignalName.TowerDeselected);
-            }
-            else
-            {
-                _selectedTower = towerType;
-                EmitSignal(SignalName.TowerSelected, towerType);
-            }
+            _index = index; _name = name; _hotkey = hotkey; _cost = cost;
+            _desc = desc; _color = color; _w = w; _h = h;
+            MouseFilter = MouseFilterEnum.Stop;
         }
 
-        Close();
-    }
-
-    private void OnUpgradeBtnPressed()
-    {
-        EmitSignal(SignalName.UpgradeRequested);
-        Close();
-    }
-
-    private void OnWaveStarted(int _)
-    {
-        _isWaveActive = true;
-        _waveLockLabel.Visible = true;
-        _itemsBox.Visible = false;
-        Close();
-    }
-
-    private void OnWaveComplete(int _)
-    {
-        _isWaveActive = false;
-        _waveLockLabel.Visible = false;
-        _itemsBox.Visible = true;
-    }
-
-    private void RefreshHighlights()
-    {
-        if (_itemBtns == null) return;
-        for (int i = 0; i < _itemBtns.Length; i++)
+        public override void _Draw()
         {
-            bool active = (i == 0 && _selectedTower == -1) ||
-                          (i > 0  && _selectedTower == i - 1);
+            var rect = new Rect2(0, 0, _w, _h);
+            bool hover = GetParent()?.GetParent() is BuildMenu bm && bm._hoverIndex == _index;
 
-            var activeStyle = new StyleBoxFlat();
-            activeStyle.BgColor = active ? RowSelected : BgDark;
-            activeStyle.SetBorderWidthAll(0);
-            _itemBtns[i].AddThemeStyleboxOverride("normal", activeStyle);
+            // Card background
+            DrawRect(rect, new Color(0.04f, 0.1f, 0.04f, 1f));
+
+            // Border — bright if hovered
+            var borderColor = hover ? Colors.Yellow : _color;
+            DrawRect(new Rect2(0, 0, _w, 2), borderColor);
+            DrawRect(new Rect2(0, _h - 2, _w, 2), borderColor);
+            DrawRect(new Rect2(0, 0, 2, _h), borderColor);
+            DrawRect(new Rect2(_w - 2, 0, 2, _h), borderColor);
+
+            // Pixel art tower preview (48×48 centered in top area)
+            const int previewSize = 48;
+            float px = (_w - previewSize) * 0.5f;
+            float py = 6f;
+            DrawTowerPreview(px, py, previewSize);
+
+            // Name text
+            DrawString(ThemeDB.FallbackFont, new Vector2(4, py + previewSize + 14),
+                _name, HorizontalAlignment.Left, _w - 8, 9, _color);
+
+            // Hotkey + cost
+            string label = _hotkey.Length > 0 ? $"{_hotkey} {_cost}" : _cost;
+            DrawString(ThemeDB.FallbackFont, new Vector2(4, py + previewSize + 26),
+                label, HorizontalAlignment.Left, _w - 8, 8, Colors.White);
+
+            // Description
+            DrawString(ThemeDB.FallbackFont, new Vector2(4, py + previewSize + 38),
+                _desc, HorizontalAlignment.Left, _w - 8, 7, new Color(0.6f, 0.8f, 0.6f));
         }
-    }
 
-    public override void _UnhandledInput(InputEvent ev)
-    {
-        if (!_isOpen) return;
-        if (ev is InputEventMouseButton mb && mb.Pressed &&
-            mb.ButtonIndex == MouseButton.Left)
+        private void DrawTowerPreview(float ox, float oy, int size)
         {
-            var popupRect = _popup.GetGlobalRect();
-            if (!popupRect.HasPoint(mb.GlobalPosition))
+            float s = size / 16f; // scale factor (16px design → size px)
+            var c = _color;
+            var dark = c * 0.3f; dark.A = 1f;
+            var bright = c; bright.A = 1f;
+
+            // Outer frame
+            DrawRect(new Rect2(ox, oy, size, size), dark);
+            DrawRect(new Rect2(ox, oy, size, 2 * s), bright);
+            DrawRect(new Rect2(ox, oy + size - 2 * s, size, 2 * s), bright);
+            DrawRect(new Rect2(ox, oy, 2 * s, size), bright);
+            DrawRect(new Rect2(ox + size - 2 * s, oy, 2 * s, size), bright);
+
+            float cx = ox + size * 0.5f;
+            float cy = oy + size * 0.5f;
+
+            switch (_index)
             {
-                Close();
-                GetViewport().SetInputAsHandled();
+                case 0: // Wall
+                    DrawRect(new Rect2(ox + 4*s, oy + 4*s, size - 8*s, size - 8*s), bright);
+                    break;
+                case 1: // Basic Filter — cross
+                    DrawRect(new Rect2(cx - s, oy + 4*s, 2*s, size - 8*s), bright);
+                    DrawRect(new Rect2(ox + 4*s, cy - s, size - 8*s, 2*s), bright);
+                    break;
+                case 2: // Electrostatic — lightning bolt
+                    DrawRect(new Rect2(cx + s, oy + 4*s, 2*s, size*0.4f), bright);
+                    DrawRect(new Rect2(cx - 2*s, cy - s, 4*s, 2*s), bright);
+                    DrawRect(new Rect2(cx - 3*s, cy + s, 2*s, size*0.35f), bright);
+                    break;
+                case 3: // UV — ring
+                    for (int a = 0; a < 8; a++) {
+                        float angle = a * Mathf.Pi / 4f;
+                        float rx = cx + Mathf.Cos(angle) * size * 0.3f;
+                        float ry = cy + Mathf.Sin(angle) * size * 0.3f;
+                        DrawRect(new Rect2(rx - s, ry - s, 2*s, 2*s), bright);
+                    }
+                    break;
+                case 4: // Vortex — spiral dots
+                    for (int a = 0; a < 6; a++) {
+                        float t = a / 6f;
+                        float r = t * size * 0.35f;
+                        float angle = t * Mathf.Pi * 4f;
+                        DrawRect(new Rect2(cx + Mathf.Cos(angle)*r - s, cy + Mathf.Sin(angle)*r - s, 2*s, 2*s), bright);
+                    }
+                    break;
+                case 5: // Power Core — diamond
+                    DrawRect(new Rect2(cx - s, oy + 4*s, 2*s, size - 8*s), bright);
+                    DrawRect(new Rect2(ox + 4*s, cy - s, size - 8*s, 2*s), bright);
+                    DrawRect(new Rect2(cx - 3*s, cy - 3*s, 2*s, 2*s), bright);
+                    DrawRect(new Rect2(cx + s, cy + s, 2*s, 2*s), bright);
+                    break;
+                case 6: // Bio Neutraliser — hex dots
+                    for (int a = 0; a < 6; a++) {
+                        float angle = a * Mathf.Pi / 3f;
+                        float rx = cx + Mathf.Cos(angle) * size * 0.28f;
+                        float ry = cy + Mathf.Sin(angle) * size * 0.28f;
+                        DrawRect(new Rect2(rx - s, ry - s, 2*s, 2*s), bright);
+                    }
+                    DrawRect(new Rect2(cx - s, cy - s, 2*s, 2*s), bright);
+                    break;
+                case 7: // Magnetic Cage — inward arrows
+                    DrawRect(new Rect2(cx - s, oy + 4*s, 2*s, size*0.25f), bright);
+                    DrawRect(new Rect2(cx - s, oy + size*0.7f, 2*s, size*0.25f), bright);
+                    DrawRect(new Rect2(ox + 4*s, cy - s, size*0.25f, 2*s), bright);
+                    DrawRect(new Rect2(ox + size*0.7f, cy - s, size*0.25f, 2*s), bright);
+                    break;
             }
         }
     }
