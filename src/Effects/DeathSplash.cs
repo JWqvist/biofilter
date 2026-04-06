@@ -5,15 +5,16 @@ namespace BioFilter.Effects;
 /// <summary>
 /// Death splash effect — spawns 6-8 tiny squares flying outward when a particle dies.
 /// Pure Godot drawing, auto-queues free after animation completes.
+/// Color matches the particle type that triggered it.
 /// </summary>
 public partial class DeathSplash : Node2D
 {
-    private const float Duration = 0.4f;
-    private const float SquareSize = 2f;
-    private const int ParticleCount = 7;
-    private const float SpreadSpeed = 40f; // pixels per second
+    private const float Duration     = 0.4f;
+    private const float SquareSize   = 2f;
+    private const int  ParticleCount = 7;
+    private const float SpreadSpeed  = 40f; // pixels per second
 
-    private static readonly Color SplashColor = new Color("#7fff3a");
+    private Color _splashColor = new Color("#7fff3a");
 
     private struct Splinter
     {
@@ -23,6 +24,15 @@ public partial class DeathSplash : Node2D
 
     private Splinter[] _splinters = new Splinter[ParticleCount];
     private float _elapsed = 0f;
+
+    /// <summary>
+    /// Set the splash colour to match the dying particle type.
+    /// Must be called before _Ready() fires (i.e. right after AddChild).
+    /// </summary>
+    public void SetColor(Color color)
+    {
+        _splashColor = color;
+    }
 
     public override void _Ready()
     {
@@ -35,7 +45,7 @@ public partial class DeathSplash : Node2D
             float speed = rng.RandfRange(SpreadSpeed * 0.6f, SpreadSpeed * 1.4f);
             _splinters[i] = new Splinter
             {
-                Offset = Vector2.Zero,
+                Offset   = Vector2.Zero,
                 Velocity = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed
             };
         }
@@ -60,7 +70,7 @@ public partial class DeathSplash : Node2D
     public override void _Draw()
     {
         float alpha = 1f - (_elapsed / Duration);
-        var color = new Color(SplashColor.R, SplashColor.G, SplashColor.B, alpha);
+        var color = new Color(_splashColor.R, _splashColor.G, _splashColor.B, alpha);
 
         for (int i = 0; i < ParticleCount; i++)
         {
