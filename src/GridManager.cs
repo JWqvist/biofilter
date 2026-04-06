@@ -140,10 +140,9 @@ public partial class GridManager : Node2D
         return col >= 0 && col < GameConfig.GridWidth && row >= 0 && row < GameConfig.GridHeight;
     }
 
-    public Vector2I WorldToGrid(Vector2 viewportPos)
+    public Vector2I WorldToGrid(Vector2 localPos)
     {
-        // Convert viewport/canvas position to GridManager-local coordinate space
-        Vector2 localPos = ToLocal(viewportPos);
+        // Already in local space - just convert to grid coords
         int col = (int)(localPos.X / GameConfig.TileSize);
         int row = (int)(localPos.Y / GameConfig.TileSize);
         return new Vector2I(col, row);
@@ -399,10 +398,10 @@ public partial class GridManager : Node2D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is InputEventMouseMotion mouseMotion)
+        if (@event is InputEventMouseMotion)
         {
-            // Convert to local grid coordinates
-            Vector2 localPos = ToLocal(mouseMotion.Position);
+            // Use GetLocalMousePosition() — correctly handles canvas scaling
+            Vector2 localPos = GetLocalMousePosition();
             Vector2I tile = new Vector2I((int)(localPos.X / GameConfig.TileSize), (int)(localPos.Y / GameConfig.TileSize));
             if (IsValidCoord(tile.X, tile.Y))
                 SetHoverTile(tile);
@@ -411,7 +410,7 @@ public partial class GridManager : Node2D
         }
         else if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed)
         {
-            Vector2 localPos = ToLocal(mouseButton.Position);
+            Vector2 localPos = GetLocalMousePosition();
             Vector2I tile = new Vector2I((int)(localPos.X / GameConfig.TileSize), (int)(localPos.Y / GameConfig.TileSize));
             if (!IsValidCoord(tile.X, tile.Y)) return;
 
