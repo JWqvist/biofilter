@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://bxrjd3a1r66f2"]
+[gd_scene load_steps=17 format=3 uid="uid://bxrjd3a1r66f2"]
 
 [ext_resource type="Script" path="res://src/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://src/GridManager.cs" id="2_gridmanager"]
@@ -16,6 +16,7 @@
 [ext_resource type="PackedScene" path="res://scenes/UI/WinScreen.tscn" id="14_winscreen"]
 [ext_resource type="Script" path="res://src/UI/BuildButton.cs" id="15_buildbutton"]
 [ext_resource type="PackedScene" path="res://scenes/UI/PauseMenu.tscn" id="16_pausemenu"]
+[ext_resource type="Script" path="res://src/UI/BottomBarWidget.cs" id="17_bottombarmwidget"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -34,37 +35,39 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TopBar" type="HBoxContainer" parent="VBoxContainer"]
+[node name="TopBar" type="GridContainer" parent="VBoxContainer"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 85)
-theme_override_constants/separation = 4
+custom_minimum_size = Vector2(0, 90)
+theme_override_constants/h_separation = 0
+theme_override_constants/v_separation = 0
+columns = 4
 
 [node name="WaveHUD" type="Control" parent="VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_minimum_size = Vector2(140, 80)
+custom_minimum_size = Vector2(120, 88)
 script = ExtResource("11_wavehud")
 
 [node name="LivesMeter" type="Control" parent="VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_minimum_size = Vector2(80, 80)
+custom_minimum_size = Vector2(120, 88)
 script = ExtResource("6_livesmeter")
 
 [node name="CurrencyMeter" type="Control" parent="VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_minimum_size = Vector2(60, 70)
+custom_minimum_size = Vector2(120, 88)
 script = ExtResource("9_currencymeter")
 
 [node name="AirflowMeter" type="Control" parent="VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_minimum_size = Vector2(80, 85)
+custom_minimum_size = Vector2(120, 88)
 script = ExtResource("3_airflowmeter")
 
 [node name="GameArea" type="Control" parent="VBoxContainer"]
@@ -88,36 +91,13 @@ script = ExtResource("10_wavemanager")
 [node name="BottomBar" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 40)
-theme_override_constants/separation = 8
+theme_override_constants/separation = 0
 
-[node name="BuildButton" type="Button" parent="VBoxContainer/BottomBar"]
-layout_mode = 2
-size_flags_vertical = 4
-text = "🛠 Build"
-theme_override_font_sizes/font_size = 11
-script = ExtResource("15_buildbutton")
-
-[node name="PhaseLabel" type="Label" parent="VBoxContainer/BottomBar"]
-layout_mode = 2
-size_flags_vertical = 4
-text = "🛠 BUILD PHASE"
-theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(0.0, 0.784, 0.325, 1.0)
-
-[node name="StatusLabel" type="Label" parent="VBoxContainer/BottomBar"]
+[node name="BottomBarWidget" type="Control" parent="VBoxContainer/BottomBar"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 4
-text = "Wall mode"
-theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(0.75, 0.75, 0.85, 1.0)
-
-[node name="StartWaveButton" type="Button" parent="VBoxContainer/BottomBar"]
-layout_mode = 2
-size_flags_vertical = 4
-text = "▶ Start Wave"
-theme_override_font_sizes/font_size = 11
-script = ExtResource("12_startwavebutton")
+size_flags_vertical = 3
+script = ExtResource("17_bottombarmwidget")
 
 [node name="BuildMenu" type="CanvasLayer" parent="."]
 layer = 10
