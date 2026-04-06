@@ -27,7 +27,7 @@ window/size/window_width_override=960
 window/size/window_height_override=890
 window/mode=3
 window/stretch/mode="canvas_items"
-window/stretch/aspect="expand"
+window/stretch/aspect="keep"
 
 [dotnet]
 
@@ -36,3 +36,6 @@ project/assembly_name="BioFilter"
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
+
+[rendering]
+textures/canvas_textures/default_texture_filter=0
