@@ -152,6 +152,7 @@ public partial class Main : Node
         // Set GameArea offset so GridManager can convert mouse coords correctly
         // Defer to next frame so layout is calculated
         CallDeferred(nameof(SetGameAreaOffset));
+        CallDeferred(nameof(RefreshAirflow));
 
         _ambientDust = new AmbientDust();
         float gameW = GameConfig.GridWidth  * GameConfig.TileSize;
@@ -281,7 +282,13 @@ public partial class Main : Node
 
     private void SetGameAreaOffset()
     {
-        var gameArea = GetNode<Control>("GameArea");
-        _gridManager.GameAreaOffset = gameArea.GlobalPosition;
+        var gameArea = GetNodeOrNull<Control>("GameArea");
+        if (gameArea != null) _gridManager.GameAreaOffset = gameArea.GlobalPosition;
+    }
+
+    private void RefreshAirflow()
+    {
+        _gridManager.TriggerAirflowRefresh();
+        _rightPanel.UpdateAirflow(_gridManager.CurrentAirflow);
     }
 }

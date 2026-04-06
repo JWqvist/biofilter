@@ -68,7 +68,9 @@ public partial class TopStrip : Control
         lx += PixelFont.MeasureString(waveLabel, PixS) + 4f;
 
         // Segmented bar — fits full remaining width
-        float barEnd    = w - pad;
+        // Bar ends at grid width boundary (not full viewport width)
+        float gridWidth = GameConfig.GridWidth * GameConfig.TileSize;
+        float barEnd    = Mathf.Min(gridWidth - pad, w - pad);
         float barW      = barEnd - lx;
         if (barW > 0)
         {

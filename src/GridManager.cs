@@ -425,7 +425,8 @@ public partial class GridManager : Node2D
     {
         if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed)
         {
-            // Only handle clicks that are actually on the grid
+            // Only handle clicks when on grid and no menu open
+            if (!IsMouseOverGrid()) return;
             Vector2I tile = MouseToTile();
             if (!IsValidCoord(tile.X, tile.Y)) return;
 
