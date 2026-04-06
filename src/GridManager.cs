@@ -396,13 +396,22 @@ public partial class GridManager : Node2D
         DrawLine(new Vector2(gw, gh), new Vector2(gw, gh - arm), c, w);
     }
 
+    // Set this from Main.cs after layout is ready to account for TopBar offset
+    public Vector2 GameAreaOffset { get; set; } = Vector2.Zero;
+
+    public Vector2I MouseToTile()
+    {
+        // Get mouse position in viewport space, subtract GameArea offset
+        Vector2 vpMouse = GetViewport().GetMousePosition();
+        Vector2 localPos = vpMouse - GameAreaOffset;
+        return new Vector2I((int)(localPos.X / GameConfig.TileSize), (int)(localPos.Y / GameConfig.TileSize));
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is InputEventMouseMotion)
         {
-            // Use GetLocalMousePosition() — correctly handles canvas scaling
-            Vector2 localPos = GetLocalMousePosition();
-            Vector2I tile = new Vector2I((int)(localPos.X / GameConfig.TileSize), (int)(localPos.Y / GameConfig.TileSize));
+            Vector2I tile = MouseToTile();
             if (IsValidCoord(tile.X, tile.Y))
                 SetHoverTile(tile);
             else
@@ -410,8 +419,7 @@ public partial class GridManager : Node2D
         }
         else if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed)
         {
-            Vector2 localPos = GetLocalMousePosition();
-            Vector2I tile = new Vector2I((int)(localPos.X / GameConfig.TileSize), (int)(localPos.Y / GameConfig.TileSize));
+            Vector2I tile = MouseToTile();
             if (!IsValidCoord(tile.X, tile.Y)) return;
 
             if (mouseButton.ButtonIndex == MouseButton.Left)
