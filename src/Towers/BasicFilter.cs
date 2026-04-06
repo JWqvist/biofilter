@@ -66,29 +66,62 @@ public partial class BasicFilter : TowerBase
         base._Draw();
 
         int ts = GameConfig.TileSize;
-        float half = ts * 0.5f;
-        var bright = Constants.Colors.BasicFilterBright;
+        var bright = new Color("#4caf50");
+        var dim    = new Color("#2e7d32");
+        var brighter = new Color("#69f0ae");
 
-        // Center 3x3 cross/plus in bright green
-        // Horizontal bar: 5 wide x 1 tall (centered)
-        DrawRect(new Rect2(-2, -1, 5, 1), bright);
-        // Vertical bar: 1 wide x 5 tall (centered)
-        DrawRect(new Rect2(-1, -2, 1, 5), bright);
+        bool pulsing = _glowing;
+        Color cellColor = pulsing ? brighter : bright;
 
-        // Corner dots: 1x1 px at each inner corner (3px from edge)
-        float d = half - 3f;
-        DrawRect(new Rect2(-d - 1, -d - 1, 2, 2), bright);
-        DrawRect(new Rect2(d - 1,  -d - 1, 2, 2), bright);
-        DrawRect(new Rect2(-d - 1,  d - 1, 2, 2), bright);
-        DrawRect(new Rect2(d - 1,   d - 1, 2, 2), bright);
+        // 3×3 filter mesh grid
+        // Each cell: 2×2 px, 1px gap, centered in tile
+        // Total mesh width = 3*2 + 2*1 = 8px; offset = -4
+        float meshOff = -4f;
+        float cellSz  = 2f;
+        float gap     = 1f;
+        float step    = cellSz + gap;
 
-        // Glow on damage
+        for (int row = 0; row < 3; row++)
+        {
+            for (int col = 0; col < 3; col++)
+            {
+                float cx = meshOff + col * step;
+                float cy = meshOff + row * step;
+
+                bool isCenter = row == 1 && col == 1;
+                bool isChecker = (row + col) % 2 == 0;
+
+                Color c;
+                if (isCenter)
+                    c = pulsing ? brighter : brighter;
+                else
+                    c = pulsing ? cellColor : (isChecker ? bright : dim);
+
+                float sz = isCenter ? 3f : cellSz;
+                float offset = isCenter ? -0.5f : 0f;
+                DrawRect(new Rect2(cx + offset, cy + offset, sz, sz), c);
+            }
+        }
+
+        // Flow arrows: tiny 1px triangles on left and right inner edges
+        // Left side arrow (pointing right)
+        float arrowX = meshOff - 3f;
+        float arrowY = -1f;
+        DrawRect(new Rect2(arrowX,       arrowY,     1f, 3f), dim);
+        DrawRect(new Rect2(arrowX + 1f,  arrowY + 1f, 1f, 1f), dim);
+
+        // Right side arrow (pointing right)
+        float arrowRX = meshOff + 3f * step + 1f;
+        DrawRect(new Rect2(arrowRX,      arrowY,      1f, 3f), dim);
+        DrawRect(new Rect2(arrowRX + 1f, arrowY + 1f, 1f, 1f), dim);
+
+        // Glow pulse on damage
         if (_glowing)
         {
             float t = _glowTimer / GlowDuration;
             float alpha = (1f - t) * 0.5f;
             DrawCircle(Vector2.Zero, ts * 0.7f,
-                new Color(0.49f, 1.0f, 0.23f, alpha));
+                new Color(0.29f, 0.69f, 0.31f, alpha));
         }
     }
 }
