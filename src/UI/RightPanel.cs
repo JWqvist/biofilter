@@ -181,7 +181,7 @@ public partial class RightPanel : Control
         // BUILD button
         _buildRect = new Rect2(ox, y, btnW, btnH);
         DrawRect(new Rect2(ox, y, btnW, btnH), ColBtnBg);
-        DrawBorder(_buildRect, ColBtnBorder);
+        DrawBorder(_buildRect, _isBuildPhase ? ColBtnBorder : ColLabel);
         string buildStr = "BUILD MODULE";
         float  bsTW = PixelFont.MeasureString(buildStr, PixS);
         float  bsTX = ox + (btnW - bsTW) * 0.5f;
@@ -289,7 +289,7 @@ public partial class RightPanel : Control
 
         var pos = mb.Position;
 
-        if (_buildRect.HasPoint(pos))
+        if (_isBuildPhase && _buildRect.HasPoint(pos))
         {
             EmitSignal(SignalName.BuildPressed);
             return;

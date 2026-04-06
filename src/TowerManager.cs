@@ -29,6 +29,7 @@ public partial class TowerManager : Node2D
 
     // Injected by Main
     public GridManager? GridManagerRef { get; set; }
+    public bool IsWaveActive { get; set; } = false;
     public GameState? GameStateRef { get; set; }
     public ParticleManager? ParticleManagerRef { get; set; }
     public WaveManager? WaveManagerRef { get; set; }
@@ -118,9 +119,8 @@ public partial class TowerManager : Node2D
 
         // Only handle clicks when grid active and no menu open
         if (!GridManagerRef.IsMouseOverGrid()) return;
-        if (!GridManagerRef.WallPlacementActive) return; // block during wave
+        if (IsWaveActive) return; // block all building during wave
         Vector2I tile = GridManagerRef.MouseToTile();
-        if (!GridManagerRef.IsMouseOverGrid()) return;
 
         if (mb.ButtonIndex == MouseButton.Right)
         {
