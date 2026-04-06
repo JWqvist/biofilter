@@ -147,7 +147,7 @@ public partial class RightPanel : Control
 
         // ── POP ────────────────────────────────────────────────────────────
         {
-            PixelFont.DrawString(this, "POP", new Vector2(ox, y), PixS, ColLabel);
+            PixelFont.DrawString(this, "POP", new Vector2(ox, y), PixS, ColAmber);
             y += PixelFont.CharHeight(PixS) + 1f;
             float popValX = ox;
             float popValY = y;
@@ -167,7 +167,7 @@ public partial class RightPanel : Control
         }
 
         // ── CREDITS ────────────────────────────────────────────────────────
-        y = DrawSection(y, ox, inner, "CREDITS", $"$ {_currency:D4}", ColGreen);
+        y = DrawSection(y, ox, inner, "CREDITS", $"$ {_currency:D4}", new Color("#ffd700"), ColAmber);
 
         // ── THREAT ─────────────────────────────────────────────────────────
         y = DrawThreatSection(y, ox, inner);
@@ -222,16 +222,16 @@ public partial class RightPanel : Control
         // ── STATUS ─────────────────────────────────────────────────────────
         DrawRect(new Rect2(ox, y, inner, 1f), ColDivider);
         y += 3f;
-        PixelFont.DrawString(this, "STATUS:", new Vector2(ox, y), PixS, ColLabel);
+        PixelFont.DrawString(this, "STATUS:", new Vector2(ox, y), PixS, ColAmber);
         y += PixelFont.CharHeight(PixS) + 2f;
         Color statusCol = _isBuildPhase ? ColGreen : ColAmber;
         PixelFont.DrawString(this, _statusText, new Vector2(ox, y), PixS, statusCol);
     }
 
     /// <summary>Draw a labeled value section. Returns new y after divider.</summary>
-    private float DrawSection(float y, float ox, float inner, string label, string value, Color valueCol)
+    private float DrawSection(float y, float ox, float inner, string label, string value, Color valueCol, Color? labelCol = null)
     {
-        PixelFont.DrawString(this, label, new Vector2(ox, y), PixS, ColLabel);
+        PixelFont.DrawString(this, label, new Vector2(ox, y), PixS, labelCol ?? ColLabel);
         y += PixelFont.CharHeight(PixS) + 1f;
         PixelFont.DrawString(this, value, new Vector2(ox, y), PixS, valueCol);
         y += PixelFont.CharHeight(PixS) + 3f;
@@ -239,24 +239,22 @@ public partial class RightPanel : Control
         return y + 4f;
     }
 
-    /// <summary>Draw THREAT section with segmented bar.</summary>
+    /// <summary>Draw AIRFLOW section with segmented bar.</summary>
     private float DrawThreatSection(float y, float ox, float inner)
     {
-        PixelFont.DrawString(this, "AIRFLOW", new Vector2(ox, y), PixS, ColLabel);
+        PixelFont.DrawString(this, "AIRFLOW", new Vector2(ox, y), PixS, ColAmber);
         y += PixelFont.CharHeight(PixS) + 1f;
 
-        float threat = GameConfig.TotalWaves > 0
-            ? (float)_currentWave / GameConfig.TotalWaves
-            : 0f;
-        int pct = (int)(threat * 100f);
+        float airflow = _airflow;
+        int pct = (int)(airflow * 100f);
 
         // Bar
         float segGap = 1f;
         float segW   = (inner - segGap * (ThreatSegs - 1)) / ThreatSegs;
-        int   filled = (int)(threat * ThreatSegs);
-        Color barCol = threat < 0.4f ? ColGreen
-                     : threat < 0.7f ? ColAmber
-                                     : ColRed;
+        int   filled = (int)(airflow * ThreatSegs);
+        Color barCol = airflow > 0.6f ? ColGreen
+                     : airflow > 0.3f ? ColAmber
+                                      : ColRed;
         for (int i = 0; i < ThreatSegs; i++)
         {
             float sx = ox + i * (segW + segGap);
@@ -265,7 +263,7 @@ public partial class RightPanel : Control
         y += 7f;
 
         // Percentage label
-        string pctStr = $"{pct}%";
+        string pctStr = $"{pct:D3}%";
         PixelFont.DrawString(this, pctStr, new Vector2(ox, y), PixS, barCol);
         y += PixelFont.CharHeight(PixS) + 3f;
         DrawRect(new Rect2(ox, y, inner, 1f), ColDivider);

@@ -78,13 +78,15 @@ public partial class BuildMenu : CanvasLayer
         _overlay.AddChild(closeBtn);
 
         // Module cards grid
+        // Viewport is 640x360 — 3 rows of cards must fit.
+        // 3 rows * 110px + 2 gaps * 4px + padY 22 = 22+330+8 = 360px exactly.
         const int cols = 3;
         const int cardW = 140;
         const int cardH = 110;
         const int padX = 8;
-        const int padY = 28;
+        const int padY = 22; // reduced from 28 to fit 3 rows in 360px viewport
         const int gapX = 6;
-        const int gapY = 6;
+        const int gapY = 4;  // reduced from 6
 
         for (int i = 0; i < _modules.Length; i++)
         {
