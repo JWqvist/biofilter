@@ -162,6 +162,10 @@ public partial class Main : Node
         var gameArea = GetNode<Control>("VBoxContainer/GameArea");
         gameArea.AddChild(_airflowVisualizer);
 
+        // Set GameArea offset so GridManager can convert mouse coords correctly
+        // Defer to next frame so layout is calculated
+        CallDeferred(nameof(SetGameAreaOffset));
+
         _ambientDust = new AmbientDust();
         float gameW = GameConfig.GridWidth  * GameConfig.TileSize;
         float gameH = GameConfig.GridHeight * GameConfig.TileSize;
@@ -279,4 +283,10 @@ public partial class Main : Node
     }
 
     private void TogglePauseMenu() => _pauseMenu.Toggle();
+
+    private void SetGameAreaOffset()
+    {
+        var gameArea = GetNode<Control>("VBoxContainer/GameArea");
+        _gridManager.GameAreaOffset = gameArea.GlobalPosition;
+    }
 }
