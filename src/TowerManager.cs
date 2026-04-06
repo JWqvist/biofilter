@@ -116,7 +116,9 @@ public partial class TowerManager : Node2D
         if (!mb.Pressed) return;
         if (GridManagerRef == null) return;
 
-        // Only handle clicks that land on the grid
+        // Only handle clicks when grid active and no menu open
+        if (!GridManagerRef.IsMouseOverGrid()) return;
+        if (!GridManagerRef.WallPlacementActive) return; // block during wave
         Vector2I tile = GridManagerRef.MouseToTile();
         if (!GridManagerRef.IsMouseOverGrid()) return;
 

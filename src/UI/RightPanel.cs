@@ -19,7 +19,7 @@ public partial class RightPanel : Control
     private int    _currency     = GameConfig.StartingCurrency;
     private int    _currentWave  = 0;
     private bool   _isBuildPhase = true;
-    private bool   _isFast       = false;
+    private int    _speedStep     = 0; // 0=1x 1=2x 2=3x
     private string _statusText   = "BUILD PHASE";
 
     // ── Hit rects ─────────────────────────────────────────────────────────
@@ -99,8 +99,8 @@ public partial class RightPanel : Control
 
     public void ResetSpeed()
     {
-        _isFast = false;
-        Engine.TimeScale = GameConfig.SpeedNormal;
+        Engine.TimeScale = 1.0f;
+        _speedStep = 0;
         QueueRedraw();
     }
 
@@ -168,7 +168,7 @@ public partial class RightPanel : Control
         }
 
         // SPEED button
-        string speedStr = _isFast ? "SPEED: 2X" : "SPEED: 1X";
+        string speedStr = _speedStep == 0 ? "SPEED: 1X" : _speedStep == 1 ? "SPEED: 2X" : "SPEED: 3X";
         _speedRect = new Rect2(ox, y, btnW, btnH);
         DrawRect(new Rect2(ox, y, btnW, btnH), ColSpeedDim);
         DrawBorder(_speedRect, ColBorder);
@@ -176,7 +176,7 @@ public partial class RightPanel : Control
         float spTX = ox + (btnW - spTW) * 0.5f;
         float spTY = y + (btnH - PixelFont.CharHeight(PixS)) * 0.5f;
         PixelFont.DrawString(this, speedStr, new Vector2(spTX, spTY), PixS,
-            _isFast ? ColAmber : ColLabel);
+            _speedStep > 0 ? ColAmber : ColLabel);
         y += btnH + 4f;
 
         // ── STATUS ─────────────────────────────────────────────────────────
@@ -263,9 +263,10 @@ public partial class RightPanel : Control
 
         if (_speedRect.HasPoint(pos))
         {
-            _isFast = !_isFast;
-            Engine.TimeScale = _isFast ? GameConfig.SpeedFast : GameConfig.SpeedNormal;
-            EmitSignal(SignalName.SpeedToggled, _isFast ? GameConfig.SpeedFast : GameConfig.SpeedNormal);
+            _speedStep = (_speedStep + 1) % 3;
+            float[] speeds = { 1.0f, 2.0f, 3.0f };
+            Engine.TimeScale = speeds[_speedStep];
+            EmitSignal(SignalName.SpeedToggled, Engine.TimeScale);
             QueueRedraw();
         }
     }
