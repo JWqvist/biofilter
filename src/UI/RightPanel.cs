@@ -52,6 +52,10 @@ public partial class RightPanel : Control
 
     // ── Public API ────────────────────────────────────────────────────────
 
+    private float _airflow = 1.0f;
+
+    public void UpdateAirflow(float airflow) { _airflow = airflow; QueueRedraw(); }
+
     public void UpdatePopulation(int population)
     {
         _population = population;
@@ -198,7 +202,7 @@ public partial class RightPanel : Control
     /// <summary>Draw THREAT section with segmented bar.</summary>
     private float DrawThreatSection(float y, float ox, float inner)
     {
-        PixelFont.DrawString(this, "THREAT", new Vector2(ox, y), PixS, ColLabel);
+        PixelFont.DrawString(this, "AIRFLOW", new Vector2(ox, y), PixS, ColLabel);
         y += PixelFont.CharHeight(PixS) + 1f;
 
         float threat = GameConfig.TotalWaves > 0
