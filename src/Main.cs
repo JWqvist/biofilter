@@ -5,21 +5,20 @@ using Godot;
 
 public partial class Main : Node
 {
-    private GridManager    _gridManager     = null!;
-    private BioFilter.AirflowMeter _airflowMeter = null!;
-    private GameState      _gameState       = null!;
+    private GridManager     _gridManager     = null!;
+    private GameState       _gameState       = null!;
     private ParticleManager _particleManager = null!;
-    private BioFilter.LivesMeter _livesMeter = null!;
-    private TowerManager   _towerManager    = null!;
-    private CurrencyMeter  _currencyMeter   = null!;
-    private BuildMenu      _buildMenu       = null!;
-    private WaveManager    _waveManager     = null!;
-    private WaveHUD        _waveHUD         = null!;
-    private GameOver       _gameOverScreen  = null!;
-    private WinScreen      _winScreen       = null!;
-    private PauseMenu      _pauseMenu       = null!;
-    private Timer          _statusTimer     = null!;
-    private BottomBarWidget _bottomBarWidget = null!;
+    private TowerManager    _towerManager    = null!;
+    private BuildMenu       _buildMenu       = null!;
+    private WaveManager     _waveManager     = null!;
+    private GameOver        _gameOverScreen  = null!;
+    private WinScreen       _winScreen       = null!;
+    private PauseMenu       _pauseMenu       = null!;
+    private Timer           _statusTimer     = null!;
+
+    // New widescreen HUD nodes
+    private TopStrip  _topStrip   = null!;
+    private RightPanel _rightPanel = null!;
 
     // Sprint 9 UI nodes (created programmatically)
     private WavePreview       _wavePreview       = null!;
@@ -35,22 +34,20 @@ public partial class Main : Node
         // Force fullscreen on startup
         DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
 
-        _gridManager      = GetNode<GridManager>("VBoxContainer/GameArea/GridManager");
-        _airflowMeter     = GetNode<BioFilter.AirflowMeter>("VBoxContainer/TopBar/AirflowMeter");
-        _gameState        = GetNode<GameState>("GameState");
-        _particleManager  = GetNode<ParticleManager>("VBoxContainer/GameArea/ParticleManager");
-        _livesMeter       = GetNode<BioFilter.LivesMeter>("VBoxContainer/TopBar/LivesMeter");
-        _towerManager     = GetNode<TowerManager>("VBoxContainer/GameArea/TowerManager");
-        _currencyMeter    = GetNode<CurrencyMeter>("VBoxContainer/TopBar/CurrencyMeter");
-        _buildMenu        = GetNode<BuildMenu>("BuildMenu");
-        _waveManager      = GetNode<WaveManager>("VBoxContainer/GameArea/WaveManager");
-        _waveHUD          = GetNode<WaveHUD>("VBoxContainer/TopBar/WaveHUD");
-        _gameOverScreen   = GetNode<GameOver>("GameOver");
-        _winScreen        = GetNode<WinScreen>("WinScreen");
-        _pauseMenu        = GetNode<PauseMenu>("PauseMenu");
-        _bottomBarWidget  = GetNode<BottomBarWidget>("VBoxContainer/BottomBar/BottomBarWidget");
+        // New widescreen layout nodes
+        _topStrip      = GetNode<TopStrip>("TopStrip");
+        _rightPanel    = GetNode<RightPanel>("RightPanel");
+        _gridManager   = GetNode<GridManager>("GameArea/GridManager");
+        _gameState     = GetNode<GameState>("GameState");
+        _particleManager = GetNode<ParticleManager>("GameArea/ParticleManager");
+        _towerManager  = GetNode<TowerManager>("GameArea/TowerManager");
+        _buildMenu     = GetNode<BuildMenu>("BuildMenu");
+        _waveManager   = GetNode<WaveManager>("GameArea/WaveManager");
+        _gameOverScreen = GetNode<GameOver>("GameOver");
+        _winScreen     = GetNode<WinScreen>("WinScreen");
+        _pauseMenu     = GetNode<PauseMenu>("PauseMenu");
 
-        // ── Sprint 9: Create new UI nodes ─────────────────────────────────────
+        // ── Sprint 9: Create new UI nodes ─────────────────────────────────
         _wavePreview = new WavePreview();
         AddChild(_wavePreview);
 
@@ -60,27 +57,29 @@ public partial class Main : Node
         _airflowVignette = new AirflowVignette();
         AddChild(_airflowVignette);
 
-        // Wire BottomBarWidget phase + signals
-        _bottomBarWidget.Initialize(_waveManager);
-        _bottomBarWidget.BuildPressed     += () => _buildMenu.Toggle();
-        _bottomBarWidget.StartWavePressed += () => _waveManager.StartWave();
-        _bottomBarWidget.SpeedToggled     += (_newSpeed) => { /* speed applied inside BottomBarWidget */ };
+        // Wire RightPanel phase + signals
+        _rightPanel.Initialize(_waveManager);
+        _rightPanel.BuildPressed     += () => _buildMenu.Toggle();
+        _rightPanel.StartWavePressed += () => _waveManager.StartWave();
+        _rightPanel.SpeedToggled     += (_newSpeed) => { /* speed applied inside RightPanel */ };
 
         // Status timer — auto-clears status text after a few seconds
         _statusTimer = new Timer();
         _statusTimer.OneShot = true;
         _statusTimer.WaitTime = 2.0;
-        _statusTimer.Timeout += () => _bottomBarWidget.SetStatus("Wall mode");
+        _statusTimer.Timeout += () => _rightPanel.SetStatus(_waveManager.State == WaveManager.WaveState.Idle
+            ? "Wall mode"
+            : "WAVE ACTIVE");
         AddChild(_statusTimer);
 
-        // Wire airflow signal to HUD meter and vignette
-        _gridManager.AirflowChanged += _airflowMeter.UpdateAirflow;
+        // Wire airflow signal to TopStrip and vignette
+        _gridManager.AirflowChanged += _topStrip.UpdateAirflow;
         _gridManager.AirflowChanged += _airflowVignette.UpdateAirflow;
         _gridManager.AirflowChanged += (af) => _gameState.RecordAirflow(af);
 
-        // Wire GameState to HUD
-        _gameState.PopulationChanged += _livesMeter.UpdatePopulation;
-        _gameState.CurrencyChanged   += _currencyMeter.UpdateCurrency;
+        // Wire GameState to RightPanel
+        _gameState.PopulationChanged += _rightPanel.UpdatePopulation;
+        _gameState.CurrencyChanged   += _rightPanel.UpdateCurrency;
         _gameState.GameOver          += OnGameOver;
         _gameState.BonusEarned       += (msg, _amount) => _bonusNotification.ShowBonus(msg);
 
@@ -105,7 +104,7 @@ public partial class Main : Node
         // Wire refund status message
         _towerManager.TileRefunded += (refundAmount) =>
         {
-            _bottomBarWidget.SetStatus(refundAmount > 0
+            _rightPanel.SetStatus(refundAmount > 0
                 ? $"Refunded: ${refundAmount}"
                 : "Removed");
             _statusTimer.Stop();
@@ -117,13 +116,13 @@ public partial class Main : Node
         {
             _towerManager.OnTowerSelected(towerType);
             _gridManager.WallPlacementActive = false;
-            _bottomBarWidget.SetStatus(TowerName(towerType));
+            _rightPanel.SetStatus(TowerName(towerType));
         };
         _buildMenu.TowerDeselected += () =>
         {
             _towerManager.OnTowerDeselected();
             _gridManager.WallPlacementActive = true;
-            _bottomBarWidget.SetStatus("Wall mode");
+            _rightPanel.SetStatus("Wall mode");
         };
         _buildMenu.UpgradeRequested += _towerManager.OnUpgradeRequested;
 
@@ -131,23 +130,23 @@ public partial class Main : Node
         _towerManager.TowerClicked    += _buildMenu.ShowUpgradeButton;
         _towerManager.TowerDeselected += _buildMenu.HideUpgradeButton;
 
-        // Wire WaveManager (Sprint 9: inject WavePreview and GameState)
+        // Wire WaveManager
         _waveManager.ParticleManagerRef = _particleManager;
         _waveManager.WavePreviewRef     = _wavePreview;
         _waveManager.GameStateRef       = _gameState;
-        _waveManager.WaveStarted        += _waveHUD.OnWaveStarted;
-        _waveManager.WaveComplete       += _waveHUD.OnWaveComplete;
+        _waveManager.WaveStarted        += _topStrip.OnWaveStarted;
+        _waveManager.WaveComplete       += _topStrip.OnWaveComplete;
         _waveManager.WaveComplete       += (_) => _gameState.RecordWaveSurvived();
         _waveManager.GameWon            += OnGameWon;
 
         // Set initial display
-        _airflowMeter.UpdateAirflow(_gridManager.CurrentAirflow);
-        _livesMeter.UpdatePopulation(_gameState.Population);
-        _currencyMeter.UpdateCurrency(_gameState.Currency);
+        _topStrip.UpdateAirflow(_gridManager.CurrentAirflow);
+        _rightPanel.UpdatePopulation(_gameState.Population);
+        _rightPanel.UpdateCurrency(_gameState.Currency);
 
-        // ── Sprint 10: VFX nodes ──────────────────────────────────────────────
+        // ── Sprint 10: VFX nodes ──────────────────────────────────────────
         _airflowVisualizer = new AirflowVisualizer();
-        var gameArea = GetNode<Control>("VBoxContainer/GameArea");
+        var gameArea = GetNode<Control>("GameArea");
         gameArea.AddChild(_airflowVisualizer);
 
         // Set GameArea offset so GridManager can convert mouse coords correctly
@@ -198,13 +197,13 @@ public partial class Main : Node
             }
         };
 
-        GD.Print("BioFilter initialized.");
+        GD.Print("BioFilter initialized (widescreen HUD).");
     }
 
     private void OnGameOver()
     {
         GD.Print("GAME OVER — population reached zero.");
-        _bottomBarWidget.ResetSpeed();
+        _rightPanel.ResetSpeed();
         _gameOverScreen.Show(_gameState.Population);
         GetTree().Paused = true;
         _gameOverScreen.ProcessMode = ProcessModeEnum.Always;
@@ -213,7 +212,7 @@ public partial class Main : Node
     private void OnGameWon()
     {
         GD.Print("GAME WON — all waves survived!");
-        _bottomBarWidget.ResetSpeed();
+        _rightPanel.ResetSpeed();
         _winScreen.Show(GameConfig.TotalWaves);
         GetTree().Paused = true;
         _winScreen.ProcessMode = ProcessModeEnum.Always;
@@ -266,7 +265,7 @@ public partial class Main : Node
     {
         _towerManager.OnTowerSelected(menuIndex);
         _gridManager.WallPlacementActive = false;
-        _bottomBarWidget.SetStatus($"{type} selected [hotkey]");
+        _rightPanel.SetStatus($"{type} selected");
         _statusTimer.Stop();
         _statusTimer.Start();
     }
@@ -275,14 +274,14 @@ public partial class Main : Node
     {
         _towerManager.OnTowerDeselected();
         _gridManager.WallPlacementActive = true;
-        _bottomBarWidget.SetStatus("Wall mode");
+        _rightPanel.SetStatus("Wall mode");
     }
 
     private void TogglePauseMenu() => _pauseMenu.Toggle();
 
     private void SetGameAreaOffset()
     {
-        var gameArea = GetNode<Control>("VBoxContainer/GameArea");
+        var gameArea = GetNode<Control>("GameArea");
         _gridManager.GameAreaOffset = gameArea.GlobalPosition;
     }
 }

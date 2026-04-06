@@ -52,6 +52,16 @@ namespace BioFilter
             public static readonly Color TextDim       = new Color("#6a8a6a"); // Secondary text
             public static readonly Color CornerMarker  = new Color("#4caf50"); // Grid corner brackets
             public static readonly Color CorruptedPixel = new Color(0f, 1f, 0.2f, 0.15f); // Corrupted pixel flash
+
+            // ── Widescreen HUD palette ────────────────────────────────────────────
+            public static readonly Color AmberAccent = new Color("#ff8f00");
+            public static readonly Color AmberDim    = new Color("#7a4400");
+            public static readonly Color PanelBg     = new Color("#0d1208");
+            public static readonly Color PanelBorder = new Color("#1e3a1e");
+            public static readonly Color ActiveGreen = new Color("#4caf50");
+            public static readonly Color TextLight   = new Color("#c8e6c0");
+            public static readonly Color TextDim2    = new Color("#4a7a4a");
+            public static readonly Color AlertRed    = new Color("#c62828");
         }
     }
 }
