@@ -13,21 +13,18 @@ public partial class Main : Node
     private TowerManager   _towerManager    = null!;
     private CurrencyMeter  _currencyMeter   = null!;
     private BuildMenu      _buildMenu       = null!;
-    private BuildButton    _buildButton     = null!;
     private WaveManager    _waveManager     = null!;
     private WaveHUD        _waveHUD         = null!;
-    private StartWaveButton _startWaveButton = null!;
     private GameOver       _gameOverScreen  = null!;
     private WinScreen      _winScreen       = null!;
     private PauseMenu      _pauseMenu       = null!;
-    private Label          _statusLabel     = null!;
     private Timer          _statusTimer     = null!;
+    private BottomBarWidget _bottomBarWidget = null!;
 
     // Sprint 9 UI nodes (created programmatically)
     private WavePreview       _wavePreview       = null!;
     private BonusNotification _bonusNotification = null!;
     private AirflowVignette   _airflowVignette   = null!;
-    private SpeedButton       _speedButton       = null!;
 
     // Sprint 10 VFX nodes
     private AirflowVisualizer _airflowVisualizer = null!;
@@ -46,14 +43,12 @@ public partial class Main : Node
         _towerManager     = GetNode<TowerManager>("VBoxContainer/GameArea/TowerManager");
         _currencyMeter    = GetNode<CurrencyMeter>("VBoxContainer/TopBar/CurrencyMeter");
         _buildMenu        = GetNode<BuildMenu>("BuildMenu");
-        _buildButton      = GetNode<BuildButton>("VBoxContainer/BottomBar/BuildButton");
         _waveManager      = GetNode<WaveManager>("VBoxContainer/GameArea/WaveManager");
         _waveHUD          = GetNode<WaveHUD>("VBoxContainer/TopBar/WaveHUD");
-        _startWaveButton  = GetNode<StartWaveButton>("VBoxContainer/BottomBar/StartWaveButton");
         _gameOverScreen   = GetNode<GameOver>("GameOver");
         _winScreen        = GetNode<WinScreen>("WinScreen");
         _pauseMenu        = GetNode<PauseMenu>("PauseMenu");
-        _statusLabel      = GetNode<Label>("VBoxContainer/BottomBar/StatusLabel");
+        _bottomBarWidget  = GetNode<BottomBarWidget>("VBoxContainer/BottomBar/BottomBarWidget");
 
         // ── Sprint 9: Create new UI nodes ─────────────────────────────────────
         _wavePreview = new WavePreview();
@@ -65,19 +60,17 @@ public partial class Main : Node
         _airflowVignette = new AirflowVignette();
         AddChild(_airflowVignette);
 
-        // SpeedButton added to BottomBar before StartWaveButton
-        _speedButton = new SpeedButton();
-        _speedButton.CustomMinimumSize = new Vector2(60f, 0f);
-        var bottomBar = GetNode<HBoxContainer>("VBoxContainer/BottomBar");
-        // Insert before StartWaveButton (last child)
-        bottomBar.AddChild(_speedButton);
-        bottomBar.MoveChild(_speedButton, _startWaveButton.GetIndex());
+        // Wire BottomBarWidget phase + signals
+        _bottomBarWidget.Initialize(_waveManager);
+        _bottomBarWidget.BuildPressed     += () => _buildMenu.Toggle();
+        _bottomBarWidget.StartWavePressed += () => _waveManager.StartWave();
+        _bottomBarWidget.SpeedToggled     += (_newSpeed) => { /* speed applied inside BottomBarWidget */ };
 
-        // Status timer — auto-clears status label after a few seconds
+        // Status timer — auto-clears status text after a few seconds
         _statusTimer = new Timer();
         _statusTimer.OneShot = true;
         _statusTimer.WaitTime = 2.0;
-        _statusTimer.Timeout += () => _statusLabel.Text = "Wall mode";
+        _statusTimer.Timeout += () => _bottomBarWidget.SetStatus("Wall mode");
         AddChild(_statusTimer);
 
         // Wire airflow signal to HUD meter and vignette
@@ -112,26 +105,25 @@ public partial class Main : Node
         // Wire refund status message
         _towerManager.TileRefunded += (refundAmount) =>
         {
-            _statusLabel.Text = refundAmount > 0
+            _bottomBarWidget.SetStatus(refundAmount > 0
                 ? $"Refunded: ${refundAmount}"
-                : "Removed";
+                : "Removed");
             _statusTimer.Stop();
             _statusTimer.Start();
         };
-
-        // Wire BuildButton → BuildMenu
-        _buildButton.Initialize(_buildMenu);
 
         // Wire BuildMenu signals to TowerManager / GridManager
         _buildMenu.TowerSelected += (towerType) =>
         {
             _towerManager.OnTowerSelected(towerType);
             _gridManager.WallPlacementActive = false;
+            _bottomBarWidget.SetStatus(TowerName(towerType));
         };
         _buildMenu.TowerDeselected += () =>
         {
             _towerManager.OnTowerDeselected();
             _gridManager.WallPlacementActive = true;
+            _bottomBarWidget.SetStatus("Wall mode");
         };
         _buildMenu.UpgradeRequested += _towerManager.OnUpgradeRequested;
 
@@ -145,12 +137,8 @@ public partial class Main : Node
         _waveManager.GameStateRef       = _gameState;
         _waveManager.WaveStarted        += _waveHUD.OnWaveStarted;
         _waveManager.WaveComplete       += _waveHUD.OnWaveComplete;
-        _waveManager.WaveComplete       += (_) => _speedButton.ResetSpeed();
         _waveManager.WaveComplete       += (_) => _gameState.RecordWaveSurvived();
         _waveManager.GameWon            += OnGameWon;
-
-        // Wire StartWaveButton
-        _startWaveButton.Initialize(_waveManager);
 
         // Set initial display
         _airflowMeter.UpdateAirflow(_gridManager.CurrentAirflow);
@@ -216,7 +204,7 @@ public partial class Main : Node
     private void OnGameOver()
     {
         GD.Print("GAME OVER — population reached zero.");
-        _speedButton.ResetSpeed();
+        _bottomBarWidget.ResetSpeed();
         _gameOverScreen.Show(_gameState.Population);
         GetTree().Paused = true;
         _gameOverScreen.ProcessMode = ProcessModeEnum.Always;
@@ -225,7 +213,7 @@ public partial class Main : Node
     private void OnGameWon()
     {
         GD.Print("GAME WON — all waves survived!");
-        _speedButton.ResetSpeed();
+        _bottomBarWidget.ResetSpeed();
         _winScreen.Show(GameConfig.TotalWaves);
         GetTree().Paused = true;
         _winScreen.ProcessMode = ProcessModeEnum.Always;
@@ -266,11 +254,19 @@ public partial class Main : Node
         }
     }
 
+    private static string TowerName(int t) => t switch
+    {
+        0 => "Basic Filter",
+        1 => "Electrostatic",
+        2 => "UV Steriliser",
+        _ => "Unknown"
+    };
+
     private void SelectTower(TowerManager.TowerType type, int menuIndex)
     {
         _towerManager.OnTowerSelected(menuIndex);
         _gridManager.WallPlacementActive = false;
-        _statusLabel.Text = $"{type} selected [hotkey]";
+        _bottomBarWidget.SetStatus($"{type} selected [hotkey]");
         _statusTimer.Stop();
         _statusTimer.Start();
     }
@@ -279,7 +275,7 @@ public partial class Main : Node
     {
         _towerManager.OnTowerDeselected();
         _gridManager.WallPlacementActive = true;
-        _statusLabel.Text = "Wall mode";
+        _bottomBarWidget.SetStatus("Wall mode");
     }
 
     private void TogglePauseMenu() => _pauseMenu.Toggle();
