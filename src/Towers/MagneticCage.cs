@@ -21,6 +21,7 @@ public partial class MagneticCage : TowerBase
 
     // Map particle -> time held so far
     private readonly Dictionary<Particle, float> _heldParticles = new();
+    private readonly Dictionary<Particle, float> _releaseCooldown = new(); // time until can be caught again
     // Original speeds before we stopped them
     private readonly Dictionary<Particle, float> _originalSpeeds = new();
 
@@ -34,7 +35,7 @@ public partial class MagneticCage : TowerBase
         // Start holding newly arrived particles
         foreach (var p in inRange)
         {
-            if (!_heldParticles.ContainsKey(p))
+            if (!_heldParticles.ContainsKey(p) && !_releaseCooldown.ContainsKey(p))
             {
                 // Freeze particle
                 _originalSpeeds[p] = p.Speed;
@@ -68,7 +69,21 @@ public partial class MagneticCage : TowerBase
                 p.Speed = origSpeed;
             _heldParticles.Remove(p);
             _originalSpeeds.Remove(p);
+            _releaseCooldown[p] = GameConfig.MagneticCageHoldSeconds; // cooldown = same as hold time
         }
+
+        // Tick cooldowns
+        var cooldownExpired = new List<Particle>();
+        foreach (var (p, cd) in _releaseCooldown)
+        {
+            float newCd = cd - dt;
+            if (!Godot.GodotObject.IsInstanceValid(p) || newCd <= 0)
+                cooldownExpired.Add(p);
+            else
+                _releaseCooldown[p] = newCd;
+        }
+        foreach (var p in cooldownExpired)
+            _releaseCooldown.Remove(p);
 
         QueueRedraw();
     }

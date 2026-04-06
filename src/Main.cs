@@ -135,6 +135,8 @@ public partial class Main : Node
         _waveManager.WavePreviewRef     = _wavePreview;
         _waveManager.GameStateRef       = _gameState;
         _waveManager.WaveStarted        += _topStrip.OnWaveStarted;
+        _waveManager.WaveStarted        += (_) => _towerManager.IsWaveActive = true;
+        _waveManager.WaveComplete       += (_) => _towerManager.IsWaveActive = false;
         _waveManager.WaveComplete       += _topStrip.OnWaveComplete;
         _waveManager.WaveComplete       += (_) => _gameState.RecordWaveSurvived();
         _waveManager.GameWon            += OnGameWon;
