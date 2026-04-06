@@ -1,22 +1,17 @@
-[gd_scene load_steps=17 format=3 uid="uid://bxrjd3a1r66f2"]
+[gd_scene load_steps=16 format=3 uid="uid://bxrjd3a1r66f2"]
 
 [ext_resource type="Script" path="res://src/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://src/GridManager.cs" id="2_gridmanager"]
-[ext_resource type="Script" path="res://src/UI/AirflowMeter.cs" id="3_airflowmeter"]
 [ext_resource type="Script" path="res://src/GameState.cs" id="4_gamestate"]
 [ext_resource type="Script" path="res://src/ParticleManager.cs" id="5_particlemanager"]
-[ext_resource type="Script" path="res://src/UI/LivesMeter.cs" id="6_livesmeter"]
 [ext_resource type="Script" path="res://src/TowerManager.cs" id="7_towermanager"]
 [ext_resource type="Script" path="res://src/UI/BuildMenu.cs" id="8_buildmenu"]
-[ext_resource type="Script" path="res://src/UI/CurrencyMeter.cs" id="9_currencymeter"]
 [ext_resource type="Script" path="res://src/WaveManager.cs" id="10_wavemanager"]
-[ext_resource type="Script" path="res://src/UI/WaveHUD.cs" id="11_wavehud"]
-[ext_resource type="Script" path="res://src/UI/StartWaveButton.cs" id="12_startwavebutton"]
 [ext_resource type="PackedScene" path="res://scenes/UI/GameOver.tscn" id="13_gameover"]
 [ext_resource type="PackedScene" path="res://scenes/UI/WinScreen.tscn" id="14_winscreen"]
-[ext_resource type="Script" path="res://src/UI/BuildButton.cs" id="15_buildbutton"]
 [ext_resource type="PackedScene" path="res://scenes/UI/PauseMenu.tscn" id="16_pausemenu"]
-[ext_resource type="Script" path="res://src/UI/BottomBarWidget.cs" id="17_bottombarmwidget"]
+[ext_resource type="Script" path="res://src/UI/TopStrip.cs" id="17_topstrip"]
+[ext_resource type="Script" path="res://src/UI/RightPanel.cs" id="18_rightpanel"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -24,80 +19,48 @@ script = ExtResource("1_main")
 [node name="GameState" type="Node" parent="."]
 script = ExtResource("4_gamestate")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="TopStrip" type="Control" parent="."]
+offset_right = 640.0
+offset_bottom = 24.0
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+script = ExtResource("17_topstrip")
 
-[node name="TopBar" type="GridContainer" parent="VBoxContainer"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 90)
-theme_override_constants/h_separation = 0
-theme_override_constants/v_separation = 0
-columns = 4
+[node name="GameArea" type="Control" parent="."]
+offset_left = 0.0
+offset_top = 24.0
+offset_right = 512.0
+offset_bottom = 360.0
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
 
-[node name="WaveHUD" type="Control" parent="VBoxContainer/TopBar"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-custom_minimum_size = Vector2(120, 88)
-script = ExtResource("11_wavehud")
-
-[node name="LivesMeter" type="Control" parent="VBoxContainer/TopBar"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-custom_minimum_size = Vector2(120, 88)
-script = ExtResource("6_livesmeter")
-
-[node name="CurrencyMeter" type="Control" parent="VBoxContainer/TopBar"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-custom_minimum_size = Vector2(120, 88)
-script = ExtResource("9_currencymeter")
-
-[node name="AirflowMeter" type="Control" parent="VBoxContainer/TopBar"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-custom_minimum_size = Vector2(120, 88)
-script = ExtResource("3_airflowmeter")
-
-[node name="GameArea" type="Control" parent="VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-custom_minimum_size = Vector2(480, 320)
-
-[node name="GridManager" type="Node2D" parent="VBoxContainer/GameArea"]
+[node name="GridManager" type="Node2D" parent="GameArea"]
 position = Vector2(0, 0)
 script = ExtResource("2_gridmanager")
 
-[node name="ParticleManager" type="Node2D" parent="VBoxContainer/GameArea"]
+[node name="ParticleManager" type="Node2D" parent="GameArea"]
 script = ExtResource("5_particlemanager")
 
-[node name="TowerManager" type="Node2D" parent="VBoxContainer/GameArea"]
+[node name="TowerManager" type="Node2D" parent="GameArea"]
 script = ExtResource("7_towermanager")
 
-[node name="WaveManager" type="Node2D" parent="VBoxContainer/GameArea"]
+[node name="WaveManager" type="Node2D" parent="GameArea"]
 script = ExtResource("10_wavemanager")
 
-[node name="BottomBar" type="HBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 40)
-theme_override_constants/separation = 0
-
-[node name="BottomBarWidget" type="Control" parent="VBoxContainer/BottomBar"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-script = ExtResource("17_bottombarmwidget")
+[node name="RightPanel" type="Control" parent="."]
+offset_left = 512.0
+offset_top = 0.0
+offset_right = 640.0
+offset_bottom = 360.0
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+script = ExtResource("18_rightpanel")
 
 [node name="BuildMenu" type="CanvasLayer" parent="."]
 layer = 10

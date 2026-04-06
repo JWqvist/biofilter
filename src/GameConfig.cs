@@ -7,7 +7,7 @@ namespace BioFilter;
 public static class GameConfig
 {
     // ─── Grid ───────────────────────────────────────────────────────────────
-    public const int GridWidth = 30;
+    public const int GridWidth = 32;
     public const int GridHeight = 20;
     public const int TileSize = 16; // pixels per tile
 
@@ -55,8 +55,11 @@ public static class GameConfig
     public const int BuildMenuBottomMargin = 50; // pixels above bottom of screen
 
     // ─── UI Layout ─────────────────────────────────────────────────────────────
-    public const int TopBarHeight    = 40;  // pixels
-    public const int BottomBarHeight = 40;  // pixels
+    public const int TopBarHeight    = 40;  // pixels (legacy)
+    public const int BottomBarHeight = 40;  // pixels (legacy)
+    public const int TopStripHeight  = 24;  // widescreen HUD top strip
+    public const int RightPanelWidth = 128; // widescreen HUD right panel
+    // Grid area: 512×320 (32*16 × 20*16), positioned at (0, TopStripHeight)
 
     // ─── Economy (Refund) ────────────────────────────────────────────────────
     public const float RefundPercent = 0.5f; // 50% refund on tower removal
