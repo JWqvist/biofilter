@@ -36,6 +36,5 @@ project/assembly_name="BioFilter"
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
-
-[rendering]
+environment/default_clear_color=Color(0.05, 0.09, 0.05, 1)
 textures/canvas_textures/default_texture_filter=0
