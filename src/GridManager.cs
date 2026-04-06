@@ -416,6 +416,7 @@ public partial class GridManager : Node2D
 
     public bool IsMouseOverGrid()
     {
+        if (BioFilter.UI.BuildMenu.IsOpen) return false;
         Vector2I tile = MouseToTile();
         return IsValidCoord(tile.X, tile.Y);
     }
