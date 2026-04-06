@@ -193,7 +193,7 @@ public partial class TowerManager : Node2D
 
         var tower = scene.Instantiate<TowerBase>();
         AddChild(tower);
-        tower.GlobalPosition = TileCenter(col, row);
+        tower.Position = TileCenter(col, row);
         tower.GridPos = new Vector2I(col, row);
         tower.ParticleManagerRef = ParticleManagerRef;
 
