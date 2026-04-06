@@ -73,7 +73,7 @@ public partial class Main : Node
         AddChild(_statusTimer);
 
         // Wire airflow signal to TopStrip and vignette
-        _gridManager.AirflowChanged += _topStrip.UpdateAirflow;
+        _gridManager.AirflowChanged += _rightPanel.UpdateAirflow;
         _gridManager.AirflowChanged += _airflowVignette.UpdateAirflow;
         _gridManager.AirflowChanged += (af) => _gameState.RecordAirflow(af);
 
@@ -140,7 +140,7 @@ public partial class Main : Node
         _waveManager.GameWon            += OnGameWon;
 
         // Set initial display
-        _topStrip.UpdateAirflow(_gridManager.CurrentAirflow);
+        _rightPanel.UpdateAirflow(_gridManager.CurrentAirflow);
         _rightPanel.UpdatePopulation(_gameState.Population);
         _rightPanel.UpdateCurrency(_gameState.Currency);
 
