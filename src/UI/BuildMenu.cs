@@ -189,11 +189,20 @@ public partial class BuildMenu : CanvasLayer
         private readonly int    _w;
         private readonly int    _h;
 
+        private float _localTime = 0f;
+
         public ModuleCard(int index, string name, string hotkey, string cost, string desc, Color color, int w, int h)
         {
             _index = index; _name = name; _hotkey = hotkey; _cost = cost;
             _desc = desc; _color = color; _w = w; _h = h;
             MouseFilter = MouseFilterEnum.Stop;
+            SetProcess(true);
+        }
+
+        public override void _Process(double delta)
+        {
+            _localTime += (float)delta;
+            QueueRedraw();
         }
 
         public override void _Draw()
@@ -250,55 +259,174 @@ public partial class BuildMenu : CanvasLayer
 
             switch (_index)
             {
-                case 0: // Wall
+                case 0: // Wall — grey panel with highlight edge
+                {
                     DrawRect(new Rect2(ox + 4*s, oy + 4*s, size - 8*s, size - 8*s), bright);
+                    // highlight top edge
+                    DrawRect(new Rect2(ox + 4*s, oy + 4*s, size - 8*s, s), Colors.White * 0.6f);
                     break;
-                case 1: // Basic Filter — cross
-                    DrawRect(new Rect2(cx - s, oy + 4*s, 2*s, size - 8*s), bright);
-                    DrawRect(new Rect2(ox + 4*s, cy - s, size - 8*s, 2*s), bright);
-                    break;
-                case 2: // Electrostatic — lightning bolt
-                    DrawRect(new Rect2(cx + s, oy + 4*s, 2*s, size*0.4f), bright);
-                    DrawRect(new Rect2(cx - 2*s, cy - s, 4*s, 2*s), bright);
-                    DrawRect(new Rect2(cx - 3*s, cy + s, 2*s, size*0.35f), bright);
-                    break;
-                case 3: // UV — ring
-                    for (int a = 0; a < 8; a++) {
-                        float angle = a * Mathf.Pi / 4f;
-                        float rx = cx + Mathf.Cos(angle) * size * 0.3f;
-                        float ry = cy + Mathf.Sin(angle) * size * 0.3f;
-                        DrawRect(new Rect2(rx - s, ry - s, 2*s, 2*s), bright);
+                }
+                case 1: // Basic Filter — 3×3 filter mesh with pulsing center
+                {
+                    var meshBright = new Color("#4caf50");
+                    var meshDim    = new Color("#2e7d32");
+                    var meshCenter = new Color("#69f0ae");
+                    float pulse = 0.7f + 0.3f * Mathf.Sin(_localTime * 4f);
+                    float cellSz = 2f * s;
+                    float gap    = 1f * s;
+                    float step   = cellSz + gap;
+                    float meshOff = -4f * s;
+                    for (int row = 0; row < 3; row++)
+                    {
+                        for (int col = 0; col < 3; col++)
+                        {
+                            float bx = cx + meshOff + col * step;
+                            float by = cy + meshOff + row * step;
+                            bool isCenter2 = row == 1 && col == 1;
+                            bool isChecker = (row + col) % 2 == 0;
+                            Color cellC;
+                            float sz;
+                            if (isCenter2)
+                            {
+                                cellC = new Color(meshCenter.R, meshCenter.G, meshCenter.B, pulse);
+                                sz = 3f * s;
+                                bx -= 0.5f * s;
+                                by -= 0.5f * s;
+                            }
+                            else
+                            {
+                                cellC = isChecker ? meshBright : meshDim;
+                                sz = cellSz;
+                            }
+                            DrawRect(new Rect2(bx, by, sz, sz), cellC);
+                        }
                     }
                     break;
-                case 4: // Vortex — spiral dots
-                    for (int a = 0; a < 6; a++) {
-                        float t = a / 6f;
-                        float r = t * size * 0.35f;
-                        float angle = t * Mathf.Pi * 4f;
-                        DrawRect(new Rect2(cx + Mathf.Cos(angle)*r - s, cy + Mathf.Sin(angle)*r - s, 2*s, 2*s), bright);
+                }
+                case 2: // Electrostatic — animated lightning bolt
+                {
+                    float brightness = 0.6f + 0.4f * Mathf.Sin(_localTime * 8f);
+                    var boltColor = new Color(0f, brightness, brightness, 0.9f);
+                    float top = cy - size * 0.3f;
+                    float bot = cy + size * 0.3f;
+                    var pts = new Godot.Vector2[]
+                    {
+                        new Godot.Vector2(cx + s, top),
+                        new Godot.Vector2(cx - 2*s, cy),
+                        new Godot.Vector2(cx + 2*s, cy),
+                        new Godot.Vector2(cx - s, bot),
+                    };
+                    for (int i = 0; i < pts.Length - 1; i++)
+                        DrawLine(pts[i], pts[i + 1], boltColor, 1.5f);
+                    break;
+                }
+                case 3: // UV Steriliser — ring + 4 rotating rays
+                {
+                    float ringR = size * 0.28f;
+                    var ringColor = new Color(bright.R + 0.3f, bright.G + 0.1f, bright.B + 0.3f, 0.9f);
+                    for (int i = 0; i < 8; i++)
+                    {
+                        float angle = i * (Mathf.Pi / 4f);
+                        float rx = cx + Mathf.Cos(angle) * ringR;
+                        float ry = cy + Mathf.Sin(angle) * ringR;
+                        DrawRect(new Rect2(rx - s, ry - s, 2*s, 2*s), ringColor);
+                    }
+                    float rayLen = size * 0.28f;
+                    var rayColor = new Color(0.8f, 0.5f, 1.0f, 0.85f);
+                    for (int i = 0; i < 4; i++)
+                    {
+                        float angle = _localTime * 2.2f + i * (Mathf.Pi * 0.5f);
+                        var inner = new Godot.Vector2(cx + Mathf.Cos(angle) * (ringR + 1f),
+                                                      cy + Mathf.Sin(angle) * (ringR + 1f));
+                        var outer = new Godot.Vector2(cx + Mathf.Cos(angle) * (ringR + rayLen * 0.6f),
+                                                      cy + Mathf.Sin(angle) * (ringR + rayLen * 0.6f));
+                        DrawLine(inner, outer, rayColor, 1f);
                     }
                     break;
-                case 5: // Power Core — diamond
-                    DrawRect(new Rect2(cx - s, oy + 4*s, 2*s, size - 8*s), bright);
-                    DrawRect(new Rect2(ox + 4*s, cy - s, size - 8*s, 2*s), bright);
-                    DrawRect(new Rect2(cx - 3*s, cy - 3*s, 2*s, 2*s), bright);
-                    DrawRect(new Rect2(cx + s, cy + s, 2*s, 2*s), bright);
-                    break;
-                case 6: // Bio Neutraliser — hex dots
-                    for (int a = 0; a < 6; a++) {
-                        float angle = a * Mathf.Pi / 3f;
-                        float rx = cx + Mathf.Cos(angle) * size * 0.28f;
-                        float ry = cy + Mathf.Sin(angle) * size * 0.28f;
-                        DrawRect(new Rect2(rx - s, ry - s, 2*s, 2*s), bright);
+                }
+                case 4: // Vortex Sep. — rotating spiral
+                {
+                    float half2 = size * 0.35f;
+                    var spiralColor = new Color(0f, 0.8f, 0.9f, 0.9f);
+                    for (int i = 0; i < 4; i++)
+                    {
+                        float angle = _localTime * 2.5f + i * Mathf.Pi * 0.5f;
+                        var innerPt = new Godot.Vector2(cx + Mathf.Cos(angle) * 2f,
+                                                        cy + Mathf.Sin(angle) * 2f);
+                        var outerPt = new Godot.Vector2(cx + Mathf.Cos(angle) * half2,
+                                                        cy + Mathf.Sin(angle) * half2);
+                        DrawLine(innerPt, outerPt, spiralColor, 1.5f);
+                        float perpAngle = angle + Mathf.Pi * 0.25f;
+                        var perpEnd = new Godot.Vector2(outerPt.X + Mathf.Cos(perpAngle) * (half2 * 0.4f),
+                                                        outerPt.Y + Mathf.Sin(perpAngle) * (half2 * 0.4f));
+                        DrawLine(outerPt, perpEnd, spiralColor, 1f);
                     }
-                    DrawRect(new Rect2(cx - s, cy - s, 2*s, 2*s), bright);
                     break;
-                case 7: // Magnetic Cage — inward arrows
-                    DrawRect(new Rect2(cx - s, oy + 4*s, 2*s, size*0.25f), bright);
-                    DrawRect(new Rect2(cx - s, oy + size*0.7f, 2*s, size*0.25f), bright);
-                    DrawRect(new Rect2(ox + 4*s, cy - s, size*0.25f, 2*s), bright);
-                    DrawRect(new Rect2(ox + size*0.7f, cy - s, size*0.25f, 2*s), bright);
+                }
+                case 5: // Power Core — pulsing diamond with rays
+                {
+                    float pulse = 0.4f + 0.4f * Mathf.Sin(_localTime * 3f);
+                    float d = size * 0.28f * (0.9f + 0.1f * pulse);
+                    var gold = new Color(bright, 0.9f);
+                    DrawLine(new Godot.Vector2(cx, cy - d), new Godot.Vector2(cx + d, cy), gold, 1.5f);
+                    DrawLine(new Godot.Vector2(cx + d, cy), new Godot.Vector2(cx, cy + d), gold, 1.5f);
+                    DrawLine(new Godot.Vector2(cx, cy + d), new Godot.Vector2(cx - d, cy), gold, 1.5f);
+                    DrawLine(new Godot.Vector2(cx - d, cy), new Godot.Vector2(cx, cy - d), gold, 1.5f);
+                    float rayLen = size * 0.5f;
+                    var rayColor = new Color(1f, 0.9f, 0.1f, 0.8f);
+                    for (int i = 0; i < 4; i++)
+                    {
+                        float angle = _localTime * 0.8f + i * Mathf.Pi * 0.5f;
+                        var innerPt = new Godot.Vector2(cx + Mathf.Cos(angle) * (d + 1f),
+                                                        cy + Mathf.Sin(angle) * (d + 1f));
+                        var outerPt = new Godot.Vector2(cx + Mathf.Cos(angle) * rayLen,
+                                                        cy + Mathf.Sin(angle) * rayLen);
+                        DrawLine(innerPt, outerPt, rayColor, 1.5f);
+                    }
                     break;
+                }
+                case 6: // Bio Neutraliser — rotating hex dots
+                {
+                    var atomColor = new Color(0.8f, 0.3f, 1.0f, 0.9f);
+                    float r = size * 0.22f;
+                    float rotOffset = _localTime * 1.5f;
+                    for (int i = 0; i < 6; i++)
+                    {
+                        float angle = rotOffset + i * (Mathf.Pi / 3f);
+                        float ax = cx + Mathf.Cos(angle) * r;
+                        float ay = cy + Mathf.Sin(angle) * r;
+                        DrawRect(new Rect2(ax - s, ay - s, 2*s, 2*s), atomColor);
+                    }
+                    DrawRect(new Rect2(cx - s, cy - s, 2*s, 2*s), atomColor);
+                    break;
+                }
+                case 7: // Magnetic Cage — inward arrows pulsing toward center
+                {
+                    float pulse = 0.5f + 0.5f * Mathf.Sin(_localTime * 5f);
+                    var arrowColor = new Color(1f, 0.7f, 0.2f, 0.7f + 0.3f * pulse);
+                    float arrowDist = size * 0.4f;
+                    float tipSize   = 3.5f * s;
+                    // Animate: arrows move inward slightly with pulse
+                    float pulseDist = arrowDist - pulse * 2f * s;
+                    Godot.Vector2[] dirs =
+                    {
+                        new Godot.Vector2(0, -1),
+                        new Godot.Vector2(0,  1),
+                        new Godot.Vector2(-1, 0),
+                        new Godot.Vector2( 1, 0),
+                    };
+                    foreach (var dir in dirs)
+                    {
+                        var base1 = new Godot.Vector2(cx + dir.X * pulseDist, cy + dir.Y * pulseDist);
+                        var tip   = new Godot.Vector2(cx + dir.X * (pulseDist - tipSize * 2f),
+                                                      cy + dir.Y * (pulseDist - tipSize * 2f));
+                        var perp  = new Godot.Vector2(-dir.Y * tipSize, dir.X * tipSize);
+                        DrawLine(base1 - perp, tip, arrowColor, 1f);
+                        DrawLine(base1 + perp, tip, arrowColor, 1f);
+                        DrawLine(base1 - perp, base1 + perp, arrowColor, 1f);
+                    }
+                    break;
+                }
             }
         }
     }

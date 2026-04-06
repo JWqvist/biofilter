@@ -16,6 +16,8 @@ public partial class RightPanel : Control
 
     // ── State ─────────────────────────────────────────────────────────────
     private int    _population   = GameConfig.StartingPopulation;
+    private int    _previousPop  = GameConfig.StartingPopulation;
+    private float  _popFlashTimer = 0f;
     private int    _currency     = GameConfig.StartingCurrency;
     private int    _currentWave  = 0;
     private bool   _isBuildPhase = true;
@@ -34,6 +36,8 @@ public partial class RightPanel : Control
     private static readonly Color ColAmber       = new Color("#ff8f00");
     private static readonly Color ColGreen       = new Color("#4caf50");
     private static readonly Color ColRed         = new Color("#c62828");
+    private static readonly Color ColPop         = new Color("#cc0000");
+    private static readonly Color ColPopCritical = new Color("#ff2222");
     private static readonly Color ColText        = new Color("#c8e6c0");
     private static readonly Color ColDivider     = new Color("#1e3a1e");
     private static readonly Color ColBarEmpty    = new Color("#1a2a1a");
@@ -45,9 +49,26 @@ public partial class RightPanel : Control
     private const float PixSm = 1.0f;
     private const int   ThreatSegs = 10;
 
+    // Fixed offsets for blood splat effect (dx, dy, size)
+    private static readonly (float dx, float dy, float sz)[] SplatOffsets =
+    {
+        (-8f, -3f, 2f), (12f, -2f, 1f), (-4f,  6f, 2f),
+        (16f,  3f, 1f), ( 3f, -7f, 1f), (10f,  7f, 2f),
+    };
+
     public override void _Ready()
     {
         MouseFilter = MouseFilterEnum.Stop;
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_popFlashTimer > 0f)
+        {
+            _popFlashTimer -= (float)delta;
+            if (_popFlashTimer < 0f) _popFlashTimer = 0f;
+            QueueRedraw();
+        }
     }
 
     // ── Public API ────────────────────────────────────────────────────────
@@ -58,6 +79,9 @@ public partial class RightPanel : Control
 
     public void UpdatePopulation(int population)
     {
+        if (population < _previousPop)
+            _popFlashTimer = 0.4f;
+        _previousPop = population;
         _population = population;
         QueueRedraw();
     }
@@ -122,9 +146,25 @@ public partial class RightPanel : Control
         float y     = 4f;
 
         // ── POP ────────────────────────────────────────────────────────────
-        y = DrawSection(y, ox, inner, "POP",
-            $"{_population:D3}",
-            _population < 20 ? ColRed : ColAmber);
+        {
+            PixelFont.DrawString(this, "POP", new Vector2(ox, y), PixS, ColLabel);
+            y += PixelFont.CharHeight(PixS) + 1f;
+            float popValX = ox;
+            float popValY = y;
+            Color popColor = _population < 20 ? ColPopCritical : ColPop;
+            PixelFont.DrawString(this, $"{_population:D3}", new Vector2(ox, y), PixS, popColor);
+            // Blood splats when population just decreased
+            if (_popFlashTimer > 0f)
+            {
+                float alpha = Mathf.Clamp(_popFlashTimer / 0.4f, 0f, 1f);
+                var splatColor = new Color(1f, 0f, 0f, alpha);
+                foreach (var (dx, dy, sz) in SplatOffsets)
+                    DrawRect(new Rect2(popValX + dx, popValY + dy, sz, sz), splatColor);
+            }
+            y += PixelFont.CharHeight(PixS) + 3f;
+            DrawRect(new Rect2(ox, y, inner, 1f), ColDivider);
+            y += 4f;
+        }
 
         // ── CREDITS ────────────────────────────────────────────────────────
         y = DrawSection(y, ox, inner, "CREDITS", $"$ {_currency:D4}", ColGreen);
