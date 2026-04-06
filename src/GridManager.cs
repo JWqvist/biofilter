@@ -414,10 +414,17 @@ public partial class GridManager : Node2D
         return new Vector2I((int)(localPos.X / GameConfig.TileSize), (int)(localPos.Y / GameConfig.TileSize));
     }
 
+    public bool IsMouseOverGrid()
+    {
+        Vector2I tile = MouseToTile();
+        return IsValidCoord(tile.X, tile.Y);
+    }
+
     public override void _Input(InputEvent @event)
     {
         if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed)
         {
+            // Only handle clicks that are actually on the grid
             Vector2I tile = MouseToTile();
             if (!IsValidCoord(tile.X, tile.Y)) return;
 

@@ -116,8 +116,9 @@ public partial class TowerManager : Node2D
         if (!mb.Pressed) return;
         if (GridManagerRef == null) return;
 
-        // Use GridManager's local coordinate system for tile lookup
+        // Only handle clicks that land on the grid
         Vector2I tile = GridManagerRef.MouseToTile();
+        if (!GridManagerRef.IsMouseOverGrid()) return;
 
         if (mb.ButtonIndex == MouseButton.Right)
         {
