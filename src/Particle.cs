@@ -188,10 +188,9 @@ public partial class Particle : Node2D
 
     private void SpawnDeathSplash()
     {
-        var splash = new DeathSplash();
+        var splash = DeathSplash.Create(Type, _color);
         GetParent()?.AddChild(splash);
         splash.GlobalPosition = GlobalPosition;
-        splash.SetColor(_color);
     }
 
     public override void _Draw()
@@ -304,37 +303,46 @@ public partial class Particle : Node2D
                 break;
             }
 
-            // ── CellDivision ────────────────────────────────────────────────
+            // ── CellDivision ──────────────────────────────────────────────
             case ParticleType.CellDivision:
             {
-                float seamSpeed = healthProp < 0.5f ? 10f : 4f;
-                float wobble    = healthProp < 0.5f ? Mathf.Sin(_localTime * 8f) * 2f : 0f;
-                float cellHalf  = 5f; // 10×10 shape
+                bool lowHealth  = healthProp < 0.5f;
+                float seamSpeed = lowHealth ? 10f : 4f;
+                // At low health the two halves wobble apart visibly
+                float wobble = lowHealth ? Mathf.Sin(_localTime * 8f) * 2.5f : 0f;
+                float r = 5f; // semi-circle radius
 
-                // Outer glow: dark purple
-                DrawRect(new Rect2(-cellHalf - 1, -cellHalf - 1, 12, 12),
-                         new Color(0.5f, 0.0f, 0.3f, 0.35f));
+                var leftColor  = new Color("#991144"); // darker red-purple
+                var rightColor = new Color("#ee3388"); // brighter red-purple
 
-                // Main body: red-purple
-                float wx = wobble * 0.4f;
-                DrawRect(new Rect2(-cellHalf + wx, -cellHalf, 10, 10), new Color("#cc2266"));
+                Vector2 leftCenter  = new Vector2(-wobble, 0f);
+                Vector2 rightCenter = new Vector2( wobble, 0f);
 
-                // Bright inner highlight (top-left corner feel)
-                DrawRect(new Rect2(-cellHalf + wx, -cellHalf, 10, 2), new Color("#ff44aa", 0.6f));
-                DrawRect(new Rect2(-cellHalf + wx, -cellHalf, 2, 10), new Color("#ff44aa", 0.6f));
+                // Left semi-circle (arc from 90° to 270°, left half)
+                DrawArc(leftCenter,  r, Mathf.Pi * 0.5f,  Mathf.Pi * 1.5f, 24, leftColor,  r * 2f);
+                // Right semi-circle (arc from -90° to 90°, right half)
+                DrawArc(rightCenter, r, -Mathf.Pi * 0.5f, Mathf.Pi * 0.5f, 24, rightColor, r * 2f);
 
-                // Division seam: bright pink pulse
-                float seamAlpha = (Mathf.Sin(_localTime * seamSpeed) + 1f) * 0.5f;
-                float seamY     = Mathf.Sin(_localTime * seamSpeed * 0.25f) * 2f;
-                DrawLine(new Vector2(-cellHalf + wx, seamY),
-                         new Vector2(cellHalf + wx, seamY),
-                         new Color("#ff88cc", seamAlpha), 1.5f);
+                // Outer glow ring
+                float glowAlpha = 0.25f + 0.15f * Mathf.Sin(_localTime * 3f);
+                DrawArc(Vector2.Zero, r + 2f, 0f, Mathf.Tau, 32,
+                        new Color(1f, 0.2f, 0.6f, glowAlpha), 2f);
 
-                // Small "division dots" on seam when about to split
-                if (healthProp < 0.5f)
+                // Seam: bright white/pink vertical line pulsing at x = midpoint between halves
+                float seamAlpha = lowHealth
+                    ? (Mathf.Sin(_localTime * seamSpeed) * 0.5f + 0.5f) * 0.9f + 0.1f
+                    : (Mathf.Sin(_localTime * seamSpeed) * 0.5f + 0.5f) * 0.5f + 0.2f;
+                Color seamColor = lowHealth
+                    ? new Color(1f, 0.9f, 1f, seamAlpha)    // near-white when critical
+                    : new Color(1f, 0.5f, 0.8f, seamAlpha); // soft pink normally
+                float seamX = (leftCenter.X + rightCenter.X) * 0.5f;
+                DrawLine(new Vector2(seamX, -r), new Vector2(seamX, r), seamColor, 1.5f);
+
+                // Extra glow dot on seam at low health
+                if (lowHealth)
                 {
-                    float dotX = wx;
-                    DrawRect(new Rect2(dotX - 1, seamY - 1, 2, 2), new Color(1f, 1f, 1f, 0.8f));
+                    float dotAlpha = (Mathf.Sin(_localTime * seamSpeed * 1.5f) + 1f) * 0.5f;
+                    DrawRect(new Rect2(seamX - 1f, -1f, 2f, 2f), new Color(1f, 1f, 1f, dotAlpha));
                 }
                 break;
             }

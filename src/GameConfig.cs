@@ -143,4 +143,9 @@ public static class GameConfig
     public const float CellDivisionHealth      = 80f;
     public const float CellDivisionChildHealth = 30f;
     public const float CellDivisionSpeed       = 1.5f;
+
+    // ─── Effects ────────────────────────────────────────────────────────────
+    public const float SplashDuration             = 0.4f;
+    public const float RadBlobShockwaveDuration    = 0.5f;
+    public const float SplitFlashDuration         = 0.3f;
 }
