@@ -30,6 +30,8 @@ public partial class BuildMenu : CanvasLayer
         ("VORTEX SEP.",     "",    $"${GameConfig.VortexSeparatorCost}","Forces longer routes",    3, new Color("#00bcd4")),
         ("POWER CORE",      "",    $"${GameConfig.PowerCoreCost}",      "+$5 per wave",             4, new Color("#ffd700")),
         ("BIO NEUTRALISER", "",    $"${GameConfig.BioNeutraliserCost}", "Boosts adjacent +25%",    5, new Color("#9c27b0")),
+        ("TOXIC SPRAYER", "", $"${GameConfig.ToxicSprayerCost}", "Poisons particles (DoT)", 7, new Color("#76ff03")),
+        ("PLASMA BURST",  "", $"${GameConfig.PlasmaBurstCost}",  "AoE explosion",           8, new Color("#2979ff")),
         ("MAGNETIC CAGE",   "",    $"${GameConfig.MagneticCageCost}",   "Traps particles 2s",       6, new Color("#795548")),
     };
 

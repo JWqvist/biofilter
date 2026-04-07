@@ -1,0 +1,4 @@
+[gd_scene load_steps=1 format=3 uid="uid://toxic_sprayer"]
+[ext_resource type="Script" path="res://src/Towers/ToxicSprayer.cs" id="1"]
+[node name="ToxicSprayer" type="Node2D"]
+script = ExtResource("1")

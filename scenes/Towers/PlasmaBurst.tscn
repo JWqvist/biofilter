@@ -1,0 +1,4 @@
+[gd_scene load_steps=1 format=3 uid="uid://plasma_burst"]
+[ext_resource type="Script" path="res://src/Towers/PlasmaBurst.cs" id="1"]
+[node name="PlasmaBurst" type="Node2D"]
+script = ExtResource("1")
