@@ -98,7 +98,7 @@ public partial class BuildMenu : CanvasLayer
             float x = padX + col * (cardW + gapX);
             float y = padY + row * (cardH + gapY);
 
-            var card = new ModuleCard(i, name, hotkey, cost, desc, color, cardW, cardH);
+            var card = new ModuleCard(i, name, hotkey, cost, desc, color, cardW, cardH, type);
             card.LayoutMode = 3;
             card.AnchorLeft = 0f; card.AnchorTop = 0f;
             card.OffsetLeft = x; card.OffsetTop = y;
@@ -185,6 +185,7 @@ public partial class BuildMenu : CanvasLayer
     private partial class ModuleCard : Control
     {
         private readonly int    _index;
+        private readonly int    _type;  // TowerType enum value (-1=wall)
         private readonly string _name;
         private readonly string _hotkey;
         private readonly string _cost;
@@ -195,9 +196,9 @@ public partial class BuildMenu : CanvasLayer
 
         private float _localTime = 0f;
 
-        public ModuleCard(int index, string name, string hotkey, string cost, string desc, Color color, int w, int h)
+        public ModuleCard(int index, string name, string hotkey, string cost, string desc, Color color, int w, int h, int type = -2)
         {
-            _index = index; _name = name; _hotkey = hotkey; _cost = cost;
+            _index = index; _type = type; _name = name; _hotkey = hotkey; _cost = cost;
             _desc = desc; _color = color; _w = w; _h = h;
             MouseFilter = MouseFilterEnum.Stop;
             SetProcess(true);
@@ -261,7 +262,10 @@ public partial class BuildMenu : CanvasLayer
             float cx = ox + size * 0.5f;
             float cy = oy + size * 0.5f;
 
-            switch (_index)
+            // Use _type for icon selection: -1=wall, 0=BasicFilter, 1=Electro, 2=UV,
+            // 3=Vortex, 4=PowerCore, 5=BioNeutraliser, 6=MagneticCage, 7=ToxicSprayer, 8=PlasmaBurst
+            int iconIdx = _type == -1 ? 0 : _type + 1; // wall=0, towers offset by 1
+            switch (iconIdx)
             {
                 case 0: // Wall — grey panel with highlight edge
                 {
@@ -404,7 +408,7 @@ public partial class BuildMenu : CanvasLayer
                     DrawRect(new Rect2(cx - s, cy - s, 2*s, 2*s), atomColor);
                     break;
                 }
-                case 7: // Magnetic Cage — inward arrows pulsing toward center
+                case 7: // Magnetic Cage — was type 6 — inward arrows pulsing toward center
                 {
                     float pulse = 0.5f + 0.5f * Mathf.Sin(_localTime * 5f);
                     var arrowColor = new Color(1f, 0.7f, 0.2f, 0.7f + 0.3f * pulse);
