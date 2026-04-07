@@ -110,7 +110,7 @@ public partial class Particle : Node2D
         _maxHealth = Health;
 
         if (_path != null && _path.Count > 0)
-            Position = _path[0];
+            GlobalPosition = _path[0]; // use GlobalPosition so world coords are correct
     }
 
     /// <summary>
