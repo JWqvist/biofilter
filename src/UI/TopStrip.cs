@@ -13,6 +13,8 @@ public partial class TopStrip : Control
     // ── State ─────────────────────────────────────────────────────────────
     private int   _currentWave  = 0;
     private int   _totalWaves   = GameConfig.TotalWaves;
+    private float _time          = 0f;
+    private bool  _isBuildPhase  = true;
 
     // ── Colors ────────────────────────────────────────────────────────────
     private static readonly Color ColBg        = new Color("#0a0f0a");
@@ -25,6 +27,33 @@ public partial class TopStrip : Control
     private const int BarSegments = 20;
     private const float PixS = 1.0f; // pixel font scale
 
+    // Threat colors per wave (1-indexed)
+    private static readonly Color[] WaveThreatColors =
+    {
+        new Color("#4caf50"), // Wave 1  - green
+        new Color("#4caf50"), // Wave 2  - green
+        new Color("#cddc39"), // Wave 3  - yellow-green
+        new Color("#ffeb3b"), // Wave 4  - yellow
+        new Color("#ff9800"), // Wave 5  - orange
+        new Color("#ff9800"), // Wave 6  - orange
+        new Color("#f44336"), // Wave 7  - red
+        new Color("#f44336"), // Wave 8  - red
+        new Color("#b71c1c"), // Wave 9  - dark red
+        new Color("#7b1fa2"), // Wave 10 - purple (boss)
+    };
+
+    private static Color GetWaveColor(int wave1indexed)
+    {
+        int idx = Mathf.Clamp(wave1indexed - 1, 0, WaveThreatColors.Length - 1);
+        return WaveThreatColors[idx];
+    }
+
+    public override void _Process(double delta)
+    {
+        _time += (float)delta;
+        QueueRedraw();
+    }
+
     public override void _Ready()
     {
         MouseFilter = MouseFilterEnum.Ignore;
@@ -36,12 +65,14 @@ public partial class TopStrip : Control
     public void OnWaveStarted(int waveNumber)
     {
         _currentWave = waveNumber;
+        _isBuildPhase = false;
         QueueRedraw();
     }
 
     public void OnWaveComplete(int waveNumber)
     {
         _currentWave = waveNumber;
+        _isBuildPhase = true;
         QueueRedraw();
     }
 
@@ -81,7 +112,28 @@ public partial class TopStrip : Control
             for (int i = 0; i < BarSegments; i++)
             {
                 float sx = lx + i * (segW + segGap);
-                Color sc = i < filled ? ColBarFilled : ColBarEmpty;
+
+                // Which wave does this segment represent?
+                int segWave = Mathf.Max(1, (int)Mathf.Ceil((i + 1) * _totalWaves / (float)BarSegments));
+                Color threatCol = GetWaveColor(segWave);
+
+                Color sc;
+                if (i < filled)
+                {
+                    // Completed wave — solid threat color, slightly dimmed
+                    sc = new Color(threatCol.R * 0.5f, threatCol.G * 0.5f, threatCol.B * 0.5f, 1f);
+                }
+                else if (i == filled)
+                {
+                    // Current/next wave — full threat color, blinking
+                    float blink = (Mathf.Sin(_time * Mathf.Tau * 2f) + 1f) * 0.5f;
+                    sc = new Color(threatCol.R, threatCol.G, threatCol.B, 0.5f + blink * 0.5f);
+                }
+                else
+                {
+                    // Future wave — dim threat color so player can see what's coming
+                    sc = new Color(threatCol.R * 0.25f, threatCol.G * 0.25f, threatCol.B * 0.25f, 0.8f);
+                }
                 DrawRect(new Rect2(sx, 4f, segW, h - 8f), sc);
             }
         }
