@@ -77,6 +77,8 @@ public partial class Particle : Node2D
             case ParticleType.RadiationBlob:
                 Health      = GameConfig.RadiationBlobHealth * healthMultiplier;
                 Speed       = GameConfig.RadiationBlobSpeed;
+                // Nuclear yellow-green color
+                _color = new Color("#d4e600"); // nuclear yellow-green
                 _color      = new Color("#ff8c00");
                 _visualSize = GameConfig.TileSize * 0.9f;
                 break;
@@ -244,47 +246,39 @@ public partial class Particle : Node2D
             // ── RadiationBlob ───────────────────────────────────────────────
             case ParticleType.RadiationBlob:
             {
-                // Pulsing glow at low health
-                if (healthProp < 0.35f)
-                {
-                    float pulseAlpha = (Mathf.Sin(_localTime * Mathf.Tau * 4f) + 1f) * 0.5f * 0.5f;
-                    DrawRect(new Rect2(-half - 3, -half - 3, _visualSize + 6, _visualSize + 6),
-                             new Color(_color, pulseAlpha));
-                }
-
-                // Main 14×14 (roughly) square
-                float sz = 14f;
+                float sz = 13f;
                 float hs = sz * 0.5f;
-                DrawRect(new Rect2(-hs, -hs, sz, sz), _color);
 
-                // Radiation overlay: 3 wedge-arms, very slow rotation
-                var radDark = new Color(0.478f, 0.251f, 0f, 0.9f); // #7a4000
-                float rotBase = _localTime * 0.3f;
+                // Outer glow (nuclear yellow-green)
+                float glowPulse = (Mathf.Sin(_localTime * 3f) + 1f) * 0.5f * 0.25f + 0.1f;
+                DrawRect(new Rect2(-hs - 2, -hs - 2, sz + 4, sz + 4),
+                         new Color(0.4f, 0.9f, 0.0f, glowPulse)); // green glow
+
+                // Main body: nuclear yellow
+                DrawRect(new Rect2(-hs, -hs, sz, sz), new Color("#d4e600"));
+
+                // Radiation symbol: 3 green wedge-arms rotating slowly
+                var radGreen = new Color("#00cc44"); // bright green
+                float rotBase = _localTime * 0.25f;
                 for (int i = 0; i < 3; i++)
                 {
-                    float angle  = rotBase + i * (Mathf.Tau / 3f);
-                    float spread = 0.35f;
-                    float len    = hs * 0.75f;
+                    float angle = rotBase + i * (Mathf.Tau / 3f);
+                    float spread = 0.38f;
+                    float len = hs * 0.72f;
                     Vector2 dir1 = new Vector2(Mathf.Cos(angle - spread), Mathf.Sin(angle - spread));
                     Vector2 dir2 = new Vector2(Mathf.Cos(angle + spread), Mathf.Sin(angle + spread));
-                    Vector2 tip1 = dir1 * len;
-                    Vector2 tip2 = dir2 * len;
-                    DrawLine(Vector2.Zero, tip1, radDark, 2.5f);
-                    DrawLine(Vector2.Zero, tip2, radDark, 2.5f);
-                    DrawLine(tip1, tip2, radDark, 1.5f);
+                    DrawLine(Vector2.Zero, dir1 * len, radGreen, 2f);
+                    DrawLine(Vector2.Zero, dir2 * len, radGreen, 2f);
+                    DrawLine(dir1 * len, dir2 * len, radGreen, 1.5f);
                 }
+                // Center dot
+                DrawRect(new Rect2(-1.5f, -1.5f, 3, 3), radGreen);
 
-                // Center circle of radiation symbol
-                DrawRect(new Rect2(-2, -2, 4, 4), radDark);
-
-                // Health bar: 1px bar just below the square
-                float barY  = hs + 2f;
-                float barW  = sz;
-                DrawRect(new Rect2(-hs, barY, barW, 1), new Color(0.15f, 0.15f, 0.15f, 0.9f));
-                Color barColor = healthProp > 0.5f
-                    ? new Color(0f, 1f, 0f, 0.9f)
-                    : new Color(1f, 0f, 0f, 0.9f);
-                DrawRect(new Rect2(-hs, barY, barW * healthProp, 1), barColor);
+                // Health bar
+                float barY = hs + 2f;
+                DrawRect(new Rect2(-hs, barY, sz, 1.5f), new Color(0.15f, 0.15f, 0.15f, 0.9f));
+                Color barCol = healthProp > 0.5f ? new Color("#00cc44") : new Color("#ff2222");
+                DrawRect(new Rect2(-hs, barY, sz * healthProp, 1.5f), barCol);
                 break;
             }
 
@@ -303,26 +297,35 @@ public partial class Particle : Node2D
             // ── CellDivision ────────────────────────────────────────────────
             case ParticleType.CellDivision:
             {
-                float seamSpeed = healthProp < 0.5f ? 8f : 3f;
-                float wobble    = healthProp < 0.5f ? Mathf.Sin(_localTime * 7f) * 1.5f : 0f;
+                float seamSpeed = healthProp < 0.5f ? 10f : 4f;
+                float wobble    = healthProp < 0.5f ? Mathf.Sin(_localTime * 8f) * 2f : 0f;
+                float cellHalf  = 5f; // 10×10 shape
 
-                float cellHalf = 4f; // 8×8 shape
+                // Outer glow: dark purple
+                DrawRect(new Rect2(-cellHalf - 1, -cellHalf - 1, 12, 12),
+                         new Color(0.5f, 0.0f, 0.3f, 0.35f));
 
-                // Main pink square
-                DrawRect(new Rect2(-cellHalf + wobble * 0.5f, -cellHalf, 8, 8), _color);
+                // Main body: red-purple
+                float wx = wobble * 0.4f;
+                DrawRect(new Rect2(-cellHalf + wx, -cellHalf, 10, 10), new Color("#cc2266"));
 
-                // White X
-                var xColor = new Color(1f, 1f, 1f, 0.75f);
-                float x0 = -cellHalf + wobble * 0.5f;
-                float x1 =  cellHalf + wobble * 0.5f;
-                DrawLine(new Vector2(x0, -cellHalf), new Vector2(x1, cellHalf), xColor, 1f);
-                DrawLine(new Vector2(x1, -cellHalf), new Vector2(x0, cellHalf), xColor, 1f);
+                // Bright inner highlight (top-left corner feel)
+                DrawRect(new Rect2(-cellHalf + wx, -cellHalf, 10, 2), new Color("#ff44aa", 0.6f));
+                DrawRect(new Rect2(-cellHalf + wx, -cellHalf, 2, 10), new Color("#ff44aa", 0.6f));
 
-                // Division seam: pulsing horizontal line across the middle
+                // Division seam: bright pink pulse
                 float seamAlpha = (Mathf.Sin(_localTime * seamSpeed) + 1f) * 0.5f;
-                float seamY     = Mathf.Sin(_localTime * seamSpeed * 0.3f) * 1.5f;
-                var seamColor   = new Color(1f, 1f, 1f, seamAlpha);
-                DrawLine(new Vector2(x0, seamY), new Vector2(x1, seamY), seamColor, 1.5f);
+                float seamY     = Mathf.Sin(_localTime * seamSpeed * 0.25f) * 2f;
+                DrawLine(new Vector2(-cellHalf + wx, seamY),
+                         new Vector2(cellHalf + wx, seamY),
+                         new Color("#ff88cc", seamAlpha), 1.5f);
+
+                // Small "division dots" on seam when about to split
+                if (healthProp < 0.5f)
+                {
+                    float dotX = wx;
+                    DrawRect(new Rect2(dotX - 1, seamY - 1, 2, 2), new Color(1f, 1f, 1f, 0.8f));
+                }
                 break;
             }
 
