@@ -112,7 +112,11 @@ public partial class Particle : Node2D
         _maxHealth = Health;
 
         if (_path != null && _path.Count > 0)
-            GlobalPosition = _path[0]; // use GlobalPosition so world coords are correct
+            // Division children get world-space coords; normal spawns use local (parent-relative) coords
+            if (IsDivisionChild)
+                GlobalPosition = _path[0];
+            else
+                Position = _path[0];
     }
 
     /// <summary>
