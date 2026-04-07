@@ -111,13 +111,15 @@ public partial class ParticleManager : Node2D
         return 1;
     }
 
-    /// <summary>Spawn a CellDivision child at a specific world position.</summary>
-    public void SpawnDivisionChild(Vector2 worldPosition, float healthMultiplier = 1.0f)
+    /// <summary>Spawn a CellDivision child at a specific world position with an optional spawn offset.</summary>
+    public void SpawnDivisionChild(Vector2 worldPosition, float healthMultiplier = 1.0f, Vector2 spawnOffset = default)
     {
         if (_cachedWorldPath == null)
             RefreshCachedPath();
 
         if (_cachedWorldPath == null || _cachedWorldPath.Count == 0) return;
+
+        Vector2 actualSpawn = worldPosition + spawnOffset;
 
         // Find closest waypoint to the death position
         int bestIdx  = 0;
@@ -130,10 +132,10 @@ public partial class ParticleManager : Node2D
 
         var remainingPath = _cachedWorldPath.GetRange(bestIdx, _cachedWorldPath.Count - bestIdx);
 
-        // Override the first waypoint so the child starts exactly at the parent's position
+        // Override the first waypoint so the child starts at the offset spawn position
         var spawnPath = new List<Vector2>(remainingPath);
         if (spawnPath.Count > 0)
-            spawnPath[0] = worldPosition;
+            spawnPath[0] = actualSpawn;
 
         var particle = _particleScene.Instantiate<Particle>();
         AddChild(particle);
@@ -188,11 +190,16 @@ public partial class ParticleManager : Node2D
 
     private void OnParticleDied(Particle particle, int reward)
     {
-        // CellDivision: spawn 2 children if not already a child
+        // CellDivision: spawn 2 children with offset positions + split flash
         if (particle.Type == ParticleType.CellDivision && !particle.IsDivisionChild)
         {
-            SpawnDivisionChild(particle.GlobalPosition);
-            SpawnDivisionChild(particle.GlobalPosition);
+            SpawnDivisionChild(particle.GlobalPosition, spawnOffset: new Vector2(0f, -GameConfig.TileSize * 0.4f));
+            SpawnDivisionChild(particle.GlobalPosition, spawnOffset: new Vector2(0f,  GameConfig.TileSize * 0.4f));
+
+            // White split flash at death position
+            var flash = DeathSplash.CreateSplitFlash();
+            AddChild(flash);
+            flash.GlobalPosition = particle.GlobalPosition;
         }
 
         SpawnFloatingText($"+{reward}", particle.GlobalPosition, Constants.Colors.HazardYellow);
