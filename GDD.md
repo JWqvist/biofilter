@@ -1,4 +1,4 @@
-# BioFilter — Game Design Document (GDD)
+# Contamination Protocol TD — Game Design Document (GDD)
 
 **Version:** 0.1  
 **Engine:** Godot 4 (C#)  

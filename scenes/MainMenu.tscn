@@ -43,7 +43,7 @@ theme_override_colors/font_color = Color(0.961, 0.773, 0.094, 1.0)
 
 [node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "BioFilter"
+text = "Contamination Protocol"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 52
 theme_override_colors/font_color = Color(0.29, 0.62, 0.415, 1.0)
