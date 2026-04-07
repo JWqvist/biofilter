@@ -82,13 +82,13 @@ public partial class BuildMenu : CanvasLayer
         // Module cards grid
         // Viewport is 640x360 — 3 rows of cards must fit.
         // 3 rows * 110px + 2 gaps * 4px + padY 22 = 22+330+8 = 360px exactly.
-        const int cols = 3;
-        const int cardW = 140;
-        const int cardH = 110;
-        const int padX = 8;
-        const int padY = 22; // reduced from 28 to fit 3 rows in 360px viewport
-        const int gapX = 6;
-        const int gapY = 4;  // reduced from 6
+        const int cols = 4;    // 4 columns fits more cards
+        const int cardW = 148; // (640 - 12*2 - 5*3) / 4 ≈ 148
+        const int cardH = 90;  // shorter cards
+        const int padX = 6;
+        const int padY = 22;
+        const int gapX = 5;
+        const int gapY = 4;
 
         for (int i = 0; i < _modules.Length; i++)
         {
@@ -226,7 +226,7 @@ public partial class BuildMenu : CanvasLayer
             DrawRect(new Rect2(_w - 2, 0, 2, _h), borderColor);
 
             // Pixel art tower preview (48×48 centered in top area)
-            const int previewSize = 48;
+            const int previewSize = 36;
             float px = (_w - previewSize) * 0.5f;
             float py = 6f;
             DrawTowerPreview(px, py, previewSize);
