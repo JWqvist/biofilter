@@ -14,9 +14,9 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="BioFilter"
+config/name="Contamination Protocol TD"
 run/main_scene="res://scenes/MainMenu.tscn"
-config/features=PackedStringArray("4.6")
+config/features=PackedStringArray("4.6", "C#")
 
 [display]
 
@@ -25,9 +25,8 @@ window/size/viewport_height=360
 window/size/initial_position_type=0
 window/size/window_width_override=1280
 window/size/window_height_override=720
-window/mode=3
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
+window/mode=3
 
 [dotnet]
 
@@ -35,6 +34,6 @@ project/assembly_name="BioFilter"
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="gl_compatibility"
 environment/default_clear_color=Color(0.05, 0.09, 0.05, 1)
-textures/canvas_textures/default_texture_filter=0
