@@ -11,7 +11,7 @@ namespace BioFilter.Towers;
 /// </summary>
 public partial class BioNeutraliser : TowerBase
 {
-    public override float Range => 1.5f; // visual only
+    public override float Range => GameConfig.BioNeutraliserRange; // visual only — covers the 8 adjacent tiles
     public override int Cost => GameConfig.BioNeutraliserCost;
     protected override Color TowerColor => Constants.Colors.BioNeutralPurple;
     protected override Color GetInnerColor() => new Color("#1a0020");

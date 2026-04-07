@@ -322,7 +322,7 @@ public partial class TowerManager : Node2D
         TowerType.UVSteriliser    => GameConfig.UVSteriliserRange,
         TowerType.VortexSeparator => GameConfig.VortexSeparatorRange,
         TowerType.PowerCore       => 0f,
-        TowerType.BioNeutraliser  => 1.5f,
+        TowerType.BioNeutraliser  => GameConfig.BioNeutraliserRange,
         TowerType.MagneticCage    => GameConfig.MagneticCageRange,
         _                         => 0f
     };
