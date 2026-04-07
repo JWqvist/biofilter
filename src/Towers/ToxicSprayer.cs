@@ -7,7 +7,7 @@ public partial class ToxicSprayer : TowerBase
 {
     public override float Range => GameConfig.ToxicSprayerRange;
     public override int   Cost  => GameConfig.ToxicSprayerCost;
-    protected override Color TowerColor => new Color("#76ff03");
+    protected override Color TowerColor => new Color("#dd2222");
 
     public override void _Process(double delta)
     {
@@ -21,15 +21,15 @@ public partial class ToxicSprayer : TowerBase
     {
         base._Draw();
         float t = (float)Engine.GetProcessFrames() * 0.03f;
-        var toxic = new Color("#76ff03");
+        var toxic = new Color("#dd2222");
         var dim   = new Color("#76ff03", 0.4f);
 
         // Pulsing cloud at corners
         float pulse = (Mathf.Sin(t * 2f) + 1f) * 0.5f * 0.3f + 0.1f;
-        DrawRect(new Rect2(-6, -6, 4, 4), new Color("#76ff03", pulse));
-        DrawRect(new Rect2( 2, -6, 4, 4), new Color("#76ff03", pulse));
-        DrawRect(new Rect2(-6,  2, 4, 4), new Color("#76ff03", pulse));
-        DrawRect(new Rect2( 2,  2, 4, 4), new Color("#76ff03", pulse));
+        DrawRect(new Rect2(-6, -6, 4, 4), new Color("#dd2222", pulse));
+        DrawRect(new Rect2( 2, -6, 4, 4), new Color("#dd2222", pulse));
+        DrawRect(new Rect2(-6,  2, 4, 4), new Color("#dd2222", pulse));
+        DrawRect(new Rect2( 2,  2, 4, 4), new Color("#dd2222", pulse));
 
         // 3 dripping droplets in triangle formation
         Vector2[] centers = {
