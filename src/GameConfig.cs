@@ -85,7 +85,7 @@ public static class GameConfig
 
     // ─── Build Menu ───────────────────────────────────────────────────────────
     /// <summary>Total items in the build popup (1 wall + 7 tower types).</summary>
-    public const int BuildMenuItemCount  = 8;
+    public const int BuildMenuItemCount  = 10;
     /// <summary>Pixel width of the build popup panel.</summary>
     public const int BuildMenuWidth      = 220;
     /// <summary>Pixel height of each item row in the build popup.</summary>
@@ -261,4 +261,29 @@ public static class GameConfig
     public const float RadBlobShockwaveDuration    = 0.5f;
     /// <summary>Duration in seconds of the CellDivision split flash effect.</summary>
     public const float SplitFlashDuration         = 0.3f;
+
+    // ─── Toxic Sprayer (DoT tower) ────────────────────────────────────────────
+    /// <summary>Build cost in credits.</summary>
+    public const int   ToxicSprayerCost        = 125;
+    /// <summary>Damage per DoT tick.</summary>
+    public const float ToxicSprayerDotDamage   = 5f;
+    /// <summary>Seconds between DoT ticks.</summary>
+    public const float ToxicSprayerDotTickRate = 0.5f;
+    /// <summary>Total poison duration in seconds.</summary>
+    public const float ToxicSprayerDotDuration = 4f;
+    /// <summary>Detection range in tiles.</summary>
+    public const float ToxicSprayerRange       = 2.5f;
+
+    // ─── Plasma Burst (AoE tower) ─────────────────────────────────────────────
+    /// <summary>Build cost in credits.</summary>
+    public const int   PlasmaBurstCost     = 175;
+    /// <summary>Damage per explosion hit.</summary>
+    public const float PlasmaBurstDamage   = 60f;
+    /// <summary>Explosion radius in tiles.</summary>
+    public const float PlasmaBurstRadius   = 2.5f;
+    /// <summary>Maximum targeting range in tiles.</summary>
+    public const float PlasmaBurstRange    = 5f;
+    /// <summary>Seconds between shots.</summary>
+    public const float PlasmaBurstFireRate = 2.0f;
+
 }

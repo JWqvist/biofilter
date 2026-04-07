@@ -26,7 +26,10 @@ public partial class Particle : Node2D
     // ── State ────────────────────────────────────────────────────────────────
     public float Health { get; private set; }
     public float Speed  { get; set; }
-    public float SlowMultiplier { get; set; } = 1.0f;
+    public float SlowMultiplier     { get; set; } = 1.0f;
+    public float PoisonDps           { get; private set; } = 0f;
+    public float PoisonRemaining     { get; private set; } = 0f;
+    private float _poisonTickTimer   = 0f;
     public ParticleType Type { get; private set; } = ParticleType.BioParticle;
     public bool IsDivisionChild { get; private set; } = false;
     private bool _isDead = false;
@@ -145,6 +148,13 @@ public partial class Particle : Node2D
     }
 
     // ── Godot ─────────────────────────────────────────────────────────────────
+    public void ApplyPoison(float dps, float duration)
+    {
+        PoisonDps       = dps;
+        PoisonRemaining = Mathf.Max(PoisonRemaining, duration); // refresh if already poisoned
+        _poisonTickTimer = Mathf.Min(_poisonTickTimer, GameConfig.ToxicSprayerDotTickRate);
+    }
+
     public override void _Process(double delta)
     {
         if (_isDead) return;

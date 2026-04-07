@@ -23,6 +23,8 @@ public partial class TowerManager : Node2D
         PowerCore        = 4,
         BioNeutraliser   = 5,
         MagneticCage     = 6,
+        ToxicSprayer     = 7,
+        PlasmaBurst      = 8,
     }
 
     public TowerType SelectedTower { get; private set; } = TowerType.None;
@@ -47,6 +49,8 @@ public partial class TowerManager : Node2D
     private PackedScene _powerCoreScene = null!;
     private PackedScene _bioNeutraliserScene = null!;
     private PackedScene _magneticCageScene = null!;
+    private PackedScene _toxicSprayerScene = null!;
+    private PackedScene _plasmaBurstScene   = null!;
 
     // Map from grid position -> placed tower node
     private readonly Dictionary<Vector2I, TowerBase> _placedTowers = new();
@@ -63,6 +67,8 @@ public partial class TowerManager : Node2D
         _powerCoreScene       = GD.Load<PackedScene>("res://scenes/Towers/PowerCore.tscn");
         _bioNeutraliserScene  = GD.Load<PackedScene>("res://scenes/Towers/BioNeutraliser.tscn");
         _magneticCageScene    = GD.Load<PackedScene>("res://scenes/Towers/MagneticCage.tscn");
+        _toxicSprayerScene    = GD.Load<PackedScene>("res://scenes/Towers/ToxicSprayer.tscn");
+        _plasmaBurstScene     = GD.Load<PackedScene>("res://scenes/Towers/PlasmaBurst.tscn");
     }
 
     // ── Public helpers ────────────────────────────────────────────────────────
@@ -312,6 +318,8 @@ public partial class TowerManager : Node2D
         TowerType.PowerCore       => GameConfig.PowerCoreCost,
         TowerType.BioNeutraliser  => GameConfig.BioNeutraliserCost,
         TowerType.MagneticCage    => GameConfig.MagneticCageCost,
+        TowerType.ToxicSprayer    => GameConfig.ToxicSprayerCost,
+        TowerType.PlasmaBurst     => GameConfig.PlasmaBurstCost,
         _                         => 0
     };
 
@@ -324,6 +332,8 @@ public partial class TowerManager : Node2D
         TowerType.PowerCore       => 0f,
         TowerType.BioNeutraliser  => GameConfig.BioNeutraliserRange,
         TowerType.MagneticCage    => GameConfig.MagneticCageRange,
+        TowerType.ToxicSprayer    => GameConfig.ToxicSprayerRange,
+        TowerType.PlasmaBurst     => GameConfig.PlasmaBurstRange,
         _                         => 0f
     };
 
@@ -336,6 +346,8 @@ public partial class TowerManager : Node2D
         TowerType.PowerCore       => new Color("#ffd700"),
         TowerType.BioNeutraliser  => new Color("#9c27b0"),
         TowerType.MagneticCage    => new Color("#795548"),
+        TowerType.ToxicSprayer    => new Color("#76ff03"),
+        TowerType.PlasmaBurst     => new Color("#2979ff"),
         _                         => Colors.White
     };
 
@@ -348,6 +360,8 @@ public partial class TowerManager : Node2D
         TowerType.PowerCore       => _powerCoreScene,
         TowerType.BioNeutraliser  => _bioNeutraliserScene,
         TowerType.MagneticCage    => _magneticCageScene,
+        TowerType.ToxicSprayer    => _toxicSprayerScene,
+        TowerType.PlasmaBurst     => _plasmaBurstScene,
         _                         => null
     };
 }
