@@ -138,7 +138,10 @@ public partial class Particle : Node2D
         {
             _isDead = true;
             SpawnDeathSplash();
-            int reward = GameConfig.CurrencyPerKill;
+            // SporeSpeck gives quarter credits (fast, weak scout)
+            int reward = Type == ParticleType.SporeSpeck
+                ? Mathf.Max(1, GameConfig.CurrencyPerKill / 4)
+                : GameConfig.CurrencyPerKill;
             EmitSignal(SignalName.Died, reward);
         }
     }
@@ -154,8 +157,11 @@ public partial class Particle : Node2D
         if (_path == null || _path.Count == 0) return;
         if (_waypointIndex >= _path.Count) return;
 
-        // RadiationBlob is immune to slow — ignore SlowMultiplier
-        float slowFactor = (Type == ParticleType.RadiationBlob) ? 1.0f : SlowMultiplier;
+        // RadiationBlob is immune to slow
+        // SporeSpeck only half affected by slow
+        float slowFactor = Type == ParticleType.RadiationBlob ? 1.0f
+                         : Type == ParticleType.SporeSpeck    ? 1.0f - (1.0f - SlowMultiplier) * 0.5f
+                         : SlowMultiplier;
         float effectiveSpeed = Speed * slowFactor * GameConfig.TileSize; // pixels/sec
 
         Vector2 target   = _path[_waypointIndex];
