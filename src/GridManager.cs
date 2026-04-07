@@ -38,10 +38,6 @@ public partial class GridManager : Node2D
     [Signal]
     public delegate void AirflowChangedEventHandler(float airflow);
 
-    /// <summary>Emitted when airflow drops below the critical warning threshold.</summary>
-    [Signal]
-    public delegate void AirflowCriticalEventHandler(float airflow);
-
     /// <summary>Emitted when a wall tile is right-click removed (for refund: walls cost 0 so no currency, but TowerManager hooks this for tower removal).</summary>
     [Signal]
     public delegate void TileRightClickedEventHandler(int col, int row);
@@ -181,8 +177,6 @@ public partial class GridManager : Node2D
     {
         CurrentAirflow = _airflowCalculator.CalculateAirflow(_grid);
         EmitSignal(SignalName.AirflowChanged, CurrentAirflow);
-        if (CurrentAirflow <= GameConfig.AirflowCriticalThreshold)
-            EmitSignal(SignalName.AirflowCritical, CurrentAirflow);
     }
 
     private TileType[,] CloneGrid()

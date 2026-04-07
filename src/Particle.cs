@@ -77,9 +77,7 @@ public partial class Particle : Node2D
             case ParticleType.RadiationBlob:
                 Health      = GameConfig.RadiationBlobHealth * healthMultiplier;
                 Speed       = GameConfig.RadiationBlobSpeed;
-                // Nuclear yellow-green color
-                _color = new Color("#d4e600"); // nuclear yellow-green
-                _color      = new Color("#ff8c00");
+                _color      = new Color("#ff8c00"); // nuclear orange (body fill; glow uses #d4e600 in _Draw)
                 _visualSize = GameConfig.TileSize * 0.9f;
                 break;
 
