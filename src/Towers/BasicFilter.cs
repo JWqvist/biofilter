@@ -32,6 +32,7 @@ public partial class BasicFilter : TowerBase
 
     public override void _Process(double delta)
     {
+        base._Process(delta);
         _tickTimer += (float)delta;
         if (_tickTimer >= ActiveTickRate)
         {
@@ -55,9 +56,18 @@ public partial class BasicFilter : TowerBase
 
     private bool DamageNearby()
     {
+        if (IsDisabled) return false;
         var particles = GetNearbyParticles(Range);
         foreach (var p in particles)
-            p.TakeDamage(ActiveDamage * DamageMultiplier);
+        {
+            // Armored enemies resist BasicFilter damage
+            float typeMultiplier = p.Type == ParticleType.Armored
+                ? GameConfig.ArmorBasicFilterResist
+                : 1.0f;
+            p.TakeDamageFromTower(ActiveDamage * DamageMultiplier, typeMultiplier, GlobalPosition);
+            if (p.Type == ParticleType.Saboteur)
+                HookSaboteurSignal(p);
+        }
         return particles.Count > 0;
     }
 

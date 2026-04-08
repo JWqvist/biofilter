@@ -116,24 +116,43 @@ public partial class WaveManager : Node2D
             // Waves 5-6: SporeSpeck + RadiationBlob (1 blob every 3)
             5 or 6 => (spawnIndex % 3 == 0) ? ParticleType.RadiationBlob : ParticleType.SporeSpeck,
 
-            // Wave 7: BacterialSwarm + BioParticle (every other)
-            7 => (spawnIndex % 2 == 0) ? ParticleType.BacterialSwarm : ParticleType.BioParticle,
-
-            // Wave 8: CellDivision + SporeSpeck
-            8 => (spawnIndex % 2 == 0) ? ParticleType.CellDivision : ParticleType.SporeSpeck,
-
-            // Wave 9: mix of all types
-            9 => (spawnIndex % 5) switch
+            // Wave 7: Armored mix with BacterialSwarm (new special type introduced)
+            7 => (spawnIndex % 3) switch
             {
-                0 => ParticleType.BioParticle,
-                1 => ParticleType.SporeSpeck,
-                2 => ParticleType.RadiationBlob,
-                3 => ParticleType.BacterialSwarm,
-                _ => ParticleType.CellDivision,
+                0 => ParticleType.Armored,
+                1 => ParticleType.BacterialSwarm,
+                _ => ParticleType.BioParticle,
             },
 
-            // Wave 10 boss: heavy RadiationBlob every 3rd, rest CellDivision
-            _ => (spawnIndex % 3 == 0) ? ParticleType.RadiationBlob : ParticleType.CellDivision,
+            // Wave 8: Carrier + CellDivision + SporeSpeck
+            8 => (spawnIndex % 3) switch
+            {
+                0 => ParticleType.Carrier,
+                1 => ParticleType.CellDivision,
+                _ => ParticleType.SporeSpeck,
+            },
+
+            // Wave 9: Saboteur mix with all existing types
+            9 => (spawnIndex % 6) switch
+            {
+                0 => ParticleType.Saboteur,
+                1 => ParticleType.Armored,
+                2 => ParticleType.BioParticle,
+                3 => ParticleType.Carrier,
+                4 => ParticleType.RadiationBlob,
+                _ => ParticleType.SporeSpeck,
+            },
+
+            // Wave 10 boss: all special types — heavy with RadiationBlob
+            _ => (spawnIndex % 6) switch
+            {
+                0 => ParticleType.RadiationBlob,
+                1 => ParticleType.Armored,
+                2 => ParticleType.Carrier,
+                3 => ParticleType.Saboteur,
+                4 => ParticleType.CellDivision,
+                _ => ParticleType.BacterialSwarm,
+            },
         };
     }
 

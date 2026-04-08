@@ -27,20 +27,23 @@ public partial class MagneticCage : TowerBase
 
     public override void _Process(double delta)
     {
+        base._Process(delta);
         _time += (float)delta;
         float dt = (float)delta;
-
         var inRange = GetNearbyParticles(Range);
 
-        // Start holding newly arrived particles
-        foreach (var p in inRange)
+        // Start holding newly arrived particles (only if not disabled)
+        if (!IsDisabled)
         {
-            if (!_heldParticles.ContainsKey(p) && !_releaseCooldown.ContainsKey(p))
+            foreach (var p in inRange)
             {
-                // Freeze particle
-                _originalSpeeds[p] = p.Speed;
-                p.Speed = 0f;
-                _heldParticles[p] = 0f;
+                if (!_heldParticles.ContainsKey(p) && !_releaseCooldown.ContainsKey(p))
+                {
+                    // Freeze particle
+                    _originalSpeeds[p] = p.Speed;
+                    p.Speed = 0f;
+                    _heldParticles[p] = 0f;
+                }
             }
         }
 

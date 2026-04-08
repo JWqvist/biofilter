@@ -69,6 +69,7 @@ public partial class BioNeutraliser : TowerBase
 
     public override void _Process(double delta)
     {
+        base._Process(delta);
         _time += (float)delta;
         QueueRedraw();
     }

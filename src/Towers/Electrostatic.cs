@@ -41,8 +41,9 @@ public partial class Electrostatic : TowerBase
 
     public override void _Process(double delta)
     {
+        base._Process(delta);
         _localTime += (float)delta;
-        if (ParticleManagerRef == null) return;
+        if (IsDisabled || ParticleManagerRef == null) return;
 
         var inRange = new HashSet<Particle>(GetNearbyParticles(Range));
 

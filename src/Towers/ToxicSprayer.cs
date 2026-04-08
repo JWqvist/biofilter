@@ -12,6 +12,7 @@ public partial class ToxicSprayer : TowerBase
     public override void _Process(double delta)
     {
         base._Process(delta);
+        if (IsDisabled) return;
         var nearby = GetNearbyParticles(Range * GameConfig.TileSize);
         foreach (var p in nearby)
             p.ApplyPoison(GameConfig.ToxicSprayerDotDamage, GameConfig.ToxicSprayerDotDuration);

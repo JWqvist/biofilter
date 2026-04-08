@@ -160,6 +160,47 @@ public partial class ParticleManager : Node2D
         return chosen;
     }
 
+    /// <summary>
+    /// Spawns 3 BioParticle children at the given position (Carrier death payload).
+    /// </summary>
+    public void SpawnCarrierPayload(Vector2 pos, float healthMult = 0.5f)
+    {
+        if (_cachedWorldPaths.Count == 0)
+            RefreshCachedPath();
+
+        var primary = PrimaryWorldPath();
+        if (primary == null || primary.Count == 0) return;
+
+        // Find closest waypoint to spawn from
+        int bestIdx  = 0;
+        float bestDist = float.MaxValue;
+        for (int i = 0; i < primary.Count; i++)
+        {
+            float d = pos.DistanceTo(primary[i]);
+            if (d < bestDist) { bestDist = d; bestIdx = i; }
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            var remainingPath = primary.GetRange(bestIdx, primary.Count - bestIdx);
+            var spawnPath = new List<Vector2>(remainingPath);
+
+            // Slight offset so they don't all stack
+            float ox = _rng.RandfRange(-GameConfig.TileSize * 0.3f, GameConfig.TileSize * 0.3f);
+            float oy = _rng.RandfRange(-GameConfig.TileSize * 0.3f, GameConfig.TileSize * 0.3f);
+            if (spawnPath.Count > 0)
+                spawnPath[0] = pos + new Vector2(ox, oy);
+
+            var particle = _particleScene.Instantiate<Particle>();
+            AddChild(particle);
+            particle.Initialize(spawnPath, healthMult, ParticleType.BioParticle, isDivisionChild: true);
+            HookParticleSignals(particle);
+            _activeParticles.Add(particle);
+
+            WaveManager?.RegisterExtraParticle();
+        }
+    }
+
     /// <summary>Spawn a CellDivision child at a specific world position with an optional spawn offset.</summary>
     public void SpawnDivisionChild(Vector2 worldPosition, float healthMultiplier = 1.0f, Vector2 spawnOffset = default)
     {
@@ -243,6 +284,12 @@ public partial class ParticleManager : Node2D
 
     private void OnParticleDied(Particle particle, int reward)
     {
+        // Carrier: release 3 mini BioParticles on death
+        if (particle.Type == ParticleType.Carrier)
+        {
+            SpawnCarrierPayload(particle.GlobalPosition, 0.5f);
+        }
+
         // CellDivision: spawn 2 children with offset positions + split flash
         if (particle.Type == ParticleType.CellDivision && !particle.IsDivisionChild)
         {

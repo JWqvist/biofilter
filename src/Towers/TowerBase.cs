@@ -26,9 +26,51 @@ public abstract partial class TowerBase : Node2D
     /// <summary>Grid position (col, row) set by TowerManager on placement.</summary>
     public Vector2I GridPos { get; set; }
 
+    // ── Saboteur disable mechanic ──────────────────────────────────────────────────
+    /// <summary>True while this tower is disabled by a Saboteur kill.</summary>
+    public bool IsDisabled { get; private set; } = false;
+    private float _disabledTimer = 0f;
+    private float _disabledFlashTimer = 0f;
+
     public override void _Ready()
     {
         QueueRedraw();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (IsDisabled)
+        {
+            _disabledTimer    += (float)delta;
+            _disabledFlashTimer += (float)delta;
+            if (_disabledTimer >= GameConfig.SaboteurDisableDuration)
+            {
+                IsDisabled = false;
+                _disabledTimer = 0f;
+                _disabledFlashTimer = 0f;
+            }
+            QueueRedraw();
+        }
+    }
+
+    /// <summary>
+    /// Called by subclasses (or ParticleManager) when a Saboteur particle is killed by this tower.
+    /// Connects the SaboteurKilledByTower signal from the particle so we can disable ourselves.
+    /// </summary>
+    public void HookSaboteurSignal(Particle particle)
+    {
+        particle.SaboteurKilledByTower += OnSaboteurKilledByTower;
+    }
+
+    private void OnSaboteurKilledByTower(Vector2 towerPos)
+    {
+        if (towerPos.DistanceSquaredTo(GlobalPosition) < 4f) // tolerance: ~2px
+        {
+            IsDisabled = true;
+            _disabledTimer = 0f;
+            _disabledFlashTimer = 0f;
+            QueueRedraw();
+        }
     }
 
     /// <summary>Returns all active particles within the given range (in tiles).</summary>
@@ -68,6 +110,19 @@ public abstract partial class TowerBase : Node2D
         {
             int corner = size / 4;
             DrawRect(new Rect2(-half, -half, corner, corner), Colors.Gold);
+        }
+
+        // Red X overlay when disabled by Saboteur (flashing)
+        if (IsDisabled)
+        {
+            bool flashOn = (int)(_disabledFlashTimer * 4f) % 2 == 0;
+            if (flashOn)
+            {
+                var xColor = new Color(1f, 0.1f, 0.1f, 0.85f);
+                DrawLine(new Vector2(-half + 2, -half + 2), new Vector2(half - 2, half - 2), xColor, 2f);
+                DrawLine(new Vector2(half - 2, -half + 2), new Vector2(-half + 2, half - 2), xColor, 2f);
+                DrawRect(rect, new Color(1f, 0.1f, 0.1f, 0.25f));
+            }
         }
     }
 
