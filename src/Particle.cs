@@ -15,6 +15,9 @@ public enum ParticleType
     BacterialSwarm,// meta-type: ParticleManager spawns 8 SwarmUnits instead
     SwarmUnit,     // individual unit spawned by BacterialSwarm
     CellDivision,  // splits into 2 children on death
+    Armored,       // resistant to BasicFilter, weak to UV
+    Carrier,       // releases 3 BioParticles on death
+    Saboteur,      // disables the tower that kills it
 }
 
 /// <summary>
@@ -52,6 +55,8 @@ public partial class Particle : Node2D
     // ── Signals ───────────────────────────────────────────────────────────────
     [Signal] public delegate void ReachedExitEventHandler();
     [Signal] public delegate void DiedEventHandler(int currencyReward);
+    /// <summary>Emitted by Saboteur on death, carrying the killer tower's world position.</summary>
+    [Signal] public delegate void SaboteurKilledByTowerEventHandler(Vector2 towerPos);
 
     // ── Public API ────────────────────────────────────────────────────────────
     public void Initialize(
@@ -102,6 +107,27 @@ public partial class Particle : Node2D
                     : GameConfig.TileSize * 0.7f;
                 break;
 
+            case ParticleType.Armored:
+                Health      = GameConfig.ArmoredHealth * healthMultiplier;
+                Speed       = GameConfig.ArmoredSpeed;
+                _color      = new Color("#607d8b");
+                _visualSize = GameConfig.TileSize * 0.75f;
+                break;
+
+            case ParticleType.Carrier:
+                Health      = GameConfig.CarrierHealth * healthMultiplier;
+                Speed       = GameConfig.CarrierSpeed;
+                _color      = new Color("#8d6e63");
+                _visualSize = GameConfig.TileSize * 0.65f;
+                break;
+
+            case ParticleType.Saboteur:
+                Health      = GameConfig.SaboteurHealth * healthMultiplier;
+                Speed       = GameConfig.SaboteurSpeed;
+                _color      = new Color("#7b1fa2");
+                _visualSize = GameConfig.TileSize * 0.7f;
+                break;
+
             default: // BioParticle
                 Health      = GameConfig.ParticleBaseHealth * healthMultiplier;
                 Speed       = GameConfig.ParticleBaseSpeed;
@@ -131,10 +157,15 @@ public partial class Particle : Node2D
         // Do NOT reset Health, Position, or _velocity
     }
 
-    public void TakeDamage(float amount)
+    /// <summary>
+    /// Deals damage to this particle.
+    /// Pass an optional <paramref name="damageMultiplier"/> to account for type-specific
+    /// resistances/vulnerabilities (e.g. Armored vs BasicFilter or UV).
+    /// </summary>
+    public void TakeDamage(float amount, float damageMultiplier = 1.0f)
     {
         if (_isDead) return;
-        Health -= amount;
+        Health -= amount * damageMultiplier;
         if (Health <= 0f)
         {
             _isDead = true;
@@ -143,6 +174,27 @@ public partial class Particle : Node2D
             int reward = Type == ParticleType.SporeSpeck
                 ? Mathf.Max(1, GameConfig.CurrencyPerKill / 4)
                 : GameConfig.CurrencyPerKill;
+            EmitSignal(SignalName.Died, reward);
+        }
+    }
+
+    /// <summary>
+    /// Variant of TakeDamage that also carries the killer tower position for Saboteur logic.
+    /// If the particle dies and is a Saboteur, emits SaboteurKilledByTower.
+    /// </summary>
+    public void TakeDamageFromTower(float amount, float damageMultiplier, Vector2 towerWorldPos)
+    {
+        if (_isDead) return;
+        Health -= amount * damageMultiplier;
+        if (Health <= 0f)
+        {
+            _isDead = true;
+            SpawnDeathSplash();
+            int reward = Type == ParticleType.SporeSpeck
+                ? Mathf.Max(1, GameConfig.CurrencyPerKill / 4)
+                : GameConfig.CurrencyPerKill;
+            if (Type == ParticleType.Saboteur)
+                EmitSignal(SignalName.SaboteurKilledByTower, towerWorldPos);
             EmitSignal(SignalName.Died, reward);
         }
     }
@@ -352,6 +404,81 @@ public partial class Particle : Node2D
                     float dotAlpha = (Mathf.Sin(_localTime * seamSpeed * 1.5f) + 1f) * 0.5f;
                     DrawRect(new Rect2(seamX - 1f, -1f, 2f, 2f), new Color(1f, 1f, 1f, dotAlpha));
                 }
+                break;
+            }
+
+            // ── Armored ───────────────────────────────────────────────────────────────
+            case ParticleType.Armored:
+            {
+                float sz = 12f;
+                float hs = sz * 0.5f;
+
+                // Metallic grey-blue body
+                DrawRect(new Rect2(-hs, -hs, sz, sz), _color);
+
+                // Diagonal hash lines (armor pattern)
+                var hashColor = new Color(1f, 1f, 1f, 0.35f);
+                for (int i = -2; i <= 4; i += 2)
+                {
+                    float d = i * 2f;
+                    DrawLine(new Vector2(-hs + d, -hs), new Vector2(-hs + d + sz, -hs + sz), hashColor, 1f);
+                }
+
+                // Bright border
+                DrawRect(new Rect2(-hs, -hs, sz, sz), new Color(0.8f, 0.9f, 1.0f, 0.8f), false, 1f);
+
+                // Health bar
+                float barY = hs + 2f;
+                DrawRect(new Rect2(-hs, barY, sz, 1.5f), new Color(0.15f, 0.15f, 0.15f, 0.9f));
+                Color barCol = healthProp > 0.5f ? new Color("#90a4ae") : new Color("#ff2222");
+                DrawRect(new Rect2(-hs, barY, sz * healthProp, 1.5f), barCol);
+                break;
+            }
+
+            // ── Carrier ───────────────────────────────────────────────────────────────
+            case ParticleType.Carrier:
+            {
+                float sz = 11f;
+                float hs = sz * 0.5f;
+                float r  = 2.5f; // corner radius approximation (use inset rect + corners)
+
+                // Rounded body (approximated with inset rects)
+                DrawRect(new Rect2(-hs + r, -hs, sz - r * 2f, sz), _color);
+                DrawRect(new Rect2(-hs, -hs + r, sz, sz - r * 2f), _color);
+
+                // 3 small white payload dots
+                float[] dotX = { -3f, 0f, 3f };
+                foreach (float dx in dotX)
+                    DrawRect(new Rect2(dx - 1f, -1.5f, 2.5f, 2.5f), Colors.White);
+
+                // Subtle pulse ring
+                float pulseAlpha = (Mathf.Sin(_localTime * 3f) + 1f) * 0.5f * 0.2f + 0.05f;
+                DrawRect(new Rect2(-hs - 1, -hs - 1, sz + 2, sz + 2), new Color(_color, pulseAlpha), false, 1f);
+                break;
+            }
+
+            // ── Saboteur ───────────────────────────────────────────────────────────────
+            case ParticleType.Saboteur:
+            {
+                float sz = 11f;
+                float hs = sz * 0.5f;
+
+                // Purple body
+                DrawRect(new Rect2(-hs, -hs, sz, sz), _color);
+
+                // Yellow lightning bolt (pixel art)
+                var bolt = new Color("#ffeb3b");
+                // Top segment (angled right)
+                DrawRect(new Rect2(-1.5f, -hs + 1f, 3f, 2.5f), bolt);
+                DrawRect(new Rect2(-0.5f, -hs + 3f, 3f, 2f),   bolt);
+                // Middle diagonal
+                DrawRect(new Rect2(-2f, -hs + 4.5f, 4f, 1.5f), bolt);
+                // Bottom segment (angled right)
+                DrawRect(new Rect2(-2.5f, -hs + 6f, 3f, 2f),   bolt);
+                DrawRect(new Rect2(-3f,  -hs + 7.5f, 2.5f, 1.5f), bolt);
+
+                // Border
+                DrawRect(new Rect2(-hs, -hs, sz, sz), new Color(0.9f, 0.5f, 1.0f, 0.9f), false, 1f);
                 break;
             }
 

@@ -66,6 +66,7 @@ public partial class VortexSeparator : TowerBase
 
     public override void _Process(double delta)
     {
+        base._Process(delta);
         _time += (float)delta;
         QueueRedraw();
     }

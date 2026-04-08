@@ -31,6 +31,7 @@ public partial class PlasmaBurst : TowerBase
 
     private void FirePlasma()
     {
+        if (IsDisabled) return;
         var nearby = GetNearbyParticles(Range * GameConfig.TileSize);
         if (nearby.Count == 0) return;
 
@@ -44,7 +45,11 @@ public partial class PlasmaBurst : TowerBase
         foreach (var p in nearby)
         {
             if (p.GlobalPosition.DistanceTo(center) <= radiusPx)
-                p.TakeDamage(GameConfig.PlasmaBurstDamage * DamageMultiplier);
+            {
+                if (p.Type == BioFilter.ParticleType.Saboteur)
+                    HookSaboteurSignal(p);
+                p.TakeDamageFromTower(GameConfig.PlasmaBurstDamage * DamageMultiplier, 1.0f, GlobalPosition);
+            }
         }
         _flashTimer = 0.2f;
     }

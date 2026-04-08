@@ -43,6 +43,7 @@ public partial class UVSteriliser : TowerBase
 
     public override void _Process(double delta)
     {
+        base._Process(delta);
         _localTime += (float)delta;
         _fireTimer += (float)delta;
         if (_fireTimer >= FireInterval)
@@ -80,10 +81,20 @@ public partial class UVSteriliser : TowerBase
 
         if (nearest == null) return;
 
+        if (IsDisabled) return;
+
+        // Armored enemies take bonus damage from UV
+        float typeMultiplier = nearest.Type == ParticleType.Armored
+            ? GameConfig.ArmorUVBonus
+            : 1.0f;
+
+        if (nearest.Type == ParticleType.Saboteur)
+            HookSaboteurSignal(nearest);
+
         var projectile = _projectileScene.Instantiate<Projectile>();
         GetTree().Root.AddChild(projectile);
         projectile.GlobalPosition = GlobalPosition;
-        projectile.Initialize(nearest, ActiveDamage * DamageMultiplier);
+        projectile.Initialize(nearest, ActiveDamage * DamageMultiplier * typeMultiplier);
 
         // Trigger muzzle flash
         _flashing = true;
