@@ -54,7 +54,7 @@ public static class GameConfig
     /// A single Basic Filter (DPS = BasicFilterDamage / BasicFilterTickRate = 16)
     /// should kill this in ~3 seconds while the particle is in range.
     /// </summary>
-    public const float ParticleBaseHealth = 48f;
+    public const float ParticleBaseHealth = 80f; // needs 2-3 filters to kill at wave 1
     /// <summary>Speed multiplier applied to a particle while it is slowed (used by MagneticCage).</summary>
     public const float ParticleSlowFactor = 0.5f;
     /// <summary>Lerp weight for particle steering — higher = tighter turns, lower = more momentum.</summary>
@@ -64,7 +64,7 @@ public static class GameConfig
     /// <summary>Currency the player starts with. Must be exactly divisible into 4 Basic Filters (4 × $50).</summary>
     public const int StartingCurrency = 200;
     /// <summary>Currency awarded to the player for each particle killed by a tower.</summary>
-    public const int CurrencyPerKill = 12;
+    public const int CurrencyPerKill = 8; // fewer credits per kill = tighter economy
 
     // ─── Lives ──────────────────────────────────────────────────────────────
     /// <summary>Starting population (lives). Game over when this reaches 0.</summary>
@@ -86,7 +86,7 @@ public static class GameConfig
     /// W1=1.0×, W3=1.6×, W6=2.5×, W10=3.7×.
     /// Produces a smooth easy→hard curve without exponential blowup.
     /// </summary>
-    public const float WaveHealthMultiplierIncrease = 0.30f;
+    public const float WaveHealthMultiplierIncrease = 0.45f; // wave 10 = 80*(1+9*0.45) = ~404 HP
     /// <summary>
     /// Gap in seconds between particle spawns within a wave.
     /// Must be ≥ 1.2 s to give the player time to react to each particle.
@@ -128,16 +128,16 @@ public static class GameConfig
     /// DPS = BasicFilterDamage / BasicFilterTickRate = 8 / 0.5 = 16.
     /// At wave 1 (ParticleBaseHealth = 48 HP), kills in exactly 3 seconds.
     /// </summary>
-    public const float BasicFilterDamage = 8f;
+    public const float BasicFilterDamage = 6f; // DPS=12, needs 2+ filters to kill wave 1 in range
     /// <summary>Damage aura radius of the Basic Filter in tiles.</summary>
     public const float BasicFilterRange = 2f;
     /// <summary>Seconds between each damage tick of the Basic Filter (lower = faster).</summary>
-    public const float BasicFilterTickRate = 0.5f;
+    public const float BasicFilterTickRate = 0.5f; // DPS = 6/0.5 = 12/sec
 
     /// <summary>Build cost of the Electrostatic tower.</summary>
     public const int ElectrostaticCost = 75;
     /// <summary>Speed multiplier applied to particles slowed by the Electrostatic tower (0.5 = 50% speed).</summary>
-    public const float ElectrostaticSlowPercent = 0.5f;
+    public const float ElectrostaticSlowPercent = 0.35f; // 35% slow — less OP than 50%
     /// <summary>Slow aura radius of the Electrostatic tower in tiles.</summary>
     public const float ElectrostaticRange = 2f;
 
@@ -147,7 +147,7 @@ public static class GameConfig
     /// Damage per projectile fired by the UV Steriliser.
     /// Must be ≥ wave-3 BioParticle health (48 × 1.6 = 76.8) to guarantee a one-shot kill on waves 1–3.
     /// </summary>
-    public const float UVSteriliserDamage = 80f;
+    public const float UVSteriliserDamage = 50f; // one-shots wave 1 (80 HP) but not wave 4+
     /// <summary>Targeting range of the UV Steriliser in tiles.</summary>
     public const float UVSteriliserRange = 4f;
     /// <summary>Projectiles fired per second by the UV Steriliser.</summary>
@@ -319,5 +319,18 @@ public static class GameConfig
     public const float PlasmaBurstRange    = 5f;
     /// <summary>Seconds between shots.</summary>
     public const float PlasmaBurstFireRate = 2.0f;
+
+
+    // ─── Tower unlock wave requirements ──────────────────────────────────────────
+    /// <summary>Wave number required to unlock (0 = always available)</summary>
+    public const int UnlockHepaFilter       = 0;
+    public const int UnlockIonTrap          = 0;
+    public const int UnlockUVEmitter        = 0;
+    public const int UnlockVortexSeparator  = 3;
+    public const int UnlockPowerCore        = 3;
+    public const int UnlockAmplifier        = 5;
+    public const int UnlockMagneticCage     = 5;
+    public const int UnlockAerosolDispenser = 6;
+    public const int UnlockIoniserCannon    = 8;
 
 }
