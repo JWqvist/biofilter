@@ -11,6 +11,9 @@ public partial class GridManager : Node2D
     private Vector2I _hoverTile = new Vector2I(-1, -1);
     private float _time = 0f;
 
+    /// <summary>All active spawn points for the current map (populated in InitializeGrid).</summary>
+    public System.Collections.Generic.List<Vector2I> SpawnPoints { get; } = new();
+
     // Ambient corrupted-pixel effect
     private readonly RandomNumberGenerator _rng = new();
     private Vector2I _corruptedTile = new Vector2I(-1, -1);
@@ -55,29 +58,46 @@ public partial class GridManager : Node2D
     public override void _Ready()
     {
         _rng.Randomize();
-        InitializeGrid();
+        InitializeGridForMap(MapManager.CurrentMap);
         RefreshAirflow();
     }
 
-    private void InitializeGrid()
+    /// <summary>
+    /// Initialises the grid for the given map number.
+    /// Map 1: single spawn at (0, 10).
+    /// Map 2: dual spawns at (0, 5) and (0, 15).
+    /// Exit is the entire right column in all maps.
+    /// </summary>
+    public void InitializeGridForMap(int mapNumber)
     {
+        SpawnPoints.Clear();
+
         for (int col = 0; col < GameConfig.GridWidth; col++)
-        {
             for (int row = 0; row < GameConfig.GridHeight; row++)
-            {
                 _grid[col, row] = TileType.Empty;
-            }
-        }
 
-        // Spawn: column 0, row 10 (left middle)
-        _grid[GameConfig.SpawnCol, GameConfig.SpawnRow] = TileType.Spawn;
-
-        // Exit: entire column 29 (right edge)
-        for (int row = 0; row < GameConfig.GridHeight; row++)
+        if (mapNumber == 2)
         {
-            _grid[GameConfig.GridWidth - 1, row] = TileType.Exit;
+            // Two red spawn tiles: top-left and bottom-left
+            _grid[GameConfig.Map2Spawn1Col, GameConfig.Map2Spawn1Row] = TileType.Spawn;
+            _grid[GameConfig.Map2Spawn2Col, GameConfig.Map2Spawn2Row] = TileType.Spawn;
+            SpawnPoints.Add(new Vector2I(GameConfig.Map2Spawn1Col, GameConfig.Map2Spawn1Row));
+            SpawnPoints.Add(new Vector2I(GameConfig.Map2Spawn2Col, GameConfig.Map2Spawn2Row));
         }
+        else
+        {
+            // Map 1 (default): single spawn at middle-left
+            _grid[GameConfig.SpawnCol, GameConfig.SpawnRow] = TileType.Spawn;
+            SpawnPoints.Add(new Vector2I(GameConfig.SpawnCol, GameConfig.SpawnRow));
+        }
+
+        // Exit: entire right column
+        for (int row = 0; row < GameConfig.GridHeight; row++)
+            _grid[GameConfig.GridWidth - 1, row] = TileType.Exit;
     }
+
+    // Legacy shim — kept so code calling InitializeGrid() still compiles.
+    private void InitializeGrid() => InitializeGridForMap(MapManager.CurrentMap);
 
     /// <summary>
     /// Attempts to place a tile. Returns false if placement would drop airflow below the minimum.

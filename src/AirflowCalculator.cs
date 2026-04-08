@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Godot;
 
 namespace BioFilter;
 
@@ -14,8 +15,24 @@ public class AirflowCalculator
         t == TileType.Empty || t == TileType.Spawn || t == TileType.Exit;
 
     /// <summary>
-    /// Returns true if there is at least one valid path from spawn to any exit tile.
-    /// Uses proper BFS flood-fill.
+    /// Returns the list of active spawn points for the current map.
+    /// </summary>
+    private static List<Vector2I> GetSpawnPoints()
+    {
+        if (MapManager.CurrentMap == 2)
+        {
+            return new List<Vector2I>
+            {
+                new Vector2I(GameConfig.Map2Spawn1Col, GameConfig.Map2Spawn1Row),
+                new Vector2I(GameConfig.Map2Spawn2Col, GameConfig.Map2Spawn2Row),
+            };
+        }
+        return new List<Vector2I> { new Vector2I(GameConfig.SpawnCol, GameConfig.SpawnRow) };
+    }
+
+    /// <summary>
+    /// Returns true if there is at least one valid path from any spawn to any exit tile.
+    /// Uses proper BFS flood-fill, starting from ALL spawn points simultaneously.
     /// </summary>
     public bool HasValidPath(TileType[,] grid)
     {
@@ -25,12 +42,16 @@ public class AirflowCalculator
         bool[,] visited = new bool[cols, rows];
         var queue = new Queue<(int col, int row)>();
 
-        // Guard: spawn must be in bounds
-        if (GameConfig.SpawnCol < 0 || GameConfig.SpawnCol >= cols) return false;
-        if (GameConfig.SpawnRow < 0 || GameConfig.SpawnRow >= rows) return false;
+        // Seed BFS from all spawn points
+        foreach (var sp in GetSpawnPoints())
+        {
+            if (sp.X < 0 || sp.X >= cols || sp.Y < 0 || sp.Y >= rows) continue;
+            if (visited[sp.X, sp.Y]) continue;
+            visited[sp.X, sp.Y] = true;
+            queue.Enqueue((sp.X, sp.Y));
+        }
 
-        queue.Enqueue((GameConfig.SpawnCol, GameConfig.SpawnRow));
-        visited[GameConfig.SpawnCol, GameConfig.SpawnRow] = true;
+        if (queue.Count == 0) return false;
 
         int[] dc = { 0, 0, 1, -1 };
         int[] dr = { 1, -1, 0, 0 };
@@ -74,15 +95,18 @@ public class AirflowCalculator
         int cols = grid.GetLength(0);
         int rows = grid.GetLength(1);
 
-        // Step 1: BFS flood-fill from spawn to find all reachable passable tiles
+        // Step 1: BFS flood-fill from ALL spawn points simultaneously
         bool[,] reachable = new bool[cols, rows];
         var queue = new Queue<(int col, int row)>();
 
-        if (GameConfig.SpawnCol < 0 || GameConfig.SpawnCol >= cols) return 0.0f;
-        if (GameConfig.SpawnRow < 0 || GameConfig.SpawnRow >= rows) return 0.0f;
-
-        queue.Enqueue((GameConfig.SpawnCol, GameConfig.SpawnRow));
-        reachable[GameConfig.SpawnCol, GameConfig.SpawnRow] = true;
+        foreach (var sp in GetSpawnPoints())
+        {
+            if (sp.X < 0 || sp.X >= cols || sp.Y < 0 || sp.Y >= rows) continue;
+            if (reachable[sp.X, sp.Y]) continue;
+            reachable[sp.X, sp.Y] = true;
+            queue.Enqueue((sp.X, sp.Y));
+        }
+        if (queue.Count == 0) return 0.0f;
 
         int[] dc = { 0, 0, 1, -1 };
         int[] dr = { 1, -1, 0, 0 };

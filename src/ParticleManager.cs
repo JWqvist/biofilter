@@ -18,8 +18,12 @@ public partial class ParticleManager : Node2D
     private PackedScene _particleScene = null!;
     private readonly List<Particle> _activeParticles = new();
 
-    // Cached path (recalculated on grid change)
-    private List<Vector2>? _cachedWorldPath;
+    // Cached paths: one per spawn point (recalculated on grid change)
+    // Index 0 = primary / Map1 spawn; Index 1 = secondary (Map2 only)
+    private readonly List<List<Vector2>?> _cachedWorldPaths = new();
+
+    // Round-robin index for multi-spawn cycling
+    private int _spawnRoundRobinIndex = 0;
 
     // Random number generator for swarm offsets
     private readonly RandomNumberGenerator _rng = new();
@@ -37,48 +41,77 @@ public partial class ParticleManager : Node2D
     }
 
     // ── Path helpers ──────────────────────────────────────────────────────────
-    private List<Vector2>? BuildWorldPath()
+
+    private static List<Vector2> TilePathToWorld(List<Vector2I> tilePath)
     {
-        if (GridManager == null) return null;
-
-        var tileGrid = GridManager.GetGrid();
-        var start    = new Vector2I(GameConfig.SpawnCol, GameConfig.SpawnRow);
-        var tilePath = Pathfinder.FindPath(tileGrid, start);
-
-        if (tilePath == null || tilePath.Count == 0) return null;
-
-        var worldPath = new List<Vector2>(tilePath.Count);
+        var world = new List<Vector2>(tilePath.Count);
         foreach (var tile in tilePath)
         {
             float cx = tile.X * GameConfig.TileSize + GameConfig.TileSize * 0.5f;
             float cy = tile.Y * GameConfig.TileSize + GameConfig.TileSize * 0.5f;
-            worldPath.Add(new Vector2(cx, cy));
+            world.Add(new Vector2(cx, cy));
         }
-        return worldPath;
+        return world;
     }
 
     private void RefreshCachedPath()
     {
-        _cachedWorldPath = BuildWorldPath();
+        _cachedWorldPaths.Clear();
+        if (GridManager == null) return;
+
+        var tileGrid = GridManager.GetGrid();
+        var spawnPoints = GridManager.SpawnPoints;
+
+        if (spawnPoints.Count == 0)
+        {
+            // Fallback: use GameConfig spawn
+            var fallbackTile = Pathfinder.FindPath(tileGrid, new Vector2I(GameConfig.SpawnCol, GameConfig.SpawnRow));
+            _cachedWorldPaths.Add(fallbackTile != null ? TilePathToWorld(fallbackTile) : null);
+        }
+        else
+        {
+            var tilePaths = Pathfinder.FindPathMultiSpawn(tileGrid, spawnPoints);
+            foreach (var tp in tilePaths)
+                _cachedWorldPaths.Add(tp != null ? TilePathToWorld(tp) : null);
+        }
 
         foreach (var p in _activeParticles)
             RecalculateParticlePath(p);
     }
 
+    /// <summary>Returns the first non-null cached world path (used for CellDivision children).</summary>
+    private List<Vector2>? PrimaryWorldPath()
+    {
+        foreach (var p in _cachedWorldPaths)
+            if (p != null) return p;
+        return null;
+    }
+
     private void RecalculateParticlePath(Particle p)
     {
-        if (_cachedWorldPath == null || _cachedWorldPath.Count == 0) return;
-
-        int bestIdx  = 0;
+        // Find best path across all cached paths by closest waypoint
+        List<Vector2>? bestPath = null;
+        int bestIdx = 0;
         float bestDist = float.MaxValue;
-        for (int i = 0; i < _cachedWorldPath.Count; i++)
+
+        foreach (var worldPath in _cachedWorldPaths)
         {
-            float d = p.Position.DistanceTo(_cachedWorldPath[i]);
-            if (d < bestDist) { bestDist = d; bestIdx = i; }
+            if (worldPath == null || worldPath.Count == 0) continue;
+            for (int i = 0; i < worldPath.Count; i++)
+            {
+                float d = p.Position.DistanceTo(worldPath[i]);
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    bestIdx  = i;
+                    bestPath = worldPath;
+                }
+            }
         }
 
-        var remainingPath = _cachedWorldPath.GetRange(bestIdx, _cachedWorldPath.Count - bestIdx);
-        p.Reroute(remainingPath);
+        if (bestPath == null) return;
+        var remaining = bestPath.GetRange(bestIdx, bestPath.Count - bestIdx);
+        p.Reroute(remaining);
     }
 
     // ── Spawn API ─────────────────────────────────────────────────────────────
@@ -90,10 +123,11 @@ public partial class ParticleManager : Node2D
     /// </summary>
     public int SpawnParticle(float healthMultiplier = 1.0f, ParticleType type = ParticleType.BioParticle)
     {
-        if (_cachedWorldPath == null)
+        if (_cachedWorldPaths.Count == 0)
             RefreshCachedPath();
 
-        if (_cachedWorldPath == null || _cachedWorldPath.Count == 0)
+        var primary = PrimaryWorldPath();
+        if (primary == null || primary.Count == 0)
         {
             GD.PrintErr("ParticleManager: No path available — cannot spawn particle.");
             return 0;
@@ -101,38 +135,57 @@ public partial class ParticleManager : Node2D
 
         if (type == ParticleType.BacterialSwarm)
         {
-            // Spawn 8 SwarmUnits with slight positional offsets
+            // Spawn 8 SwarmUnits — alternate between spawn points
             for (int i = 0; i < GameConfig.SwarmUnitCount; i++)
-                SpawnSingle(healthMultiplier, ParticleType.SwarmUnit, offset: true);
+                SpawnSingleFromPath(GetNextPath(), healthMultiplier, ParticleType.SwarmUnit, offset: true);
             return GameConfig.SwarmUnitCount;
         }
 
-        SpawnSingle(healthMultiplier, type);
+        SpawnSingleFromPath(GetNextPath(), healthMultiplier, type);
         return 1;
+    }
+
+    /// <summary>Round-robin pick of the next valid world path.</summary>
+    private List<Vector2> GetNextPath()
+    {
+        // Filter to non-null paths
+        var valid = new List<List<Vector2>>();
+        foreach (var p in _cachedWorldPaths)
+            if (p != null && p.Count > 0) valid.Add(p);
+
+        if (valid.Count == 0) return PrimaryWorldPath()!;
+
+        var chosen = valid[_spawnRoundRobinIndex % valid.Count];
+        _spawnRoundRobinIndex++;
+        return chosen;
     }
 
     /// <summary>Spawn a CellDivision child at a specific world position with an optional spawn offset.</summary>
     public void SpawnDivisionChild(Vector2 worldPosition, float healthMultiplier = 1.0f, Vector2 spawnOffset = default)
     {
-        if (_cachedWorldPath == null)
+        if (_cachedWorldPaths.Count == 0)
             RefreshCachedPath();
 
-        if (_cachedWorldPath == null || _cachedWorldPath.Count == 0) return;
-
-        Vector2 actualSpawn = worldPosition + spawnOffset;
-
-        // Find closest waypoint to the death position
-        int bestIdx  = 0;
+        // Use the closest cached path to the death position
+        List<Vector2>? bestCachedPath = null;
+        int bestMatchIdx = 0;
         float bestDist = float.MaxValue;
-        for (int i = 0; i < _cachedWorldPath.Count; i++)
+
+        foreach (var worldPath in _cachedWorldPaths)
         {
-            float d = worldPosition.DistanceTo(_cachedWorldPath[i]);
-            if (d < bestDist) { bestDist = d; bestIdx = i; }
+            if (worldPath == null || worldPath.Count == 0) continue;
+            for (int i = 0; i < worldPath.Count; i++)
+            {
+                float d = worldPosition.DistanceTo(worldPath[i]);
+                if (d < bestDist) { bestDist = d; bestMatchIdx = i; bestCachedPath = worldPath; }
+            }
         }
 
-        var remainingPath = _cachedWorldPath.GetRange(bestIdx, _cachedWorldPath.Count - bestIdx);
+        if (bestCachedPath == null) return;
 
-        // Override the first waypoint so the child starts at the offset spawn position
+        Vector2 actualSpawn = worldPosition + spawnOffset;
+        var remainingPath = bestCachedPath.GetRange(bestMatchIdx, bestCachedPath.Count - bestMatchIdx);
+
         var spawnPath = new List<Vector2>(remainingPath);
         if (spawnPath.Count > 0)
             spawnPath[0] = actualSpawn;
@@ -148,12 +201,12 @@ public partial class ParticleManager : Node2D
 
     // ── Internal helpers ──────────────────────────────────────────────────────
 
-    private void SpawnSingle(float healthMultiplier, ParticleType type, bool offset = false)
+    private void SpawnSingleFromPath(List<Vector2> sourcePath, float healthMultiplier, ParticleType type, bool offset = false)
     {
         var particle = _particleScene.Instantiate<Particle>();
         AddChild(particle);
 
-        var path = new List<Vector2>(_cachedWorldPath!);
+        var path = new List<Vector2>(sourcePath);
 
         if (offset && path.Count > 0)
         {
