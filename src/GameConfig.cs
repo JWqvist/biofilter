@@ -81,7 +81,7 @@ public static class GameConfig
     /// Gap in seconds between particle spawns within a wave.
     /// Must be ≥ 1.2 s to give the player time to react to each particle.
     /// </summary>
-    public const float SpawnInterval = 1.3f;
+    public const float SpawnInterval = 1.8f; // increased for more space between particles // increased for more space between particles
 
     // ─── Build Menu ───────────────────────────────────────────────────────────
     /// <summary>Total items in the build popup (1 wall + 7 tower types).</summary>
