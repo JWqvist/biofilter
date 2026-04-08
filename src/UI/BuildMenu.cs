@@ -435,6 +435,47 @@ public partial class BuildMenu : CanvasLayer
                     }
                     break;
                 }
+                case 8: // Toxic Sprayer — red dripping drops
+                {
+                    var red = new Color("#ff4444");
+                    var redDim = new Color("#cc2222", 0.6f);
+                    // 3 drops in triangle
+                    (float bx, float by)[] drops = {
+                        (cx - s*2.5f, cy - s),
+                        (cx + s*2.5f, cy - s),
+                        (cx,          cy + s*2),
+                    };
+                    for (int di = 0; di < drops.Length; di++)
+                    {
+                        float drip = (Mathf.Sin(_localTime * 1.5f + di * 2.094f) + 1f) * 0.5f * s * 3f;
+                        DrawRect(new Rect2(drops[di].bx - s, drops[di].by - s + drip, s*2, s*2), red);
+                        DrawRect(new Rect2(drops[di].bx - s*0.5f, drops[di].by + s + drip, s, s*2), redDim);
+                    }
+                    // Toxic cloud hint at top
+                    float cloudPulse = (Mathf.Sin(_localTime * 2f) + 1f) * 0.5f * 0.25f + 0.1f;
+                    DrawRect(new Rect2(cx - s*4, oy + s, s*3, s*2), new Color(red, cloudPulse));
+                    DrawRect(new Rect2(cx + s, oy + s, s*3, s*2), new Color(red, cloudPulse));
+                    break;
+                }
+                case 9: // Plasma Burst — charging diamond with rotating sparks
+                {
+                    float charge = (Mathf.Sin(_localTime * 1.5f) + 1f) * 0.5f;
+                    var blue = new Color("#2979ff");
+                    // Charging diamond
+                    float dsz = s*2 + charge * s*3;
+                    DrawRect(new Rect2(cx - dsz, cy - dsz, dsz*2, dsz*2), new Color(blue, 0.15f + charge * 0.5f));
+                    DrawRect(new Rect2(cx - s, cy - s, s*2, s*2), new Color(blue, 0.8f)); // center
+                    // Rotating spark dots
+                    float angle = _localTime * 1.5f;
+                    for (int i = 0; i < 4; i++) {
+                        float a = angle + i * Mathf.Pi * 0.5f;
+                        float r = s * 4.5f;
+                        float rx = cx + Mathf.Cos(a) * r;
+                        float ry = cy + Mathf.Sin(a) * r;
+                        DrawRect(new Rect2(rx - s, ry - s, s*2, s*2), new Color(blue, 0.5f + charge * 0.5f));
+                    }
+                    break;
+                }
             }
         }
     }
