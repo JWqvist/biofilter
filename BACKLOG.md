@@ -51,7 +51,7 @@ Tasks:
 ---
 
 ### 🦠 Sprint 3 — Particles ✅
-**Goal:** Bio Particles spawn, pathfind, and reach the exit.
+**Goal:** Pathogens spawn, pathfind, and reach the exit.
 
 Tasks:
 - [x] ParticleEntity: movement, health, speed

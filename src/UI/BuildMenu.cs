@@ -24,15 +24,15 @@ public partial class BuildMenu : CanvasLayer
     private static readonly (string Name, string Hotkey, string Cost, string Desc, int Type, Color Color)[] _modules =
     {
         ("WALL",            "[W]", "FREE",                              "Direct particle flow",   -1, new Color("#3a5a3a")),
-        ("BASIC FILTER",    "[1]", $"${GameConfig.BasicFilterCost}",   "Damages nearby",          0, new Color("#00c853")),
+        ("HEPA FILTER",    "[1]", $"${GameConfig.BasicFilterCost}",   "Damages nearby",          0, new Color("#00c853")),
         ("ELECTROSTATIC",   "[2]", $"${GameConfig.ElectrostaticCost}", "Slows nearby",             1, new Color("#2979ff")),
         ("UV STERILISER",   "[3]", $"${GameConfig.UVSteriliserCost}",  "Shoots particles",         2, new Color("#aa00ff")),
         ("VORTEX SEP.",     "",    $"${GameConfig.VortexSeparatorCost}","Forces longer routes",    3, new Color("#00bcd4")),
         ("POWER CORE",      "",    $"${GameConfig.PowerCoreCost}",      "+$5/wave",                 4, new Color("#ffd700")),
-        ("BIO NEUTRAL.",    "",    $"${GameConfig.BioNeutraliserCost}", "Boosts adjacent +25%",    5, new Color("#9c27b0")),
+        ("AMPLIFIER",    "",    $"${GameConfig.BioNeutraliserCost}", "Boosts adjacent +25%",    5, new Color("#9c27b0")),
         ("MAGNETIC CAGE",   "",    $"${GameConfig.MagneticCageCost}",   "Traps particles 2s",      6, new Color("#795548")),
-        ("TOXIC SPRAYER",   "",    $"${GameConfig.ToxicSprayerCost}",   "Poisons (DoT)",            7, new Color("#dd2222")),
-        ("PLASMA BURST",    "",    $"${GameConfig.PlasmaBurstCost}",    "AoE explosion",            8, new Color("#2979ff")),
+        ("AEROSOL DISP.",   "",    $"${GameConfig.ToxicSprayerCost}",   "Poisons (DoT)",            7, new Color("#dd2222")),
+        ("IONISER CANNON",    "",    $"${GameConfig.PlasmaBurstCost}",    "AoE explosion",            8, new Color("#2979ff")),
     };
 
     private Panel _overlay = null!;
