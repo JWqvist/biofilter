@@ -16,6 +16,21 @@ public partial class BuildMenu : CanvasLayer
     private int  _selectedTower = -1;
     private bool _isWaveActive  = false;
     private bool _isOpen        = false;
+    private int   _currentWave   = 0;
+
+    private static readonly int[] _unlockWave =
+    {
+        0, // Wall
+        GameConfig.UnlockHepaFilter,
+        GameConfig.UnlockIonTrap,
+        GameConfig.UnlockUVEmitter,
+        GameConfig.UnlockVortexSeparator,
+        GameConfig.UnlockPowerCore,
+        GameConfig.UnlockAmplifier,
+        GameConfig.UnlockMagneticCage,
+        GameConfig.UnlockAerosolDispenser,
+        GameConfig.UnlockIoniserCannon,
+    };
 
     /// <summary>True when open — GridManager uses this to block click-through.</summary>
     public static bool IsOpen { get; private set; } = false;
@@ -98,7 +113,8 @@ public partial class BuildMenu : CanvasLayer
             float x = padX + col * (cardW + gapX);
             float y = padY + row * (cardH + gapY);
 
-            var card = new ModuleCard(i, name, hotkey, cost, desc, color, cardW, cardH, type);
+            bool locked = i < _unlockWave.Length && _currentWave < _unlockWave[i];
+            var card = new ModuleCard(i, name, hotkey, cost, desc, color, cardW, cardH, type, locked: locked);
             card.LayoutMode = 3;
             card.AnchorLeft = 0f; card.AnchorTop = 0f;
             card.OffsetLeft = x; card.OffsetTop = y;
@@ -123,6 +139,7 @@ public partial class BuildMenu : CanvasLayer
     {
         if (e is InputEventMouseButton mb && mb.Pressed && mb.ButtonIndex == MouseButton.Left)
         {
+            if (index < _unlockWave.Length && _currentWave < _unlockWave[index]) return;
             SelectModule(index);
             GetViewport().SetInputAsHandled();
         }
@@ -196,10 +213,12 @@ public partial class BuildMenu : CanvasLayer
 
         private float _localTime = 0f;
 
-        public ModuleCard(int index, string name, string hotkey, string cost, string desc, Color color, int w, int h, int type = -2)
+        internal readonly bool _locked;
+
+        public ModuleCard(int index, string name, string hotkey, string cost, string desc, Color color, int w, int h, int type = -2, bool locked = false)
         {
             _index = index; _type = type; _name = name; _hotkey = hotkey; _cost = cost;
-            _desc = desc; _color = color; _w = w; _h = h;
+            _desc = desc; _color = color; _w = w; _h = h; _locked = locked;
             MouseFilter = MouseFilterEnum.Stop;
             SetProcess(true);
         }
@@ -216,7 +235,7 @@ public partial class BuildMenu : CanvasLayer
             bool hover = GetParent()?.GetParent() is BuildMenu bm && bm._hoverIndex == _index;
 
             // Card background
-            DrawRect(rect, new Color(0.04f, 0.1f, 0.04f, 1f));
+            DrawRect(rect, _locked ? new Color(0.02f, 0.02f, 0.02f, 1f) : new Color(0.04f, 0.1f, 0.04f, 1f));
 
             // Border — bright if hovered
             var borderColor = hover ? Colors.Yellow : _color;
@@ -224,6 +243,14 @@ public partial class BuildMenu : CanvasLayer
             DrawRect(new Rect2(0, _h - 2, _w, 2), borderColor);
             DrawRect(new Rect2(0, 0, 2, _h), borderColor);
             DrawRect(new Rect2(_w - 2, 0, 2, _h), borderColor);
+
+            if (_locked)
+            {
+                DrawRect(rect, new Color(0, 0, 0, 0.7f));
+                var lockColor = new Color("#ff8f00");
+                PixelFont.DrawString(this, "LOCKED", new Vector2(4, _h * 0.5f - 4), 1.2f, lockColor);
+                return;
+            }
 
             // Pixel art tower preview (48×48 centered in top area)
             const int previewSize = 36;
