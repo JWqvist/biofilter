@@ -17,9 +17,19 @@ public static class GameConfig
     // ─── Spawn & Exit ───────────────────────────────────────────────────────
     /// <summary>Column index where particles spawn (left edge).</summary>
     public const int SpawnCol = 0;
-    /// <summary>Row index where particles spawn.</summary>
+    /// <summary>Row index where particles spawn (Map 1 / primary).</summary>
     public const int SpawnRow = 10;
     // Exit = entire right edge (col GridWidth - 1)
+
+    // ─── Map 2 Spawn Points ─────────────────────────────────────────────────
+    /// <summary>Map 2 first spawn column (left edge).</summary>
+    public const int Map2Spawn1Col = 0;
+    /// <summary>Map 2 first spawn row (top-left area).</summary>
+    public const int Map2Spawn1Row = 5;
+    /// <summary>Map 2 second spawn column (left edge).</summary>
+    public const int Map2Spawn2Col = 0;
+    /// <summary>Map 2 second spawn row (bottom-left area).</summary>
+    public const int Map2Spawn2Row = 15;
 
     // ─── Airflow ────────────────────────────────────────────────────────────
     /// <summary>Minimum airflow fraction (30%) before placement is blocked.</summary>
@@ -245,6 +255,30 @@ public static class GameConfig
     public const float SwarmUnitSpeed  = 2.0f;
     /// <summary>Number of SwarmUnit particles spawned per BacterialSwarm.</summary>
     public const int   SwarmUnitCount  = 8;
+
+    // Armored — resistant to BasicFilter, weak to UV
+    /// <summary>Base health of the Armored particle.</summary>
+    public const float ArmoredHealth           = 120f;
+    /// <summary>Movement speed of the Armored particle in tiles per second.</summary>
+    public const float ArmoredSpeed            = 1.2f;
+    /// <summary>Damage multiplier when Armored takes damage from BasicFilter (30% = 70% resistance).</summary>
+    public const float ArmorBasicFilterResist  = 0.3f;
+    /// <summary>Damage multiplier when Armored takes damage from UV Steriliser (150% = vulnerability).</summary>
+    public const float ArmorUVBonus            = 1.5f;
+
+    // Carrier — releases mini-particles on death
+    /// <summary>Base health of the Carrier particle.</summary>
+    public const float CarrierHealth           = 60f;
+    /// <summary>Movement speed of the Carrier particle in tiles per second.</summary>
+    public const float CarrierSpeed            = 1.0f;
+
+    // Saboteur — disables the tower that kills it
+    /// <summary>Base health of the Saboteur particle.</summary>
+    public const float SaboteurHealth          = 80f;
+    /// <summary>Movement speed of the Saboteur particle in tiles per second.</summary>
+    public const float SaboteurSpeed           = 1.3f;
+    /// <summary>Duration in seconds that a tower is disabled after being killed by a Saboteur.</summary>
+    public const float SaboteurDisableDuration = 5f;
 
     // CellDivision — splits on death into 2 smaller child particles
     /// <summary>Health of a CellDivision parent particle.</summary>

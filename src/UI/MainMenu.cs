@@ -11,6 +11,8 @@ namespace BioFilter.UI;
 public partial class MainMenu : Control
 {
     private Button _playButton  = null!;
+    private Button _map1Button  = null!;
+    private Button _map2Button  = null!;
     private Label  _hazardLabel = null!;
     private Label  _titleLabel  = null!;
 
@@ -76,6 +78,16 @@ public partial class MainMenu : Control
         _playButton.MouseFilter = Control.MouseFilterEnum.Stop;
         _playButton.FocusMode = Control.FocusModeEnum.All;
 
+        // ── Map selection buttons ────────────────────────────────────
+        _map1Button = GetNode<Button>("CenterContainer/VBoxContainer/MapRow/Map1Button");
+        _map2Button = GetNode<Button>("CenterContainer/VBoxContainer/MapRow/Map2Button");
+        ApplyMapButtonStyle(_map1Button);
+        ApplyMapButtonStyle(_map2Button);
+        _map1Button.Pressed += () => OnMapSelected(1);
+        _map2Button.Pressed += () => OnMapSelected(2);
+        // Highlight the current selection
+        UpdateMapButtons();
+
         // ── Version label (bottom-right) ──────────────────────────────────
         var versionLabel = new Label();
         versionLabel.Text = "v0.13c";
@@ -125,6 +137,58 @@ public partial class MainMenu : Control
             _blinkOn    = !_blinkOn;
             _hazardLabel.Modulate = _blinkOn ? Colors.White : new Color(1f, 1f, 1f, 0.2f);
         }
+    }
+
+    private void OnMapSelected(int mapNumber)
+    {
+        MapManager.CurrentMap = mapNumber;
+        UpdateMapButtons();
+    }
+
+    private void UpdateMapButtons()
+    {
+        SetMapButtonActive(_map1Button, MapManager.CurrentMap == 1);
+        SetMapButtonActive(_map2Button, MapManager.CurrentMap == 2);
+    }
+
+    private static void ApplyMapButtonStyle(Button btn)
+    {
+        var normal = new StyleBoxFlat();
+        normal.BgColor     = new Color("#0a1a0a");
+        normal.BorderColor = new Color("#2d5a3d");
+        normal.SetBorderWidthAll(2);
+        normal.SetCornerRadiusAll(0);
+        btn.AddThemeStyleboxOverride("normal", normal);
+
+        var hover = new StyleBoxFlat();
+        hover.BgColor     = new Color("#0d2a0d");
+        hover.BorderColor = new Color("#4caf50");
+        hover.SetBorderWidthAll(2);
+        hover.SetCornerRadiusAll(0);
+        btn.AddThemeStyleboxOverride("hover", hover);
+
+        var pressed = new StyleBoxFlat();
+        pressed.BgColor     = new Color("#1a3a1a");
+        pressed.BorderColor = new Color("#00c853");
+        pressed.SetBorderWidthAll(2);
+        pressed.SetCornerRadiusAll(0);
+        btn.AddThemeStyleboxOverride("pressed", pressed);
+
+        btn.AddThemeColorOverride("font_color", Constants.Colors.GlowGreen);
+        btn.AddThemeFontSizeOverride("font_size", 12);
+        btn.MouseFilter = Control.MouseFilterEnum.Stop;
+        btn.FocusMode   = Control.FocusModeEnum.All;
+    }
+
+    private static void SetMapButtonActive(Button btn, bool active)
+    {
+        // Swap border colour: bright green when active, dim when not
+        var active_style = new StyleBoxFlat();
+        active_style.BgColor     = active ? new Color("#0d2a0d") : new Color("#0a1a0a");
+        active_style.BorderColor = active ? new Color("#00c853") : new Color("#2d5a3d");
+        active_style.SetBorderWidthAll(2);
+        active_style.SetCornerRadiusAll(0);
+        btn.AddThemeStyleboxOverride("normal", active_style);
     }
 
     private void OnPlayPressed()

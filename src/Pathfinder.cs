@@ -139,4 +139,18 @@ public static class Pathfinder
         path.Reverse();
         return path;
     }
+
+    /// <summary>
+    /// Finds a path from each spawn point to the nearest exit tile.
+    /// Returns one List&lt;Vector2I&gt; per spawn point; null entries mean no path was found from that spawn.
+    /// </summary>
+    public static List<List<Vector2I>?> FindPathMultiSpawn(
+        TileType[,] grid,
+        IEnumerable<Vector2I> spawnPoints)
+    {
+        var results = new List<List<Vector2I>?>();
+        foreach (var spawn in spawnPoints)
+            results.Add(FindPath(grid, spawn));
+        return results;
+    }
 }
