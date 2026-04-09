@@ -312,7 +312,7 @@ public static class GameConfig
     /// <summary>Build cost in credits.</summary>
     public const int   PlasmaBurstCost     = 175;
     /// <summary>Damage per explosion hit.</summary>
-    public const float PlasmaBurstDamage   = 60f;
+    public const float PlasmaBurstDamage   = 30f; // reduced - was too OP
     /// <summary>Explosion radius in tiles.</summary>
     public const float PlasmaBurstRadius   = 2.5f;
     /// <summary>Maximum targeting range in tiles.</summary>
