@@ -22,14 +22,34 @@ public partial class AirflowVisualizer : Node2D
 
     private struct AirDot
     {
-        public float PathT;   // 0..1 along the path
-        public float Speed;   // individual speed variation
+        public float PathT;     // 0..1 along the path
+        public float Speed;     // individual speed variation
+        public int   PathIndex; // which spawn path to follow
     }
 
     private List<AirDot> _dots = new();
     private List<Vector2> _path = new();
+    private List<List<Vector2>> _paths = new();
     private float _airflow = 1.0f;
     private float _totalPathLength = 0f;
+
+    /// <summary>Set multiple paths (one per spawn point).</summary>
+    public void SetPaths(List<List<Vector2>> worldPaths)
+    {
+        if (worldPaths == null || worldPaths.Count == 0) return;
+        // Store all paths; dots are distributed across all paths
+        _paths = worldPaths;
+        _path  = worldPaths[0]; // primary path for backwards compat
+        _totalPathLength = 0f;
+        foreach (var p in _path)
+            _ = p; // just keep for compat
+        // Recalculate length for primary
+        for (int i = 1; i < _path.Count; i++)
+            _totalPathLength += _path[i].DistanceTo(_path[i - 1]);
+        // Reset dots
+        for (int i = 0; i < _dots.Count; i++)
+            _dots[i] = new AirDot { PathT = (float)i / _dots.Count, PathIndex = i % Mathf.Max(1, _paths.Count), Speed = _dots[i].Speed };
+    }
 
     public void SetPath(List<Vector2> worldPath)
     {
@@ -104,10 +124,32 @@ public partial class AirflowVisualizer : Node2D
 
         foreach (var dot in _dots)
         {
-            var pos = SamplePath(dot.PathT);
+            var activePath = (_paths.Count > dot.PathIndex && _paths[dot.PathIndex].Count > 1)
+                ? _paths[dot.PathIndex]
+                : _path;
+            var pos = SamplePathList(activePath, dot.PathT);
             DrawRect(new Rect2(pos.X - DotSize * 0.5f, pos.Y - DotSize * 0.5f,
                                DotSize, DotSize), dotColor);
         }
+    }
+
+    private static Vector2 SamplePathList(List<Vector2> path, float t)
+    {
+        if (path.Count == 0) return Vector2.Zero;
+        if (path.Count == 1) return path[0];
+        float totalLen = 0f;
+        for (int i = 1; i < path.Count; i++) totalLen += path[i].DistanceTo(path[i-1]);
+        float target = Mathf.Clamp(t, 0f, 1f) * totalLen;
+        float walked = 0f;
+        for (int i = 1; i < path.Count; i++) {
+            float segLen = path[i].DistanceTo(path[i-1]);
+            if (walked + segLen >= target) {
+                float localT = (target - walked) / segLen;
+                return path[i-1].Lerp(path[i], localT);
+            }
+            walked += segLen;
+        }
+        return path[path.Count - 1];
     }
 
     private Vector2 SamplePath(float t)
