@@ -184,20 +184,7 @@ public partial class Main : Node
         // Refresh visualizer path when grid/airflow changes
         _gridManager.AirflowChanged += (_) =>
         {
-            var tp = BioFilter.Pathfinder.FindPath(
-                _gridManager.GetGrid(),
-                new Vector2I(GameConfig.SpawnCol, GameConfig.SpawnRow));
-            if (tp != null && tp.Count > 0)
-            {
-                var wp = new System.Collections.Generic.List<Vector2>();
-                foreach (var t in tp)
-                {
-                    float cx2 = t.X * GameConfig.TileSize + GameConfig.TileSize * 0.5f;
-                    float cy2 = t.Y * GameConfig.TileSize + GameConfig.TileSize * 0.5f;
-                    wp.Add(new Vector2(cx2, cy2));
-                }
-                _airflowVisualizer.SetPath(wp);
-            }
+            RefreshVisualizerPaths();
         };
 
         GD.Print("BioFilter initialized (widescreen HUD).");
@@ -293,4 +280,29 @@ public partial class Main : Node
         _gridManager.TriggerAirflowRefresh();
         _rightPanel.UpdateAirflow(_gridManager.CurrentAirflow);
     }
+
+    private static System.Collections.Generic.List<Vector2> TilePathToWorld(System.Collections.Generic.List<Vector2I> tiles)
+    {
+        var world = new System.Collections.Generic.List<Vector2>();
+        foreach (var t in tiles)
+            world.Add(new Vector2(t.X * GameConfig.TileSize + GameConfig.TileSize * 0.5f,
+                                  t.Y * GameConfig.TileSize + GameConfig.TileSize * 0.5f));
+        return world;
+    }
+
+    private void RefreshVisualizerPaths()
+    {
+        var grid = _gridManager.GetGrid();
+        var spawnPoints = _gridManager.SpawnPoints;
+        var allPaths = new System.Collections.Generic.List<System.Collections.Generic.List<Vector2>>();
+        foreach (var sp in spawnPoints)
+        {
+            var tp = BioFilter.Pathfinder.FindPath(grid, sp);
+            if (tp != null && tp.Count > 0)
+                allPaths.Add(TilePathToWorld(tp));
+        }
+        if (allPaths.Count > 0)
+            _airflowVisualizer.SetPaths(allPaths);
+    }
+
 }
