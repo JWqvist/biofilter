@@ -14,6 +14,9 @@ public abstract partial class TowerBase : Node2D
     public abstract int Cost { get; }
     protected abstract Color TowerColor { get; }
 
+    /// <summary>Exposes the tower's display color for external range-circle drawing.</summary>
+    public Color RangeColor => TowerColor;
+
     // Injected by TowerManager after placement
     public ParticleManager? ParticleManagerRef { get; set; }
 
