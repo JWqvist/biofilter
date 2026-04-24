@@ -41,6 +41,8 @@ public partial class TowerManager : Node2D
     [Signal] public delegate void TowerDeselectedEventHandler();
     /// <summary>Emitted when a tile is refunded so BuildButton can show the status message.</summary>
     [Signal] public delegate void TileRefundedEventHandler(int refundAmount);
+    /// <summary>Emitted when a tower is successfully placed (used by AudioManager).</summary>
+    [Signal] public delegate void TowerPlacedEventHandler();
 
     private PackedScene _basicFilterScene = null!;
     private PackedScene _electrostaticScene = null!;
@@ -57,6 +59,9 @@ public partial class TowerManager : Node2D
 
     // Currently selected tower for upgrade UI
     private TowerBase? _selectedForUpgrade;
+
+    // Hover tracking for range-circle overlay on placed towers
+    private Vector2I _hoveredTile = new Vector2I(-1, -1);
 
     public override void _Ready()
     {
@@ -78,6 +83,42 @@ public partial class TowerManager : Node2D
     {
         _placedTowers.TryGetValue(gridPos, out var tower);
         return tower;
+    }
+
+    // ── Per-frame hover tracking ──────────────────────────────────────────────
+
+    public override void _Process(double _delta)
+    {
+        if (GridManagerRef == null) return;
+        var tile = GridManagerRef.MouseToTile();
+        if (tile != _hoveredTile)
+        {
+            _hoveredTile = tile;
+            QueueRedraw();
+        }
+    }
+
+    /// <summary>
+    /// Draws a translucent range circle over an already-placed tower when the player hovers it.
+    /// Only shown in wall/idle mode (not while a tower type is selected for placement).
+    /// </summary>
+    public override void _Draw()
+    {
+        // Only show when not in tower-placement mode (Sprint 9 covers that case)
+        if (SelectedTower != TowerType.None) return;
+        if (_hoveredTile.X < 0 || _hoveredTile.Y < 0) return;
+        if (!_placedTowers.TryGetValue(_hoveredTile, out var tower)) return;
+
+        float range = tower.Range;
+        if (range <= 0f) return;
+
+        float radiusPx = range * GameConfig.TileSize;
+        var center = TileCenter(_hoveredTile.X, _hoveredTile.Y);
+        var baseColor = tower.RangeColor;
+
+        // Filled translucent disc + outline
+        DrawCircle(center, radiusPx, new Color(baseColor, 0.12f));
+        DrawArc(center, radiusPx, 0f, Mathf.Tau, 64, new Color(baseColor, 0.55f), 1.2f);
     }
 
     // ── BuildPanel callbacks ──────────────────────────────────────────────────
@@ -234,6 +275,7 @@ public partial class TowerManager : Node2D
 
         _placedTowers[new Vector2I(col, row)] = tower;
 
+        EmitSignal(SignalName.TowerPlaced);
         GD.Print($"TowerManager: placed {SelectedTower} at ({col},{row})");
     }
 

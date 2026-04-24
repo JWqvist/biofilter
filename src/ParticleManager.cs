@@ -15,6 +15,9 @@ public partial class ParticleManager : Node2D
     public GameState?   GameState   { get; set; }
     public WaveManager? WaveManager { get; set; }
 
+    /// <summary>Emitted whenever a particle is killed by a tower (used by AudioManager).</summary>
+    [Signal] public delegate void ParticleKilledEventHandler();
+
     private PackedScene _particleScene = null!;
     private readonly List<Particle> _activeParticles = new();
 
@@ -305,6 +308,7 @@ public partial class ParticleManager : Node2D
         SpawnFloatingText($"+{reward}", particle.GlobalPosition, Constants.Colors.HazardYellow);
         GameState?.AddCurrency(reward);
         GameState?.RecordParticleKilled();
+        EmitSignal(SignalName.ParticleKilled);
         RemoveParticle(particle);
     }
 

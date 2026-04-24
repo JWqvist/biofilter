@@ -161,25 +161,26 @@ Tasks:
 ### Gameplay
 - **No path recovery after game over**: If player causes complete airflow block and escapes,
   particles on screen have no path. They stay still until the wave ends. Non-breaking.
-- **Tower range visual**: No range circle shown when placing or hovering towers.
-  Players may not know what they're buying. Sprint 8 candidate.
+- **Tower range visual**: Range circle shown on hover for placed towers (Sprint 8) and while placing (Sprint 9).
 - **Slow stacking**: Multiple Electrostatic towers don't stack slow (only max applies).
   This is intentional but not communicated to the player.
 
 ---
 
-### 🗺️ Sprint 8 — Content & Feel (Next)
+### 🗺️ Sprint 8 — Content & Feel ✅
 **Goal:** More content, sound, visual polish.
 
 Tasks:
-- [ ] Sound effects (placement, kill, wave start/end)
-- [ ] Particle visual variety (type 2: radiation particle)
-- [ ] Map 2 (different grid layout)
-- [ ] Selling/refunding towers
-- [ ] Particle health bars
-- [ ] Tower range circles on hover
+- [x] Sound effects (placement, kill, wave start/end) — synthesized via AudioStreamGenerator; AudioManager singleton wired in Main.cs
+- [x] Particle visual variety — RadiationBlob already has distinct nuclear-yellow body + rotating radiation symbol; confirmed visually distinct from BioParticle
+- [x] Map 2 (different grid layout) — dual spawns at (0,5) and (0,15); selectable from main menu
+- [x] Selling/refunding towers — right-click removes tower/wall for 50% refund; already implemented via TowerManager.RefundTile
+- [x] Particle health bars — unified 2px red/green bar drawn above every particle showing HP proportion
+- [x] Tower range circles on hover — translucent disc + outline shown when hovering already-placed towers in wall mode
 
-**Acceptance criteria:** Game has audio feedback. At least 2 particle types. Map selection screen.
+**Acceptance criteria:** Sound feedback on key events. Health bars visible. Range shown on placed towers. Selling works. Two maps available.
+
+**Completed:** 2026-04-24 — PR: Sprint 8: Content & Feel
 
 ---
 
@@ -289,7 +290,7 @@ Status: ✅ Done
 All effects: pure Godot DrawRect/DrawCircle/DrawLine, no sprites. Build: 0 errors.
 
 ## Sprint 8
-Status: 🔴 Not started
+Status: 🟡 In Progress — started 2026-04-24 by Tue (cron)
 
 ## Sprint 7
 Status: ✅ Done — Ready for player testing

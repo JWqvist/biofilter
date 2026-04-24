@@ -29,6 +29,9 @@ public partial class Main : Node
     private AirflowVisualizer _airflowVisualizer = null!;
     private AmbientDust       _ambientDust       = null!;
 
+    // Sprint 8: Audio manager
+    private AudioManager _audioManager = null!;
+
     public override void _Ready()
     {
         // Force fullscreen on startup
@@ -186,6 +189,15 @@ public partial class Main : Node
         {
             RefreshVisualizerPaths();
         };
+
+        // ── Sprint 8: Audio manager ───────────────────────────────────────
+        _audioManager = new AudioManager();
+        AddChild(_audioManager);
+
+        _towerManager.TowerPlaced        += _audioManager.PlayTowerPlaced;
+        _particleManager.ParticleKilled  += _audioManager.PlayParticleKilled;
+        _waveManager.WaveStarted         += (_) => _audioManager.PlayWaveStarted();
+        _waveManager.WaveComplete        += (_) => _audioManager.PlayWaveComplete();
 
         GD.Print("BioFilter initialized (widescreen HUD).");
     }
