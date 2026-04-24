@@ -342,12 +342,6 @@ public partial class Particle : Node2D
                 }
                 // Center dot
                 DrawRect(new Rect2(-1.5f, -1.5f, 3, 3), radGreen);
-
-                // Health bar
-                float barY = hs + 2f;
-                DrawRect(new Rect2(-hs, barY, sz, 1.5f), new Color(0.15f, 0.15f, 0.15f, 0.9f));
-                Color barCol = healthProp > 0.5f ? new Color("#00cc44") : new Color("#ff2222");
-                DrawRect(new Rect2(-hs, barY, sz * healthProp, 1.5f), barCol);
                 break;
             }
 
@@ -426,12 +420,6 @@ public partial class Particle : Node2D
 
                 // Bright border
                 DrawRect(new Rect2(-hs, -hs, sz, sz), new Color(0.8f, 0.9f, 1.0f, 0.8f), false, 1f);
-
-                // Health bar
-                float barY = hs + 2f;
-                DrawRect(new Rect2(-hs, barY, sz, 1.5f), new Color(0.15f, 0.15f, 0.15f, 0.9f));
-                Color barCol = healthProp > 0.5f ? new Color("#90a4ae") : new Color("#ff2222");
-                DrawRect(new Rect2(-hs, barY, sz * healthProp, 1.5f), barCol);
                 break;
             }
 
@@ -486,5 +474,17 @@ public partial class Particle : Node2D
                 DrawRect(new Rect2(-half, -half, _visualSize, _visualSize), _color);
                 break;
         }
+
+        // ── Health bar above every particle ────────────────────────────────
+        // Bar width matches visual size; drawn 4px above the top edge
+        float bw = _visualSize;
+        float bh = 2f;
+        float bx = -bw * 0.5f;
+        float by = -half - 4f;
+        // Background track
+        DrawRect(new Rect2(bx, by, bw, bh), new Color(0.08f, 0.08f, 0.08f, 0.85f));
+        // Filled portion: green when healthy, red when low
+        Color healthColor = healthProp > 0.5f ? new Color("#22cc44") : new Color("#ff3322");
+        DrawRect(new Rect2(bx, by, bw * healthProp, bh), healthColor);
     }
 }
