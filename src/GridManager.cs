@@ -76,6 +76,15 @@ public partial class GridManager : Node2D
             for (int row = 0; row < GameConfig.GridHeight; row++)
                 _grid[col, row] = TileType.Empty;
 
+        // Custom user map
+        if (mapNumber == 0 && MapManager.CustomMap != null)
+        {
+            var cm = MapManager.CustomMap;
+            System.Array.Copy(cm.Grid, _grid, _grid.Length);
+            SpawnPoints.AddRange(cm.SpawnPoints);
+            return;
+        }
+
         if (mapNumber == 2)
         {
             // Two red spawn tiles: top-left and bottom-left

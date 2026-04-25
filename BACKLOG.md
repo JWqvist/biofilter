@@ -212,7 +212,34 @@ Tasks:
 ---
 
 
-## Current Sprint: Sprint 13C
+## Current Sprint: Sprint 14
+Status: ✅ Done
+
+### Sprint 14 — Map Editor
+**Goal:** In-game map editor allowing players to design, save, and load custom grid layouts.
+
+Tasks:
+- [x] MapEditor scene (`src/MapEditor.cs` + `scenes/MapEditor.tscn`) accessible from main menu
+- [x] Full grid editing: place/remove walls, set spawn points (left edge, max 4), exit points (right edge, max 4)
+- [x] Validation: must have at least 1 spawn, 1 exit, and a valid airflow path (reuses AirflowCalculator BFS)
+- [x] Save map to JSON: `user://user_maps/{name}.json` with grid data, spawn positions, map name
+- [x] Load custom maps: main menu scans user maps directory and shows buttons for each
+- [x] UI toolbar: tile type selector (Wall/Spawn/Exit/Erase), name input, Save/Load/Clear buttons, validation status
+
+#### Implemented
+- **MapEditor** (`src/MapEditor.cs`) — standalone `Control` scene with full programmatic UI. Grid drawn with same tile visuals as the game. Toolbar (2 rows): row 1 has Back, name input, Save/Load/Clear; row 2 has tool buttons + status label. Dim-overlay load panel lists saved maps.
+- **MapManager** extended (`src/MapManager.cs`) — added `CustomMapData` class (holds `TileType[,] Grid`, `List<Vector2I> SpawnPoints`, `Name`), `CustomMap` static property, and `LoadFromJson(name)` static method.
+- **AirflowCalculator** extended (`src/AirflowCalculator.cs`) — `GetSpawnPoints()` now handles `CurrentMap == 0` (custom). Added `HasValidPath(grid, spawnPoints)` overload used by editor validation.
+- **GridManager** extended (`src/GridManager.cs`) — `InitializeGridForMap(0)` copies custom map grid and spawn points from `MapManager.CustomMap`.
+- **MainMenu** updated (`src/UI/MainMenu.cs`, `scenes/MainMenu.tscn`) — added `UserMapsRow` HBox (dynamically populated from `user://user_maps/`), `EditorButton` (✏ MAP EDITOR), and user map selection with active-state highlighting. Selecting a user map loads it via `MapManager.LoadFromJson` and sets `CurrentMap = 0`.
+
+Build: 0 errors, 0 warnings.
+
+**Completed:** 2026-04-25 — PR: Sprint 14: Map Editor
+
+---
+
+## Previous Sprint: Sprint 13C
 Status: ✅ Done
 
 ### Sprint 13C — Pixel Art Menus
@@ -290,7 +317,21 @@ Status: ✅ Done
 All effects: pure Godot DrawRect/DrawCircle/DrawLine, no sprites. Build: 0 errors.
 
 ## Sprint 8
-Status: 🟡 In Progress — started 2026-04-24 by Tue (cron)
+Status: ✅ Done
+
+### Sprint 8 — Content & Feel
+
+#### Implemented
+- **AudioManager** (`src/AudioManager.cs`) — procedural audio via AudioStreamGenerator. Synthesized tones for tower placement, particle kill, wave start, wave complete. Wired via signals in Main.cs.
+- **Particle health bars** (`src/Particle.cs`) — unified 2px bar above all particle types; green above 50% HP, red below.
+- **Tower range circle on hover** (`src/TowerManager.cs`) — translucent disc + outline shown when hovering an already-placed tower in idle/wall mode.
+- **Selling/refunding towers** — already implemented (verified).
+- **Map 2** — already implemented (verified).
+- **RadiationBlob visual variety** — already distinct (verified).
+
+Build: 0 errors, 0 warnings.
+
+**Completed:** 2026-04-24 — PR: Sprint 8: Content & Feel
 
 ## Sprint 7
 Status: ✅ Done — Ready for player testing

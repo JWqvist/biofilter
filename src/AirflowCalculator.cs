@@ -19,6 +19,9 @@ public class AirflowCalculator
     /// </summary>
     private static List<Vector2I> GetSpawnPoints()
     {
+        if (MapManager.CurrentMap == 0 && MapManager.CustomMap != null)
+            return new List<Vector2I>(MapManager.CustomMap.SpawnPoints);
+
         if (MapManager.CurrentMap == 2)
         {
             return new List<Vector2I>
@@ -34,7 +37,12 @@ public class AirflowCalculator
     /// Returns true if there is at least one valid path from any spawn to any exit tile.
     /// Uses proper BFS flood-fill, starting from ALL spawn points simultaneously.
     /// </summary>
-    public bool HasValidPath(TileType[,] grid)
+    public bool HasValidPath(TileType[,] grid) => HasValidPath(grid, GetSpawnPoints());
+
+    /// <summary>
+    /// Returns true if there is at least one valid path from any of the given spawn points to any exit tile.
+    /// </summary>
+    public bool HasValidPath(TileType[,] grid, List<Vector2I> spawnPoints)
     {
         int cols = grid.GetLength(0);
         int rows = grid.GetLength(1);
@@ -42,8 +50,7 @@ public class AirflowCalculator
         bool[,] visited = new bool[cols, rows];
         var queue = new Queue<(int col, int row)>();
 
-        // Seed BFS from all spawn points
-        foreach (var sp in GetSpawnPoints())
+        foreach (var sp in spawnPoints)
         {
             if (sp.X < 0 || sp.X >= cols || sp.Y < 0 || sp.Y >= rows) continue;
             if (visited[sp.X, sp.Y]) continue;
