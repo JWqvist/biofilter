@@ -85,3 +85,15 @@ text = "▶  ENTER BUNKER"
 theme_override_font_sizes/font_size = 16
 mouse_filter = 0
 focus_mode = 2
+
+[node name="UserMapsRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 6
+
+[node name="EditorButton" type="Button" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(180, 34)
+text = "✏  MAP EDITOR"
+mouse_filter = 0
+focus_mode = 2

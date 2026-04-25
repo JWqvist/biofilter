@@ -10,11 +10,16 @@ namespace BioFilter.UI;
 /// </summary>
 public partial class MainMenu : Control
 {
-    private Button _playButton  = null!;
-    private Button _map1Button  = null!;
-    private Button _map2Button  = null!;
-    private Label  _hazardLabel = null!;
-    private Label  _titleLabel  = null!;
+    private Button       _playButton    = null!;
+    private Button       _map1Button   = null!;
+    private Button       _map2Button   = null!;
+    private Label        _hazardLabel  = null!;
+    private Label        _titleLabel   = null!;
+    private HBoxContainer _userMapsRow = null!;
+    private Button       _editorButton = null!;
+
+    // Tracks which user-map button is currently active (by name)
+    private string _activeUserMap = "";
 
     // Scanline effect
     private ColorRect _scanline  = null!;
@@ -85,6 +90,18 @@ public partial class MainMenu : Control
         ApplyMapButtonStyle(_map2Button);
         _map1Button.Pressed += () => OnMapSelected(1);
         _map2Button.Pressed += () => OnMapSelected(2);
+
+        // ── User maps row ─────────────────────────────────────────────────────
+        _userMapsRow = GetNode<HBoxContainer>("CenterContainer/VBoxContainer/UserMapsRow");
+        if (MapManager.CurrentMap == 0 && MapManager.CustomMap != null)
+            _activeUserMap = MapManager.CustomMap.Name;
+        RefreshUserMaps();
+
+        // ── Map editor button ─────────────────────────────────────────────────
+        _editorButton = GetNode<Button>("CenterContainer/VBoxContainer/EditorButton");
+        ApplyMapButtonStyle(_editorButton);
+        _editorButton.Pressed += () => GetTree().ChangeSceneToFile("res://scenes/MapEditor.tscn");
+
         // Highlight the current selection
         UpdateMapButtons();
 
@@ -142,6 +159,8 @@ public partial class MainMenu : Control
     private void OnMapSelected(int mapNumber)
     {
         MapManager.CurrentMap = mapNumber;
+        MapManager.CustomMap  = null;
+        _activeUserMap        = "";
         UpdateMapButtons();
     }
 
@@ -149,6 +168,50 @@ public partial class MainMenu : Control
     {
         SetMapButtonActive(_map1Button, MapManager.CurrentMap == 1);
         SetMapButtonActive(_map2Button, MapManager.CurrentMap == 2);
+        // User map buttons: highlight the active one
+        foreach (var child in _userMapsRow.GetChildren())
+        {
+            if (child is Button btn)
+                SetMapButtonActive(btn, MapManager.CurrentMap == 0 && btn.Text == _activeUserMap);
+        }
+    }
+
+    private void RefreshUserMaps()
+    {
+        // Remove existing user-map buttons
+        foreach (Node child in _userMapsRow.GetChildren())
+            child.QueueFree();
+
+        var dir = DirAccess.Open("user://user_maps");
+        if (dir == null) return;
+
+        dir.ListDirBegin();
+        string fname = dir.GetNext();
+        while (fname != "")
+        {
+            if (!dir.CurrentIsDir() && fname.EndsWith(".json"))
+            {
+                string mapName = fname.Replace(".json", "");
+                var btn = new Button();
+                btn.Text = mapName;
+                ApplyMapButtonStyle(btn);
+                btn.CustomMinimumSize = new Vector2(86, 34);
+                string captured = mapName;
+                btn.Pressed += () => OnUserMapSelected(captured);
+                _userMapsRow.AddChild(btn);
+            }
+            fname = dir.GetNext();
+        }
+    }
+
+    private void OnUserMapSelected(string mapName)
+    {
+        var data = MapManager.LoadFromJson(mapName);
+        if (data == null) return;
+        MapManager.CurrentMap = 0;
+        MapManager.CustomMap  = data;
+        _activeUserMap        = mapName;
+        UpdateMapButtons();
     }
 
     private static void ApplyMapButtonStyle(Button btn)
