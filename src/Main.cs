@@ -250,6 +250,9 @@ public partial class Main : Node
                     case Key.R:
                         DeselectTower();
                         break;
+                    case Key.S:
+                        ToggleSellMode();
+                        break;
                 }
             }
         }
@@ -267,6 +270,9 @@ public partial class Main : Node
     {
         _towerManager.OnTowerSelected(menuIndex);
         _gridManager.WallPlacementActive = false;
+        // Selecting a tower type exits sell mode
+        _towerManager.SellModeActive = false;
+        _gridManager.SellModeActive  = false;
         _rightPanel.SetStatus($"{type} selected");
         _statusTimer.Stop();
         _statusTimer.Start();
@@ -276,7 +282,27 @@ public partial class Main : Node
     {
         _towerManager.OnTowerDeselected();
         _gridManager.WallPlacementActive = true;
+        // Leaving tower-select mode also exits sell mode
+        _towerManager.SellModeActive = false;
+        _gridManager.SellModeActive = false;
         _rightPanel.SetStatus("Wall mode");
+    }
+
+    private void ToggleSellMode()
+    {
+        bool active = !_towerManager.SellModeActive;
+        _towerManager.SellModeActive = active;
+        _gridManager.SellModeActive  = active;
+        if (active)
+        {
+            _rightPanel.SetStatus("[S] Sell mode — right-click to sell");
+            _statusTimer.Stop();
+            _statusTimer.Start();
+        }
+        else
+        {
+            _rightPanel.SetStatus("Wall mode");
+        }
     }
 
     private void TogglePauseMenu() => _pauseMenu.Toggle();

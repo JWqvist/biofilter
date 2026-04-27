@@ -279,14 +279,21 @@ public partial class TowerManager : Node2D
         GD.Print($"TowerManager: placed {SelectedTower} at ({col},{row})");
     }
 
+    // ── Sell mode ─────────────────────────────────────────────────────────────
+
+    /// <summary>When true, hovering over a wall or tower shows a red sell-mode tint.</summary>
+    public bool SellModeActive { get; set; } = false;
+
     // ── Refund ────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// Called on right-click. Removes the tile, refunds 50% of its cost, and emits TileRefunded.
+    /// Sell is only allowed during the build phase (not during an active wave).
     /// Returns the refund amount (0 if nothing to refund).
     /// </summary>
     public int RefundTile(int col, int row)
     {
+        if (IsWaveActive) return 0; // sell only during build phase
         if (GridManagerRef == null || GameStateRef == null) return 0;
 
         TileType tileType = GridManagerRef.GetTileType(col, row);

@@ -202,12 +202,33 @@ Tasks:
 ---
 
 ## Backlog Items (unscheduled)
-- Map editor
 - Multiple particle types (radiation, chemical)
 - Save/load
-- Selling/refunding modules
 - Particles with "prefer wider paths" behavior
 - Split flow convergence logic
+
+---
+
+## Sprint 15 — Selling/Refunding Modules
+Status: ✅ Done
+Completed: 2026-04-27
+
+### Sprint 15 — Sell & Refund
+**Goal:** Players can sell/refund placed towers and walls, receiving a partial credit refund.
+
+Tasks:
+- [x] Right-click on placed tower or wall — immediate sell, no popup needed
+- [x] Refund amount = 50% of original placement cost
+- [x] Refund currency credited back to player via existing currency system
+- [x] Tower/wall removed from grid on sell
+- [x] Airflow recalculated after removal
+- [x] Works for all tower types AND wall tiles
+- [x] Sell blocked during active wave (build phase only)
+- [x] `S` key toggles sell-mode cursor (red hover tint on removable tiles)
+
+**Acceptance criteria:** Player can right-click any placed tower or wall during build phase and receive a 50% refund. Grid updates correctly. Wave-active guard prevents accidental sells mid-wave.
+
+**Started:** 2026-04-27
 
 ---
 
