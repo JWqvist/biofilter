@@ -254,15 +254,33 @@ public partial class ParticleManager : Node2D
 
         if (offset && path.Count > 0)
         {
-            // Slight random nudge on first waypoint so swarm units don't stack
-            float ox = _rng.RandfRange(-GameConfig.TileSize * 0.4f, GameConfig.TileSize * 0.4f);
-            float oy = _rng.RandfRange(-GameConfig.TileSize * 0.4f, GameConfig.TileSize * 0.4f);
+            // Larger random nudge so swarm units spread across ~2.4 tiles instead of clustering
+            float ox = _rng.RandfRange(-GameConfig.TileSize * 1.2f, GameConfig.TileSize * 1.2f);
+            float oy = _rng.RandfRange(-GameConfig.TileSize * 1.2f, GameConfig.TileSize * 1.2f);
             path[0] = path[0] + new Vector2(ox, oy);
         }
 
         particle.Initialize(path, healthMultiplier, type);
         HookParticleSignals(particle);
         _activeParticles.Add(particle);
+    }
+
+    /// <summary>
+    /// Returns true if no active particle is within <paramref name="minDistPx"/> pixels of the primary spawn point.
+    /// Used by WaveManager to enforce minimum spacing between spawns.
+    /// </summary>
+    public bool IsSpawnPointClear(float minDistPx)
+    {
+        var primary = PrimaryWorldPath();
+        if (primary == null || primary.Count == 0) return true;
+        Vector2 spawnPos = primary[0];
+        foreach (var p in _activeParticles)
+        {
+            if (!IsInstanceValid(p)) continue;
+            if (p.GlobalPosition.DistanceTo(spawnPos) < minDistPx)
+                return false;
+        }
+        return true;
     }
 
     private void HookParticleSignals(Particle particle)
