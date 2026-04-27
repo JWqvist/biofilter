@@ -27,6 +27,14 @@ public partial class GameState : Node
     [Signal] public delegate void GameOverEventHandler();
     [Signal] public delegate void BonusEarnedEventHandler(string message, int amount);
 
+    public void RestoreState(int population, int currency)
+    {
+        Population = population;
+        Currency = currency;
+        EmitSignal(SignalName.PopulationChanged, Population);
+        EmitSignal(SignalName.CurrencyChanged, Currency);
+    }
+
     public void LosePopulation(int amount)
     {
         Population -= amount;

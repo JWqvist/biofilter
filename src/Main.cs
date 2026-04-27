@@ -253,6 +253,12 @@ public partial class Main : Node
                     case Key.S:
                         ToggleSellMode();
                         break;
+                    case Key.F5:
+                        SaveGame();
+                        break;
+                    case Key.F9:
+                        LoadGame();
+                        break;
                 }
             }
         }
@@ -303,6 +309,62 @@ public partial class Main : Node
         {
             _rightPanel.SetStatus("Wall mode");
         }
+    }
+
+    private void SaveGame()
+    {
+        var data = new BioFilter.SaveData
+        {
+            Wave       = _waveManager.CurrentWaveNumber,
+            Lives      = _gameState.Population,
+            Currency   = _gameState.Currency,
+            MapNumber  = BioFilter.MapManager.CurrentMap,
+        };
+
+        var grid = _gridManager.GetGrid();
+        for (int col = 0; col < GameConfig.GridWidth; col++)
+            for (int row = 0; row < GameConfig.GridHeight; row++)
+                if (grid[col, row] == TileType.Wall)
+                    data.Tiles.Add(new BioFilter.TileSaveEntry { X = col, Y = row, Type = (int)TileType.Wall });
+
+        foreach (var kvp in _towerManager.GetPlacedTowers())
+            data.Towers.Add(new BioFilter.TowerSaveEntry
+            {
+                X    = kvp.Key.X,
+                Y    = kvp.Key.Y,
+                Type = (int)kvp.Value.TowerTypeId,
+            });
+
+        BioFilter.SaveManager.Save(data);
+        _bonusNotification.ShowBonus("Game Saved!");
+    }
+
+    private void LoadGame()
+    {
+        var data = BioFilter.SaveManager.Load();
+        if (data == null) return;
+
+        _towerManager.ClearAllTowers();
+        BioFilter.MapManager.CurrentMap = data.MapNumber;
+        _gridManager.InitializeGridForMap(data.MapNumber);
+
+        foreach (var e in data.Tiles)
+            _gridManager.PlaceTile(e.X, e.Y, (TileType)e.Type);
+
+        foreach (var e in data.Towers)
+            _towerManager.PlaceTowerDirect(e.X, e.Y, (TowerManager.TowerType)e.Type);
+
+        _gameState.RestoreState(data.Lives, data.Currency);
+        _waveManager.RestoreWave(data.Wave);
+
+        _rightPanel.UpdateAirflow(_gridManager.CurrentAirflow);
+        _rightPanel.UpdatePopulation(_gameState.Population);
+        _rightPanel.UpdateCurrency(_gameState.Currency);
+
+        CallDeferred(nameof(RefreshAirflow));
+        CallDeferred(nameof(RefreshVisualizerPaths));
+
+        _bonusNotification.ShowBonus("Game Loaded!");
     }
 
     private void TogglePauseMenu() => _pauseMenu.Toggle();

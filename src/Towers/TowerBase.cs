@@ -29,6 +29,9 @@ public abstract partial class TowerBase : Node2D
     /// <summary>Grid position (col, row) set by TowerManager on placement.</summary>
     public Vector2I GridPos { get; set; }
 
+    /// <summary>Tower type enum value set by TowerManager on placement (used for save/load).</summary>
+    public TowerManager.TowerType TowerTypeId { get; set; } = TowerManager.TowerType.None;
+
     // ── Saboteur disable mechanic ──────────────────────────────────────────────────
     /// <summary>True while this tower is disabled by a Saboteur kill.</summary>
     public bool IsDisabled { get; private set; } = false;

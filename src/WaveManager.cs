@@ -36,6 +36,13 @@ public partial class WaveManager : Node2D
     public int CurrentWaveNumber => _currentWave + 1; // 1-indexed for display
     public int TotalWaves => GameConfig.TotalWaves;
 
+    /// <summary>Restores the wave counter to the given 1-indexed wave number (used by load system).</summary>
+    public void RestoreWave(int waveNumber)
+    {
+        _currentWave = waveNumber - 1;
+        if (_currentWave < 0) _currentWave = 0;
+    }
+
     // ── Wave start ────────────────────────────────────────────────────────────
     /// <summary>Called by StartWaveButton. Shows preview then begins spawning.</summary>
     public void StartWave()

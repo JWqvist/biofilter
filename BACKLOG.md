@@ -4,6 +4,25 @@
 
 ---
 
+### 💾 Sprint 17 — Save / Load ✅
+**Status:** ✅ Done
+**Date:** 2026-04-27
+
+**Goal:** Players can save their current game state to disk and reload it — preserving grid layout, currency, wave number, lives, and tower placements.
+
+Tasks:
+- [x] `SaveData` class — serialisable snapshot (grid tiles, tower list, currency, wave, lives)
+- [x] `SaveManager` — write/read JSON to `user://savegame.json` (Godot `user://` path)
+- [x] Save triggered by `F5` key or a Save button in the HUD
+- [x] Load triggered by `F9` key or Load button on the main menu
+- [x] On load: reconstruct grid, towers, HUD state, wave number
+- [x] Guard: loading disabled during active wave (build phase only)
+- [x] New-game clears any existing save
+
+**Acceptance criteria:** Press F5 → quit → press F9 → game resumes from exact same state (same wave, same grid, same currency, same lives). Works across game restarts.
+
+---
+
 ### 🦠 Sprint 16 — Particle Spacing ✅
 **Status:** ✅ Done
 **Date:** 2026-04-27

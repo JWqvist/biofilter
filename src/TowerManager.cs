@@ -85,6 +85,60 @@ public partial class TowerManager : Node2D
         return tower;
     }
 
+    /// <summary>Read-only view of all placed towers (used by save system).</summary>
+    public System.Collections.Generic.IReadOnlyDictionary<Vector2I, TowerBase> GetPlacedTowers()
+        => _placedTowers;
+
+    /// <summary>Removes and frees all placed tower nodes (used by load system).</summary>
+    public void ClearAllTowers()
+    {
+        foreach (var tower in _placedTowers.Values)
+            tower.QueueFree();
+        _placedTowers.Clear();
+    }
+
+    /// <summary>
+    /// Places a tower directly without spending currency (used by load system).
+    /// Registers the tile in the grid and instantiates the tower node.
+    /// </summary>
+    public void PlaceTowerDirect(int col, int row, TowerType type)
+    {
+        if (GridManagerRef == null) return;
+
+        bool placed = GridManagerRef.PlaceTile(col, row, TileType.Tower);
+        if (!placed) return;
+
+        var scene = GetSceneForType(type);
+        if (scene == null) return;
+
+        var tower = scene.Instantiate<TowerBase>();
+        AddChild(tower);
+        tower.Position = TileCenter(col, row);
+        tower.GridPos = new Vector2I(col, row);
+        tower.TowerTypeId = type;
+        tower.ParticleManagerRef = ParticleManagerRef;
+
+        switch (tower)
+        {
+            case VortexSeparator vortex:
+                vortex.GridManagerRef = GridManagerRef;
+                vortex.ApplyVortexPenalty();
+                GridManagerRef.TriggerAirflowRefresh();
+                break;
+            case PowerCore powerCore:
+                powerCore.WaveManagerRef = WaveManagerRef;
+                powerCore.GameStateRef   = GameStateRef;
+                powerCore.ConnectWaveManager();
+                break;
+            case BioNeutraliser neutraliser:
+                neutraliser.TowerManagerRef = this;
+                neutraliser.ApplyBoost();
+                break;
+        }
+
+        _placedTowers[new Vector2I(col, row)] = tower;
+    }
+
     // ── Per-frame hover tracking ──────────────────────────────────────────────
 
     public override void _Process(double _delta)
@@ -245,6 +299,7 @@ public partial class TowerManager : Node2D
         AddChild(tower);
         tower.Position = TileCenter(col, row);
         tower.GridPos = new Vector2I(col, row);
+        tower.TowerTypeId = SelectedTower;
         tower.ParticleManagerRef = ParticleManagerRef;
 
         // Sprint 12: wire extra dependencies for new tower types
