@@ -54,6 +54,10 @@ public partial class GridManager : Node2D
     private static readonly Color ColorExit       = Constants.Colors.Exit;
     private static readonly Color ColorHover      = new Color(1f, 1f, 1f, 0.3f);
     private static readonly Color ColorBlocked    = new Color(1f, 0f, 0f, 0.4f);
+    private static readonly Color ColorSellHover  = new Color(1f, 0.2f, 0.1f, 0.55f);
+
+    /// <summary>When true, hovering over a wall or tower tile shows a red sell tint.</summary>
+    public bool SellModeActive { get; set; } = false;
 
     public override void _Ready()
     {
@@ -296,9 +300,12 @@ public partial class GridManager : Node2D
                         break;
                 }
 
-                // Hover highlight
+                // Hover highlight — red sell tint when sell mode is active over a removable tile
                 if (_hoverTile.X == col && _hoverTile.Y == row)
-                    DrawRect(rect, ColorHover);
+                {
+                    bool isSellable = tile == TileType.Wall || tile == TileType.Tower;
+                    DrawRect(rect, SellModeActive && isSellable ? ColorSellHover : ColorHover);
+                }
             }
         }
 
