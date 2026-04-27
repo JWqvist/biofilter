@@ -11,6 +11,7 @@ namespace BioFilter.UI;
 public partial class MainMenu : Control
 {
     private Button       _playButton    = null!;
+    private Button       _loadButton    = null!;
     private Button       _map1Button   = null!;
     private Button       _map2Button   = null!;
     private Label        _hazardLabel  = null!;
@@ -82,6 +83,19 @@ public partial class MainMenu : Control
         _playButton.Pressed += OnPlayPressed;
         _playButton.MouseFilter = Control.MouseFilterEnum.Stop;
         _playButton.FocusMode = Control.FocusModeEnum.All;
+
+        // ── Load Game button ──────────────────────────────────────────────
+        _loadButton = new Button();
+        _loadButton.Text = SaveManager.HasSave ? "LOAD GAME  [F9]" : "LOAD GAME  [F9]  — no save";
+        _loadButton.Disabled = !SaveManager.HasSave;
+        ApplyMapButtonStyle(_loadButton);
+        _loadButton.CustomMinimumSize = new Vector2(160f, 34f);
+        _loadButton.Pressed += OnLoadPressed;
+        _loadButton.MouseFilter = Control.MouseFilterEnum.Stop;
+        _loadButton.FocusMode = Control.FocusModeEnum.All;
+        var vboxForLoad = _playButton.GetParent<VBoxContainer>();
+        vboxForLoad.AddChild(_loadButton);
+        vboxForLoad.MoveChild(_loadButton, _playButton.GetIndex() + 1);
 
         // ── Map selection buttons ────────────────────────────────────
         _map1Button = GetNode<Button>("CenterContainer/VBoxContainer/MapRow/Map1Button");
@@ -254,8 +268,23 @@ public partial class MainMenu : Control
         btn.AddThemeStyleboxOverride("normal", active_style);
     }
 
+    public override void _UnhandledInput(InputEvent e)
+    {
+        if (e is InputEventKey key && key.Pressed && !key.Echo && key.Keycode == Key.F9)
+            OnLoadPressed();
+    }
+
     private void OnPlayPressed()
     {
+        // New game — clear any existing save so a fresh run starts clean
+        SaveManager.DeleteSave();
+        GetTree().ChangeSceneToFile("res://scenes/Main.tscn");
+    }
+
+    private void OnLoadPressed()
+    {
+        if (!SaveManager.HasSave) return;
+        SaveManager.PendingLoad = true;
         GetTree().ChangeSceneToFile("res://scenes/Main.tscn");
     }
 }

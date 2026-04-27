@@ -402,6 +402,92 @@ public partial class TowerManager : Node2D
         return 0;
     }
 
+    // ── Save / Load ───────────────────────────────────────────────────────────
+
+    /// <summary>Returns a snapshot of all placed towers for saving.</summary>
+    public System.Collections.Generic.List<TowerSaveEntry> GetPlacedTowerData()
+    {
+        var result = new System.Collections.Generic.List<TowerSaveEntry>();
+        foreach (var (pos, tower) in _placedTowers)
+        {
+            result.Add(new TowerSaveEntry
+            {
+                X        = pos.X,
+                Y        = pos.Y,
+                Type     = (int)GetTypeForTower(tower),
+                Upgraded = tower.IsUpgraded,
+            });
+        }
+        return result;
+    }
+
+    /// <summary>Reconstructs all towers from save data (bypasses cost/airflow checks).</summary>
+    public void LoadTowers(System.Collections.Generic.List<TowerSaveEntry> entries)
+    {
+        if (GridManagerRef == null) return;
+
+        // Two-pass: non-BioNeutraliser first so ApplyBoost finds already-placed neighbours
+        void PlaceEntry(TowerSaveEntry e)
+        {
+            var scene = GetSceneForType((TowerType)e.Type);
+            if (scene == null) return;
+
+            GridManagerRef.ForcePlaceTile(e.X, e.Y, TileType.Tower);
+
+            var tower = scene.Instantiate<BioFilter.Towers.TowerBase>();
+            AddChild(tower);
+            tower.Position          = TileCenter(e.X, e.Y);
+            tower.GridPos           = new Vector2I(e.X, e.Y);
+            tower.ParticleManagerRef = ParticleManagerRef;
+
+            switch (tower)
+            {
+                case VortexSeparator vortex:
+                    vortex.GridManagerRef = GridManagerRef;
+                    vortex.ApplyVortexPenalty();
+                    break;
+                case PowerCore powerCore:
+                    powerCore.WaveManagerRef = WaveManagerRef;
+                    powerCore.GameStateRef   = GameStateRef;
+                    powerCore.ConnectWaveManager();
+                    break;
+                case BioNeutraliser neutraliser:
+                    neutraliser.TowerManagerRef = this;
+                    neutraliser.ApplyBoost();
+                    break;
+            }
+
+            if (e.Upgraded)
+                TowerUpgrade.ApplyUpgrade(tower);
+
+            _placedTowers[new Vector2I(e.X, e.Y)] = tower;
+        }
+
+        foreach (var e in entries)
+            if (e.Type != (int)TowerType.BioNeutraliser)
+                PlaceEntry(e);
+        foreach (var e in entries)
+            if (e.Type == (int)TowerType.BioNeutraliser)
+                PlaceEntry(e);
+
+        GridManagerRef.TriggerAirflowRefresh();
+        GD.Print($"TowerManager: loaded {entries.Count} tower(s) from save");
+    }
+
+    private static TowerType GetTypeForTower(BioFilter.Towers.TowerBase tower) => tower switch
+    {
+        BasicFilter     => TowerType.BasicFilter,
+        Electrostatic   => TowerType.Electrostatic,
+        UVSteriliser    => TowerType.UVSteriliser,
+        VortexSeparator => TowerType.VortexSeparator,
+        PowerCore       => TowerType.PowerCore,
+        BioNeutraliser  => TowerType.BioNeutraliser,
+        MagneticCage    => TowerType.MagneticCage,
+        ToxicSprayer    => TowerType.ToxicSprayer,
+        PlasmaBurst     => TowerType.PlasmaBurst,
+        _               => TowerType.None,
+    };
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private Vector2 TileCenter(int col, int row)

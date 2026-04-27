@@ -128,6 +128,15 @@ public partial class RightPanel : Control
         QueueRedraw();
     }
 
+    /// <summary>Syncs the wave display after loading a save (called from Main.LoadGame).</summary>
+    public void InitWaveDisplay(int completedWaves)
+    {
+        _currentWave  = completedWaves;
+        _isBuildPhase = true;
+        _statusText   = "BUILD PHASE";
+        QueueRedraw();
+    }
+
     // ── Rendering ─────────────────────────────────────────────────────────
 
     public override void _Draw()

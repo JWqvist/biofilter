@@ -200,6 +200,71 @@ public partial class Main : Node
         _waveManager.WaveComplete        += (_) => _audioManager.PlayWaveComplete();
 
         GD.Print("BioFilter initialized (widescreen HUD).");
+
+        // ── Sprint 17: Load from save if requested ────────────────────────
+        if (SaveManager.PendingLoad)
+        {
+            SaveManager.PendingLoad = false;
+            LoadGame();
+        }
+    }
+
+    // ── Sprint 17: Save / Load ────────────────────────────────────────────────
+
+    private void SaveGame()
+    {
+        if (_waveManager.State != WaveManager.WaveState.Idle)
+        {
+            _rightPanel.SetStatus("Can't save mid-wave");
+            _statusTimer.Stop();
+            _statusTimer.Start();
+            return;
+        }
+        var data = new SaveData
+        {
+            MapNumber  = MapManager.CurrentMap,
+            Currency   = _gameState.Currency,
+            Population = _gameState.Population,
+            WaveIndex  = _waveManager.CurrentWaveNumber - 1,
+            Walls      = _gridManager.GetWallPositions(),
+            Towers     = _towerManager.GetPlacedTowerData(),
+        };
+        SaveManager.Save(data);
+        _rightPanel.SetStatus("Saved [F5]");
+        _statusTimer.Stop();
+        _statusTimer.Start();
+    }
+
+    private void LoadGame()
+    {
+        var data = SaveManager.Load();
+        if (data == null)
+        {
+            GD.PrintErr("[Main] LoadGame: no valid save found");
+            return;
+        }
+
+        // Reset grid for the saved map, then restore walls + towers
+        MapManager.CurrentMap = data.MapNumber;
+        _gridManager.InitializeGridForMap(data.MapNumber);
+
+        foreach (var w in data.Walls)
+            _gridManager.ForcePlaceTile(w.X, w.Y, TileType.Wall);
+
+        _towerManager.LoadTowers(data.Towers); // marks tower tiles + calls TriggerAirflowRefresh
+
+        // Restore game state
+        _gameState.RestoreState(data.Population, data.Currency);
+        _waveManager.RestoreWave(data.WaveIndex + 1);
+
+        // Sync HUD
+        _topStrip.OnWaveComplete(data.WaveIndex);
+        _rightPanel.InitWaveDisplay(data.WaveIndex);
+        _rightPanel.UpdateAirflow(_gridManager.CurrentAirflow);
+        _rightPanel.UpdatePopulation(data.Population);
+        _rightPanel.UpdateCurrency(data.Currency);
+
+        GD.Print($"[Main] Game loaded (wave {data.WaveIndex}, ${data.Currency}, pop {data.Population})");
     }
 
     private void OnGameOver()
@@ -309,62 +374,6 @@ public partial class Main : Node
         {
             _rightPanel.SetStatus("Wall mode");
         }
-    }
-
-    private void SaveGame()
-    {
-        var data = new BioFilter.SaveData
-        {
-            Wave       = _waveManager.CurrentWaveNumber,
-            Lives      = _gameState.Population,
-            Currency   = _gameState.Currency,
-            MapNumber  = BioFilter.MapManager.CurrentMap,
-        };
-
-        var grid = _gridManager.GetGrid();
-        for (int col = 0; col < GameConfig.GridWidth; col++)
-            for (int row = 0; row < GameConfig.GridHeight; row++)
-                if (grid[col, row] == TileType.Wall)
-                    data.Tiles.Add(new BioFilter.TileSaveEntry { X = col, Y = row, Type = (int)TileType.Wall });
-
-        foreach (var kvp in _towerManager.GetPlacedTowers())
-            data.Towers.Add(new BioFilter.TowerSaveEntry
-            {
-                X    = kvp.Key.X,
-                Y    = kvp.Key.Y,
-                Type = (int)kvp.Value.TowerTypeId,
-            });
-
-        BioFilter.SaveManager.Save(data);
-        _bonusNotification.ShowBonus("Game Saved!");
-    }
-
-    private void LoadGame()
-    {
-        var data = BioFilter.SaveManager.Load();
-        if (data == null) return;
-
-        _towerManager.ClearAllTowers();
-        BioFilter.MapManager.CurrentMap = data.MapNumber;
-        _gridManager.InitializeGridForMap(data.MapNumber);
-
-        foreach (var e in data.Tiles)
-            _gridManager.PlaceTile(e.X, e.Y, (TileType)e.Type);
-
-        foreach (var e in data.Towers)
-            _towerManager.PlaceTowerDirect(e.X, e.Y, (TowerManager.TowerType)e.Type);
-
-        _gameState.RestoreState(data.Lives, data.Currency);
-        _waveManager.RestoreWave(data.Wave);
-
-        _rightPanel.UpdateAirflow(_gridManager.CurrentAirflow);
-        _rightPanel.UpdatePopulation(_gameState.Population);
-        _rightPanel.UpdateCurrency(_gameState.Currency);
-
-        CallDeferred(nameof(RefreshAirflow));
-        CallDeferred(nameof(RefreshVisualizerPaths));
-
-        _bonusNotification.ShowBonus("Game Loaded!");
     }
 
     private void TogglePauseMenu() => _pauseMenu.Toggle();
