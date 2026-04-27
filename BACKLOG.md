@@ -4,6 +4,18 @@
 
 ---
 
+### 🦠 Sprint 16 — Particle Spacing ✅
+**Status:** ✅ Done
+**Date:** 2026-04-27
+
+Implemented:
+- [x] Increased `SpawnInterval` in `GameConfig.cs` from 1.8 s → 2.5 s, giving players more reaction time between spawns
+- [x] Added `IsSpawnPointClear(minDistPx)` to `ParticleManager` — checks if any active particle is within the given pixel radius of the primary spawn point
+- [x] Added minimum-distance guard in `WaveManager._Process`: if the spawn point is blocked (particle within 2 tiles), the timer is reset and the tick is skipped without advancing the spawn counter
+- [x] Expanded `BacterialSwarm` `SwarmUnit` offset range from ±0.4 tiles → ±1.2 tiles so the 8-unit cluster fans out across ~2.4 tiles instead of stacking tightly
+
+---
+
 ### 🏗️ Sprint 0 — Project Foundation ✅
 **Goal:** Godot project running, dev branch, basic scene structure, nothing interactive yet.
 

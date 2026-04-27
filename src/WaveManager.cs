@@ -172,6 +172,14 @@ public partial class WaveManager : Node2D
             _spawnTimer += (float)delta;
             if (_spawnTimer >= GameConfig.SpawnInterval && _particlesSpawned < _particlesToSpawn)
             {
+                // If a particle is already within 2 tiles of the spawn point, skip this tick
+                // and wait another full interval to avoid bunching.
+                if (ParticleManagerRef?.IsSpawnPointClear(2 * GameConfig.TileSize) == false)
+                {
+                    _spawnTimer = 0f;
+                    return;
+                }
+
                 _spawnTimer = 0f;
 
                 var type = GetTypeForSpawn(_particlesSpawned);
