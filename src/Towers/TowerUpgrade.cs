@@ -42,7 +42,8 @@ public static class TowerUpgrade
 
     // ── Apply stat multipliers based on tower type ────────────────────────────
 
-    private static void ApplyUpgrade(TowerBase tower)
+    /// <summary>Applies upgrade stats without deducting currency. Used by the load system.</summary>
+    public static void ApplyUpgrade(TowerBase tower)
     {
         switch (tower)
         {

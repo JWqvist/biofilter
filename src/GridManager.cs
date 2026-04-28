@@ -158,6 +158,26 @@ public partial class GridManager : Node2D
         return CloneGrid();
     }
 
+    // ── Save / Load helpers ───────────────────────────────────────────────────
+
+    /// <summary>Sets a tile directly, bypassing the airflow validation. Used by the load system.</summary>
+    public void ForcePlaceTile(int col, int row, TileType type)
+    {
+        if (!IsValidCoord(col, row)) return;
+        _grid[col, row] = type;
+    }
+
+    /// <summary>Returns the position of every Wall tile (for saving).</summary>
+    public System.Collections.Generic.List<TileSaveEntry> GetWallPositions()
+    {
+        var result = new System.Collections.Generic.List<TileSaveEntry>();
+        for (int col = 0; col < GameConfig.GridWidth; col++)
+            for (int row = 0; row < GameConfig.GridHeight; row++)
+                if (_grid[col, row] == TileType.Wall)
+                    result.Add(new TileSaveEntry { X = col, Y = row });
+        return result;
+    }
+
     public TileType GetTileType(int col, int row)
     {
         if (!IsValidCoord(col, row)) return TileType.Empty;
